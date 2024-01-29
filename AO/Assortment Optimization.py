@@ -1162,8 +1162,9 @@ delist_materials.createOrReplaceTempView('delist_materials')
 #     material_store_sales = sales[sales['store_id'].isin(stores)]['total_sales'].sum()
 #     cwd.append(material_store_sales/all_store_sales)
 
-# cwd_df['store'] = cwd_df.groupby('material_id')['store_id'].transform('nunique')
-# cwd_df = cwd_df.groupby(['week_number', 'material_id']).agg({'total_sales': 'sum', 'store': 'mean'}).reset_index()
+# cwd_df['material_store_count'] = cwd_df.groupby('material_id')['store_id'].transform('nunique')
+# cwd_df['material_weekly_store_count'] = cwd_df.groupby(['material_id', 'week_number'])['store_id'].transform('nunique')
+# cwd_df = cwd_df.groupby(['week_number', 'material_id']).agg({'total_sales': 'sum', 'material_store_count': 'mean', 'material_weekly_store_count': 'mean'}).reset_index()
 # cwd_df['cwd'] = cwd
 
 # COMMAND ----------
@@ -1219,7 +1220,7 @@ delist_materials.createOrReplaceTempView('delist_materials')
 
 # COMMAND ----------
 
-# # # Save all the weekly data of the materials into csv formats to be used in the EDA notebook
+# # Save all the weekly data of the materials into csv formats to be used in the EDA notebook
 
 # weeks52.rename(columns={'total_sales': 'sale'}, inplace=True)
 # weeks52.rename(columns={'total_quantity_sold': 'vol'}, inplace=True)
@@ -1323,6 +1324,32 @@ delist_materials.createOrReplaceTempView('delist_materials')
 # COMMAND ----------
 
 
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+# a = timeline.copy()
+
+# COMMAND ----------
+
+# b = pd.read_csv("/dbfs/FileStore/shared_uploads/prem@loyalytics.in/ao_gp_2022.csv")
+# c = b.copy()
+# b = b[b['new_buckets'] != 'Delist']
+# b.rename(columns={'new_buckets': 'buckets'}, inplace=True)
+# b = b[['material_id', 'buckets']].reset_index(drop = True)
+
+# COMMAND ----------
+
+# b = pd.merge(b, all_products_catg, on='material_id', how='outer')
+
+# COMMAND ----------
+
+# ma = a[a['SD_first'] >= 49]['material_id'].unique()
+
+# b[(b['buckets'].isnull() == False) | (b['material_id'].isin(ma))]['new_buckets'].value_counts()
 
 # COMMAND ----------
 
