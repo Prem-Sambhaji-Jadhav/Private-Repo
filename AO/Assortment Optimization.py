@@ -1,24 +1,39 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC #Change Here
+# MAGIC ###Requirements
 
 # COMMAND ----------
 
-start_date = "2023-01-01" # Start date of the date range for the rolling 52 weeks period in your analysis
-end_date = "2023-12-30" # End date of the date range for the rolling 52 weeks period in your analysis
+# MAGIC %md
+# MAGIC GP Report should have only the following two columns (column name should match as well):
+# MAGIC 1. material_id - Integer data type
+# MAGIC 2. GP with ChargeBack & Bin Promo (%) - Float data type
+# MAGIC
+# MAGIC Also, please make sure that the GP report is of the last 3 months period of the respective date range that you have taken for the analysis
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC #User Inputs
+
+# COMMAND ----------
+
 # Please make sure that the date range is EXACTLY 52 weeks (364 days) long, and does not include the present day's date
+start_date = "2023-01-01"
+end_date = "2023-12-30"
 
-LOOKALIKES_START_DATE = "2022-01-30" # Start date of the date range for the lookalikes
-# This must be minimum 30 days after the earliest date available in the source table and it should be a Sunday
+LOOKALIKES_START_DATE = "2022-01-30"
+# This must be minimum 30 days after the earliest date available in the source table
 # The end date will be the same as the end date of rolling 52 weeks period
+# The day of the week should be the same as the day of the above start_date
 
-category = "WATER" # Change this category as per your requirement
+category = "WATER"
 
 currently_selling_range = 51 # <specified value> to 52nd week will be categorized as 'Currently selling'
 low_no_supply_range = 44 # <specified value> to <currently_selling_range - 1> week will be categorized as 'Low/no supply'
 # 1 to <low_no_supply_range - 1> week will be categorized as 'No recent sales'
 
-sales_weightage = 50 # Change the sales weightage (% format) for sales contribution as per your requirement
+sales_weightage = 50 # (% format) Weightage for sales contribution
 quantity_weightage = 100 - sales_weightage
 
 new_sku_date_range = 26 # Products launched in the last 26 weeks (6 months) will be taken as new SKUs
@@ -50,30 +65,28 @@ import numpy as np
 
 # # Gathering weekly data of all materials that have had a sale in the last 52 weeks
 
-# query = """
-# WITH 52_weeks AS (SELECT material_id, business_day,
+# query = f"""
+# WITH 52_weeks AS (SELECT material_id,
+#                          business_day,
 #                          ROUND(SUM(amount),0) AS sales,
 #                          ROUND(SUM(quantity),0) AS quantity_sold
 #                   FROM gold.pos_transactions AS t1
 #                   JOIN gold.material_master AS t2
 #                   ON t1.product_id = t2.material_id
-#                   WHERE business_day BETWEEN '{}' AND '{}'
-#                   AND category_name = '{}'
+#                   WHERE business_day BETWEEN '{start_date}' AND '{end_date}'
+#                   AND category_name = '{category}'
 #                   AND ROUND(amount,0) > 0
 #                   AND quantity > 0
-#                   GROUP BY material_id, business_day),
-
-# min_date_cte AS (SELECT MIN(business_day) AS min_business_day
-#                 FROM 52_weeks)
+#                   GROUP BY material_id, business_day)
 
 # SELECT material_id,
-#         FLOOR(DATEDIFF(business_day, min_business_day) / 7) + 1 AS week_number,
+#         FLOOR(DATEDIFF(business_day, '{start_date}') / 7) + 1 AS week_number,
 #         SUM(sales) AS total_sales,
 #         SUM(quantity_sold) AS total_quantity_sold
-# FROM 52_weeks, min_date_cte
+# FROM 52_weeks
 # GROUP BY material_id, week_number
 # ORDER BY material_id, week_number
-# """.format(start_date, end_date, category)
+# """
 
 # weeks52 = spark.sql(query).toPandas()
 
@@ -169,7 +182,7 @@ df = df.drop(columns = ['CONTRI_sales_and_quantity2'])
 
 # Categorise the SKUs into 3 categories based on deciles
 
-no_contri_df = df[df['CONTRI_sales_and_quantity'] == 0]
+no_contri_df = df[df['CONTRI_sales_and_quantity'] == 0].reset_index(drop=True)
 df = df[~df['material_id'].isin(no_contri_df['material_id'].unique())]
 
 bin_edges = [float('-inf'), df['CONTRI_sales_and_quantity'].quantile(0.5), df['CONTRI_sales_and_quantity'].quantile(0.8), float('inf')]
@@ -190,28 +203,26 @@ df = df.sort_values(by=['material_id','week_number']).reset_index(drop = True)
 
 # # Gathering weekly data of all materials that have had a sale 1 month after the earliest sales data available in gold.pos_transactions
 
-# query = """
-# WITH all_weeks AS (SELECT material_id, business_day,
+# query = f"""
+# WITH all_weeks AS (SELECT material_id,
+#                     business_day,
 #                     ROUND(SUM(amount),0) AS sales, ROUND(SUM(quantity),0) AS quantity_sold
 #             FROM gold.pos_transactions AS t1
 #             JOIN gold.material_master AS t2
 #             ON t1.product_id = t2.material_id
-#             WHERE business_day BETWEEN '{}' AND '{}'
-#             AND category_name = '{}'
+#             WHERE business_day BETWEEN '{LOOKALIKES_START_DATE}' AND '{end_date}'
+#             AND category_name = '{category}'
 #             AND ROUND(amount,0) > 0
 #             AND quantity > 0
-#             GROUP BY material_id, business_day),
-
-# min_date_cte AS (SELECT MIN(business_day) AS min_business_day
-#                 FROM all_weeks)
+#             GROUP BY material_id, business_day)
 
 # SELECT material_id,
-#         FLOOR(DATEDIFF(business_day, min_business_day) / 7) + 1 AS week_number,
+#         FLOOR(DATEDIFF(business_day, '{LOOKALIKES_START_DATE}') / 7) + 1 AS week_number,
 #         SUM(sales) AS total_sales, SUM(quantity_sold) AS total_quantity_sold
-# FROM all_weeks, min_date_cte
+# FROM all_weeks
 # GROUP BY material_id, week_number
 # ORDER BY material_id, week_number
-# """.format(LOOKALIKES_START_DATE, end_date, category)
+# """
 
 # all_weeks = spark.sql(query).toPandas()
 
@@ -583,18 +594,18 @@ median_growth_middle_sku = avg_growth_middle_sku[len(avg_growth_middle_sku)//2]
 
 # # Gathering data for number of stores where each product was sold in the last 12 weeks period
 
-# query = """
+# query = f"""
 # SELECT material_id, COUNT(DISTINCT store_id) AS num_stores
 # FROM gold.pos_transactions AS t1
 # JOIN gold.material_master AS t2
 # ON t1.product_id = t2.material_id
-# WHERE business_day BETWEEN DATE_ADD('{}', 280) AND '{}'
-# AND category_name = '{}'
+# WHERE business_day BETWEEN DATE_ADD('{start_date}', 280) AND '{end_date}'
+# AND category_name = '{category}'
 # AND ROUND(amount,0) > 0
 # AND quantity > 0
 # GROUP BY material_id
 # ORDER BY material_id
-# """.format(start_date, end_date, category)
+# """
 
 # store_pnt = spark.sql(query).toPandas()
 
@@ -602,16 +613,16 @@ median_growth_middle_sku = avg_growth_middle_sku[len(avg_growth_middle_sku)//2]
 
 # # Calculating the total number of stores where a sale was made in the last 12 weeks
 
-# query = """
+# query = f"""
 # SELECT COUNT(DISTINCT store_id) AS total_stores
 # FROM gold.pos_transactions AS t1
 # JOIN gold.material_master AS t2
 # ON t1.product_id = t2.material_id
-# WHERE business_day BETWEEN DATE_ADD('{}', 280) AND '{}'
-# AND category_name = '{}'
+# WHERE business_day BETWEEN DATE_ADD('{start_date}', 280) AND '{end_date}'
+# AND category_name = '{category}'
 # AND ROUND(amount,0) > 0
 # AND quantity > 0
-# """.format(start_date, end_date, category)
+# """
 
 # total_store_count = spark.sql(query).toPandas()
 
@@ -1016,37 +1027,14 @@ low_sku_growth['new_buckets'] = new_buckets
 
 # COMMAND ----------
 
-# temp = df[df['CONTRI_sales_and_quantity'] > 0][['material_id', 'CONTRI_sales_and_quantity']].drop_duplicates()
-# temp = temp.sort_values(by = 'CONTRI_sales_and_quantity', ascending = False).reset_index(drop = True)
-# temp['deciles'] = pd.qcut(temp['CONTRI_sales_and_quantity'], 10, labels=False, duplicates='drop') + 1
-# decile_sums = temp.groupby('deciles')['CONTRI_sales_and_quantity'].max()
-# print(decile_sums)
-
-# COMMAND ----------
-
-# final_df = pd.concat([top_sku_growth[['material_id', 'new_buckets']], middle_sku_growth[['material_id', 'new_buckets']], low_sku_growth[['material_id', 'new_buckets']]], ignore_index=True)
-# final_df = final_df.sort_values(by=['material_id']).reset_index(drop = True)
-# final_df.rename(columns={'new_buckets': '6_months_buckets'}, inplace=True)
-
-# COMMAND ----------
-
-# temp_df = pd.concat([top_sku_growth[['material_id', 'new_buckets']], middle_sku_growth[['material_id', 'new_buckets']], low_sku_growth[['material_id', 'new_buckets']]], ignore_index=True)
-# temp_df = temp_df.sort_values(by=['material_id']).reset_index(drop = True)
-# temp_df.rename(columns={'new_buckets': '3_months_buckets'}, inplace=True)
-
-# COMMAND ----------
-
-# final_df = pd.merge(final_df, temp_df, on='material_id', how='left')
-
-# COMMAND ----------
-
-# final_df.groupby(['3_months_buckets', '6_months_buckets'])['material_id'].count()
-
-# COMMAND ----------
-
 all_products_catg = pd.concat([top_sku_growth[['material_id', 'new_buckets']], middle_sku_growth[['material_id', 'new_buckets']], low_sku_growth[['material_id', 'new_buckets']]], ignore_index=True)
-# all_products_catg = spark.createDataFrame(all_products_catg)
-# all_products_catg.createOrReplaceTempView('all_products_catg')
+all_products_catg_sdf = spark.createDataFrame(all_products_catg)
+all_products_catg_sdf.createOrReplaceTempView('all_products_catg')
+
+# COMMAND ----------
+
+df1 = spark.read.format("csv").option("header", "true").option("inferSchema", "true").load("dbfs:/FileStore/shared_uploads/prem@loyalytics.in/product_list.csv")
+df1.createOrReplaceTempView('private_labels')
 
 # COMMAND ----------
 
@@ -1057,65 +1045,7 @@ all_products_catg = pd.concat([top_sku_growth[['material_id', 'new_buckets']], m
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ##Delist EDA
-
-# COMMAND ----------
-
-low_sku_growth[low_sku_growth['new_buckets'] == 'Delist']['category_store_pnt'].value_counts()
-
-# COMMAND ----------
-
-delist_materials = low_sku_growth[low_sku_growth['new_buckets'] == 'Delist'][['material_id']]
-delist_materials = spark.createDataFrame(delist_materials)
-delist_materials.createOrReplaceTempView('delist_materials')
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC SELECT material_group_name, COUNT(t1.material_id) AS product_count
-# MAGIC FROM delist_materials AS t1
-# MAGIC JOIN gold.material_master AS t2
-# MAGIC ON t1.material_id = t2.material_id
-# MAGIC GROUP BY material_group_name
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC SELECT brand, COUNT(t1.material_id) AS product_count
-# MAGIC FROM delist_materials AS t1
-# MAGIC JOIN gold.material_master AS t2
-# MAGIC ON t1.material_id = t2.material_id
-# MAGIC GROUP BY brand
-
-# COMMAND ----------
-
-# %sql
-# SELECT ROUND(SUM(amount),0) AS revenue,
-#         COUNT(DISTINCT transaction_id) AS transactions,
-#         COUNT(DISTINCT customer_id) AS customers,
-#         ROUND(SUM(quantity),0) AS volume
-# FROM delist_materials AS t1
-# JOIN gold.pos_transactions AS t2
-# ON t1.material_id = t2.product_id
-# WHERE business_day BETWEEN "2023-01-01" AND "2023-12-30"
-
-# COMMAND ----------
-
-# %sql
-# SELECT ROUND(SUM(amount),0) AS revenue,
-#         COUNT(DISTINCT transaction_id) AS transactions,
-#         COUNT(DISTINCT customer_id) AS customers,
-#         ROUND(SUM(quantity),0) AS volume
-# FROM gold.material_master AS t1
-# JOIN gold.pos_transactions AS t2
-# ON t1.material_id = t2.product_id
-# WHERE business_day BETWEEN "2023-01-01" AND "2023-12-30"
-# AND category_name = "WATER"
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ##EDA_PS Data Prep
+# MAGIC ##EDA Data Prep
 
 # COMMAND ----------
 
@@ -1252,63 +1182,63 @@ delist_materials.createOrReplaceTempView('delist_materials')
 
 # COMMAND ----------
 
-# df_12_months = spark.sql("SELECT * FROM sandbox.pj_ao_12_months_sales").toPandas()
+df_12_months = spark.sql("SELECT * FROM sandbox.pj_ao_12_months_sales").toPandas()
 
 # COMMAND ----------
 
-# gp_report_12_months = pd.read_csv("/dbfs/FileStore/shared_uploads/prem@loyalytics.in/gp_report_water_12_months.csv")
-# gp_report_12_months.rename(columns={'GP with ChargeBack & Bin Promo (%)': 'gp_perc'}, inplace=True)
-# gp_report_12_months['month_year'] = gp_report_12_months['month_year'].replace(['Jan-23', 'Feb-23', 'Mar-23', 'Apr-23', 'May-23', 'Jun-23', 'Jul-23', 'Aug-23', 'Sep-23'], [1, 2, 3, 4, 5, 6, 7, 8, 9])
+gp_report_12_months = pd.read_csv("/dbfs/FileStore/shared_uploads/prem@loyalytics.in/gp_report_water_12_months.csv")
+gp_report_12_months.rename(columns={'GP with ChargeBack & Bin Promo (%)': 'gp_perc'}, inplace=True)
+gp_report_12_months['month_year'] = gp_report_12_months['month_year'].replace(['Jan-23', 'Feb-23', 'Mar-23', 'Apr-23', 'May-23', 'Jun-23', 'Jul-23', 'Aug-23', 'Sep-23'], [1, 2, 3, 4, 5, 6, 7, 8, 9])
 
 # COMMAND ----------
 
-# df_12_months['region_name'] = df_12_months['region_name'].replace(['ABU DHABI', 'AL AIN', 'DUBAI', 'SHARJAH'], ['AUH', 'ALN', 'DXB', 'SHJ'])
+df_12_months['region_name'] = df_12_months['region_name'].replace(['ABU DHABI', 'AL AIN', 'DUBAI', 'SHARJAH'], ['AUH', 'ALN', 'DXB', 'SHJ'])
 
-# df_12_months = pd.merge(df_12_months, gp_report_12_months, how = 'left', on = ['region_name', 'material_id', 'month_year'], suffixes=('', '2'))
-
-# COMMAND ----------
-
-# df_12_months['gp_value'] = df_12_months['gp_perc'] * df_12_months['total_sales'] / 100
-# df_12_months = df_12_months.groupby('material_id')['gp_value'].sum().reset_index()
+df_12_months = pd.merge(df_12_months, gp_report_12_months, how = 'left', on = ['region_name', 'material_id', 'month_year'], suffixes=('', '2'))
 
 # COMMAND ----------
 
-# temp = pd.read_csv("/dbfs/FileStore/shared_uploads/prem@loyalytics.in/gp_report_water.csv")
-# temp = temp.sort_values(by = 'material_id').reset_index(drop = True)
-# temp.rename(columns={'GP with ChargeBack & Bin Promo (%)': 'gp_perc'}, inplace=True)
+df_12_months['gp_value'] = df_12_months['gp_perc'] * df_12_months['total_sales'] / 100
+df_12_months = df_12_months.groupby('material_id')['gp_value'].sum().reset_index()
 
 # COMMAND ----------
 
-# # Add the extra materials from the rolling 52 weeks period into the gp_report and set their GP as 0
-# # This is because they had no sales in the last 12 weeks period
-
-# materials_to_add = pd.merge(df['material_id'].drop_duplicates(), temp['material_id'].drop_duplicates(), on='material_id', how='left', indicator=True).query('_merge == "left_only"').drop('_merge', axis=1).reset_index(drop=True)
-
-# materials_to_add['gp_perc'] = 0
-
-# temp = pd.concat([temp, materials_to_add], ignore_index=True)
+temp = pd.read_csv("/dbfs/FileStore/shared_uploads/prem@loyalytics.in/gp_report_water.csv")
+temp = temp.sort_values(by = 'material_id').reset_index(drop = True)
+temp.rename(columns={'GP with ChargeBack & Bin Promo (%)': 'gp_perc'}, inplace=True)
 
 # COMMAND ----------
 
-# # Calculate the GP value
+# Add the extra materials from the rolling 52 weeks period into the gp_report and set their GP as 0
+# This is because they had no sales in the last 12 weeks period
 
-# total_sales_12weeks = df[df['week_number'] >= 41].groupby('material_id')['total_sales'].sum().reset_index()
+materials_to_add = pd.merge(df['material_id'].drop_duplicates(), temp['material_id'].drop_duplicates(), on='material_id', how='left', indicator=True).query('_merge == "left_only"').drop('_merge', axis=1).reset_index(drop=True)
 
-# temp['gp_value'] = temp['gp_perc'] * total_sales_12weeks['total_sales']/100
-# temp['gp_value'] = temp['gp_value'].fillna(0)
-# df_12_months = pd.merge(df_12_months, temp, on='material_id', how='outer', suffixes=('', '2'))
-# df_12_months['gp_value'] = df_12_months['gp_value'].fillna(0)
-# df_12_months['gp_value'] = df_12_months['gp_value'] + df_12_months['gp_value2']
-# df_12_months['gp_value_positives'] = df_12_months['gp_value'].apply(lambda x: max(0, x)) # Replace negative values with 0
-# df_12_months = df_12_months.drop(columns = ['gp_perc', 'gp_value2'])
-# df_12_months = df_12_months.sort_values(by='material_id').reset_index(drop = True)
+materials_to_add['gp_perc'] = 0
+
+temp = pd.concat([temp, materials_to_add], ignore_index=True)
 
 # COMMAND ----------
 
-# # Calculate the GP contribution
+# Calculate the GP value
 
-# total_gp_value = df_12_months['gp_value_positives'].sum()
-# df_12_months['gp_contri'] = df_12_months['gp_value_positives'] / total_gp_value
+total_sales_12weeks = df[df['week_number'] >= 41].groupby('material_id')['total_sales'].sum().reset_index()
+
+temp['gp_value'] = temp['gp_perc'] * total_sales_12weeks['total_sales']/100
+temp['gp_value'] = temp['gp_value'].fillna(0)
+df_12_months = pd.merge(df_12_months, temp, on='material_id', how='outer', suffixes=('', '2'))
+df_12_months['gp_value'] = df_12_months['gp_value'].fillna(0)
+df_12_months['gp_value'] = df_12_months['gp_value'] + df_12_months['gp_value2']
+df_12_months['gp_value_positives'] = df_12_months['gp_value'].apply(lambda x: max(0, x)) # Replace negative values with 0
+df_12_months = df_12_months.drop(columns = ['gp_perc', 'gp_value2'])
+df_12_months = df_12_months.sort_values(by='material_id').reset_index(drop = True)
+
+# COMMAND ----------
+
+# Calculate the GP contribution
+
+total_gp_value = df_12_months['gp_value_positives'].sum()
+df_12_months['gp_contri'] = df_12_months['gp_value_positives'] / total_gp_value
 
 # COMMAND ----------
 
@@ -1354,3 +1284,166 @@ delist_materials.createOrReplaceTempView('delist_materials')
 # COMMAND ----------
 
 
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ##New Rule (Delist -> Observe)
+
+# COMMAND ----------
+
+# [1573921, 980147, 1012937, 1546450]
+
+new_rule_df = df[['material_id', 'week_number', 'total_sales', 'total_sales_12weeks']]
+new_rule_df = pd.merge(new_rule_df, low_sku_growth[['material_id', 'new_buckets']], on='material_id', how='left')
+
+new_rule_df = new_rule_df[new_rule_df['new_buckets'] == 'Delist'].reset_index(drop=True)
+
+new_rule_df = pd.merge(new_rule_df, df_12_months[['material_id', 'gp_value']], on='material_id', how='left')
+
+new_rule_df = new_rule_df.drop(columns='new_buckets')
+new_rule_df.rename(columns={'gp_value': 'gp_Q4'}, inplace=True)
+new_rule_df.rename(columns={'total_sales_12weeks': 'total_sales_Q4'}, inplace=True)
+
+# COMMAND ----------
+
+total_sales_Q3 = new_rule_df[(new_rule_df['week_number'] >= 27) & (new_rule_df['week_number'] <= 40)].groupby('material_id')['total_sales'].sum().reset_index()
+
+new_rule_df = pd.merge(new_rule_df, total_sales_Q3, on='material_id', how='left', suffixes=('', '2'))
+
+new_rule_df['total_sales_Q3'] = new_rule_df['total_sales2'].fillna(0)
+
+new_rule_df = new_rule_df.drop(columns=['total_sales2'])
+
+# COMMAND ----------
+
+f = new_rule_df[['material_id', 'gp_Q4', 'total_sales_Q4']].drop_duplicates().reset_index(drop=True)
+f['gp_rank_Q4'] = f['gp_Q4'].rank(ascending=False)
+f['sales_rank_Q4'] = f['total_sales_Q4'].rank(ascending=False)
+
+new_rule_df = pd.merge(new_rule_df, f[['material_id', 'gp_rank_Q4', 'sales_rank_Q4']], on='material_id', how='left')
+
+# COMMAND ----------
+
+df_Q3 = new_rule_df[(new_rule_df['week_number'] >= 27) & (new_rule_df['week_number'] <= 40)].reset_index(drop = True)
+
+sales_growth = []
+for material in df_Q3['material_id'].unique():
+    for week in df_Q3[df_Q3['material_id'] == material]['week_number'].unique():
+
+        if week == df_Q3[df_Q3['material_id'] == material]['week_number'].min():
+            sales_growth.append(0)
+            previous_week = week
+
+        else:
+            previous_sales = df_Q3[(df_Q3['material_id'] == material) & (df_Q3['week_number'] == previous_week)]['total_sales'].iloc[0]
+            current_sales = df_Q3[(df_Q3['material_id'] == material) & (df_Q3['week_number'] == week)]['total_sales'].iloc[0]
+            sales_change = (current_sales - previous_sales)/previous_sales
+            sales_growth.append(sales_change)
+            
+            previous_week = week
+
+df_Q3['sales_growth_Q3'] = sales_growth
+
+# COMMAND ----------
+
+avg_growth = []
+for material in df_Q3['material_id'].unique():
+    mean = df_Q3[df_Q3['material_id'] == material]['sales_growth_Q3'].iloc[1:].mean()
+    
+    if np.isnan(mean):
+        mean = 0.0
+    
+    avg_growth.append(mean)
+
+avg_sales_growth_Q3_df = pd.DataFrame({'material_id': df_Q3['material_id'].unique(),
+                               'avg_sales_growth_Q3': avg_growth})
+
+# COMMAND ----------
+
+df_Q4 = new_rule_df[new_rule_df['week_number'] >= 41].reset_index(drop = True)
+
+sales_growth = []
+for material in df_Q4['material_id'].unique():
+    for week in df_Q4[df_Q4['material_id'] == material]['week_number'].unique():
+        
+        if week == df_Q4[df_Q4['material_id'] == material]['week_number'].min():
+            sales_growth.append(0)
+            previous_week = week
+
+        else:
+            previous_sales = df_Q4[(df_Q4['material_id'] == material) & (df_Q4['week_number'] == previous_week)]['total_sales'].iloc[0]
+            current_sales = df_Q4[(df_Q4['material_id'] == material) & (df_Q4['week_number'] == week)]['total_sales'].iloc[0]
+            sales_change = (current_sales - previous_sales)/previous_sales
+            sales_growth.append(sales_change)
+            
+            previous_week = week
+
+df_Q4['sales_growth_Q4'] = sales_growth
+
+# COMMAND ----------
+
+avg_growth = []
+for material in df_Q4['material_id'].unique():
+    mean = df_Q4[df_Q4['material_id'] == material]['sales_growth_Q4'].iloc[1:].mean()
+    
+    if np.isnan(mean):
+        mean = 0.0
+    
+    avg_growth.append(mean)
+
+avg_sales_growth_Q4_df = pd.DataFrame({'material_id': df_Q4['material_id'].unique(),
+                               'avg_sales_growth_Q4': avg_growth})
+
+# COMMAND ----------
+
+new_rule_df = pd.merge(new_rule_df, avg_sales_growth_Q3_df, on='material_id', how='left')
+new_rule_df = pd.merge(new_rule_df, avg_sales_growth_Q4_df, on='material_id', how='left')
+
+new_rule_df['avg_sales_growth_Q3'] = new_rule_df['avg_sales_growth_Q3'].fillna(0)
+new_rule_df['avg_sales_growth_Q4'] = new_rule_df['avg_sales_growth_Q4'].fillna(0)
+
+new_rule_df['avg_growth_Q4_vs_Q3'] = (new_rule_df['avg_sales_growth_Q4'] - new_rule_df['avg_sales_growth_Q3'])/new_rule_df['avg_sales_growth_Q3']
+
+new_rule_df['avg_growth_Q4_vs_Q3'] = new_rule_df['avg_growth_Q4_vs_Q3'].replace(float('inf'), 0)
+new_rule_df['avg_growth_Q4_vs_Q3'] = new_rule_df['avg_growth_Q4_vs_Q3'].fillna(0)
+
+# COMMAND ----------
+
+new_rule_df['overall_growth_Q4_vs_Q3'] = (new_rule_df['total_sales_Q4'] - new_rule_df['total_sales_Q3'])/new_rule_df['total_sales_Q3']
+
+new_rule_df['overall_growth_Q4_vs_Q3'] = new_rule_df['overall_growth_Q4_vs_Q3'].replace(float('inf'), 0)
+new_rule_df['overall_growth_Q4_vs_Q3'] = new_rule_df['overall_growth_Q4_vs_Q3'].fillna(0)
+
+# COMMAND ----------
+
+a = [1573921, 980147, 1012937, 1546450]
+# new_rule_df[new_rule_df['material_id'].isin(a)][['avg_sales_growth_Q4', 'avg_growth_Q4_vs_Q3', 'overall_growth_Q4_vs_Q3', 'sales_rank_Q4', 'gp_rank_Q4']].drop_duplicates()
+
+new_rule_df.drop(columns=['week_number', 'total_sales']).drop_duplicates()[(new_rule_df['sales_rank_Q4'] <= 15) & (new_rule_df['gp_rank_Q4'] <= 15)].reset_index(drop=True)
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+# p = new_sku_growth[['material_id']]
+# p = pd.merge(p, df[['material_id', 'CONTRI_sales_and_quantity', 'final_contri']].drop_duplicates(), on = 'material_id', how='left')
+# p = p[p['final_contri'] == 'Low'].reset_index(drop=True)
+# p = pd.merge(p, low_sku_growth[['material_id', 'new_buckets', 'category_SD_last', 'category_store_pnt', 'avg_weekly_growth']], on='material_id', how='left')
+# p = pd.merge(p, gp_report[['material_id', 'category_contri']], on='material_id', how='left')
+# print(median_growth_low_sku)
+# p[p['new_buckets'] == 'Delist']

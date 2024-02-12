@@ -391,10 +391,6 @@ ORDER BY
 
 -- COMMAND ----------
 
-
-
--- COMMAND ----------
-
 create or replace table sandbox.pj_temp_pos_transactions as (
   WITH cte AS (select transaction_id, business_day, mobile, customer_id,
                       SUM(amount) as spend,
