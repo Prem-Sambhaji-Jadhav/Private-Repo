@@ -18,6 +18,8 @@
 
 # COMMAND ----------
 
+gp_path = "/dbfs/FileStore/shared_uploads/prem@loyalytics.in/gp_report_water.csv"
+
 # Please make sure that the date range is EXACTLY 52 weeks (364 days) long, and does not include the present day's date
 start_date = "2023-01-01"
 end_date = "2023-12-30"
@@ -36,7 +38,7 @@ low_no_supply_range = 44 # <specified value> to <currently_selling_range - 1> we
 sales_weightage = 50 # (% format) Weightage for sales contribution
 quantity_weightage = 100 - sales_weightage
 
-new_sku_date_range = 26 # Products launched in the last 26 weeks (6 months) will be taken as new SKUs
+new_sku_date_range = 6 # Products launched in the last 6 months will be taken as new SKUs
 
 delist_contri_threshold = 0.03 # (% format) Contribution threshold for 'Low' contribution category to be categorized as Delist
 delist_product_count = 15 # (% format) Product count threshold for 'Low' contribution category that can be categorized as Delist
@@ -251,7 +253,8 @@ df = pd.merge(df, SD_first_df, on='material_id', how='left')
 
 # Create a separate list of new SKUs whose first selling date was in the last 182 days (26 weeks)
 
-new_sku_date_threshold = df2['week_number'].max() - new_sku_date_range + 1
+new_sku_date_range_weeks = int(new_sku_date_range/3 * 13)
+new_sku_date_threshold = df2['week_number'].max() - new_sku_date_range_weeks + 1
 
 new_sku = df[df['SD_first'] >= new_sku_date_threshold][['material_id', 'week_number', 'total_sales', 'total_quantity_sold', 'category_SD_last']].reset_index(drop = True)
 
@@ -858,7 +861,7 @@ else:
 
 # COMMAND ----------
 
-gp_report = pd.read_csv("/dbfs/FileStore/shared_uploads/prem@loyalytics.in/gp_report_water.csv")
+gp_report = pd.read_csv(gp_path)
 gp_report = gp_report.sort_values(by = 'material_id').reset_index(drop = True)
 gp_report.rename(columns={'GP with ChargeBack & Bin Promo (%)': 'gp_perc'}, inplace=True)
 
@@ -1249,21 +1252,7 @@ df_12_months['gp_contri'] = df_12_months['gp_value_positives'] / total_gp_value
 
 # COMMAND ----------
 
-
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
 # a = timeline.copy()
-
-# COMMAND ----------
 
 # b = pd.read_csv("/dbfs/FileStore/shared_uploads/prem@loyalytics.in/ao_gp_2022.csv")
 # c = b.copy()
@@ -1271,27 +1260,11 @@ df_12_months['gp_contri'] = df_12_months['gp_value_positives'] / total_gp_value
 # b.rename(columns={'new_buckets': 'buckets'}, inplace=True)
 # b = b[['material_id', 'buckets']].reset_index(drop = True)
 
-# COMMAND ----------
-
 # b = pd.merge(b, all_products_catg, on='material_id', how='outer')
-
-# COMMAND ----------
 
 # ma = a[a['SD_first'] >= 49]['material_id'].unique()
 
 # b[(b['buckets'].isnull() == False) | (b['material_id'].isin(ma))]['new_buckets'].value_counts()
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
-
 
 # COMMAND ----------
 
@@ -1300,30 +1273,39 @@ df_12_months['gp_contri'] = df_12_months['gp_value_positives'] / total_gp_value
 
 # COMMAND ----------
 
-# [1573921, 980147, 1012937, 1546450]
+# Extract all the delist SKUs along with their calculated metrics
+# 980147, 1012937, 1546450, 1573921
 
-new_rule_df = df[['material_id', 'week_number', 'total_sales', 'total_sales_12weeks']]
+new_rule_df = df[['material_id', 'week_number', 'total_sales', 'total_quantity_sold', 'total_sales_12weeks', 'CONTRI_sales_and_quantity']]
 new_rule_df = pd.merge(new_rule_df, low_sku_growth[['material_id', 'new_buckets']], on='material_id', how='left')
 
 new_rule_df = new_rule_df[new_rule_df['new_buckets'] == 'Delist'].reset_index(drop=True)
 
-new_rule_df = pd.merge(new_rule_df, df_12_months[['material_id', 'gp_value']], on='material_id', how='left')
+new_rule_df = pd.merge(new_rule_df, gp_report[['material_id', 'gp_value']], on='material_id', how='left')
 
 new_rule_df = new_rule_df.drop(columns='new_buckets')
 new_rule_df.rename(columns={'gp_value': 'gp_Q4'}, inplace=True)
 new_rule_df.rename(columns={'total_sales_12weeks': 'total_sales_Q4'}, inplace=True)
+new_rule_df.rename(columns={'CONTRI_sales_and_quantity': 'CONTRI_Q4'}, inplace=True)
 
 # COMMAND ----------
+
+# Calculate the Q3 sales and quantity
 
 total_sales_Q3 = new_rule_df[(new_rule_df['week_number'] >= 27) & (new_rule_df['week_number'] <= 40)].groupby('material_id')['total_sales'].sum().reset_index()
+total_quantity_sold_Q3 = new_rule_df[(new_rule_df['week_number'] >= 27) & (new_rule_df['week_number'] <= 40)].groupby('material_id')['total_quantity_sold'].sum().reset_index()
 
 new_rule_df = pd.merge(new_rule_df, total_sales_Q3, on='material_id', how='left', suffixes=('', '2'))
+new_rule_df = pd.merge(new_rule_df, total_quantity_sold_Q3, on='material_id', how='left', suffixes=('', '2'))
 
 new_rule_df['total_sales_Q3'] = new_rule_df['total_sales2'].fillna(0)
+new_rule_df['total_quantity_sold_Q3'] = new_rule_df['total_quantity_sold2'].fillna(0)
 
-new_rule_df = new_rule_df.drop(columns=['total_sales2'])
+new_rule_df = new_rule_df.drop(columns=['total_sales2', 'total_quantity_sold2'])
 
 # COMMAND ----------
+
+# Assign ranks to the GP and sales of Q4
 
 f = new_rule_df[['material_id', 'gp_Q4', 'total_sales_Q4']].drop_duplicates().reset_index(drop=True)
 f['gp_rank_Q4'] = f['gp_Q4'].rank(ascending=False)
@@ -1333,112 +1315,44 @@ new_rule_df = pd.merge(new_rule_df, f[['material_id', 'gp_rank_Q4', 'sales_rank_
 
 # COMMAND ----------
 
-df_Q3 = new_rule_df[(new_rule_df['week_number'] >= 27) & (new_rule_df['week_number'] <= 40)].reset_index(drop = True)
+# Calculate an growth from Q4 sales vs Q3 sales
 
-sales_growth = []
-for material in df_Q3['material_id'].unique():
-    for week in df_Q3[df_Q3['material_id'] == material]['week_number'].unique():
+new_rule_df['sales_growth_Q4_vs_Q3'] = (new_rule_df['total_sales_Q4'] - new_rule_df['total_sales_Q3'])/new_rule_df['total_sales_Q3']
 
-        if week == df_Q3[df_Q3['material_id'] == material]['week_number'].min():
-            sales_growth.append(0)
-            previous_week = week
-
-        else:
-            previous_sales = df_Q3[(df_Q3['material_id'] == material) & (df_Q3['week_number'] == previous_week)]['total_sales'].iloc[0]
-            current_sales = df_Q3[(df_Q3['material_id'] == material) & (df_Q3['week_number'] == week)]['total_sales'].iloc[0]
-            sales_change = (current_sales - previous_sales)/previous_sales
-            sales_growth.append(sales_change)
-            
-            previous_week = week
-
-df_Q3['sales_growth_Q3'] = sales_growth
+new_rule_df['sales_growth_Q4_vs_Q3'] = new_rule_df['sales_growth_Q4_vs_Q3'].replace(float('inf'), 0)
+new_rule_df['sales_growth_Q4_vs_Q3'] = new_rule_df['sales_growth_Q4_vs_Q3'].fillna(0)
 
 # COMMAND ----------
 
-avg_growth = []
-for material in df_Q3['material_id'].unique():
-    mean = df_Q3[df_Q3['material_id'] == material]['sales_growth_Q3'].iloc[1:].mean()
-    
-    if np.isnan(mean):
-        mean = 0.0
-    
-    avg_growth.append(mean)
+# Calculate the weighted combined contribution of sales and quantity for Q3
 
-avg_sales_growth_Q3_df = pd.DataFrame({'material_id': df_Q3['material_id'].unique(),
-                               'avg_sales_growth_Q3': avg_growth})
+total_sales_Q3_sum = new_rule_df.groupby('material_id')['total_sales_Q3'].head(1).sum()
+total_quantity_sold_Q3_sum = new_rule_df.groupby('material_id')['total_quantity_sold_Q3'].head(1).sum()
+
+new_rule_df['sales_contri_Q3'] = (new_rule_df['total_sales_Q3'] / total_sales_Q3_sum)
+new_rule_df['quantity_contri_Q3'] = (new_rule_df['total_quantity_sold_Q3'] / total_quantity_sold_Q3_sum)
+new_rule_df['CONTRI_Q3'] = (new_rule_df['sales_contri_Q3']*sales_weightage/100 + new_rule_df['quantity_contri_Q3']*quantity_weightage/100)
 
 # COMMAND ----------
 
-df_Q4 = new_rule_df[new_rule_df['week_number'] >= 41].reset_index(drop = True)
+# Calculate average growth, average contribution, and growth in contribution
+# 980147, 1012937, 1546450, 1573921
 
-sales_growth = []
-for material in df_Q4['material_id'].unique():
-    for week in df_Q4[df_Q4['material_id'] == material]['week_number'].unique():
-        
-        if week == df_Q4[df_Q4['material_id'] == material]['week_number'].min():
-            sales_growth.append(0)
-            previous_week = week
+growth_avg = new_rule_df.drop(columns=['week_number', 'total_sales']).drop_duplicates()
+growth_avg = growth_avg[growth_avg['gp_rank_Q4'] <= 15]['sales_growth_Q4_vs_Q3'].mean()
 
-        else:
-            previous_sales = df_Q4[(df_Q4['material_id'] == material) & (df_Q4['week_number'] == previous_week)]['total_sales'].iloc[0]
-            current_sales = df_Q4[(df_Q4['material_id'] == material) & (df_Q4['week_number'] == week)]['total_sales'].iloc[0]
-            sales_change = (current_sales - previous_sales)/previous_sales
-            sales_growth.append(sales_change)
-            
-            previous_week = week
+new_rule_df2 = new_rule_df.drop(columns=['week_number', 'total_sales', 'total_quantity_sold']).drop_duplicates().reset_index(drop=True)
+contri_avg = new_rule_df2[new_rule_df2['gp_rank_Q4'] <= 15]['CONTRI_Q4'].mean()
+new_rule_df2['Contri_index_Q4'] = new_rule_df2['CONTRI_Q4'] / contri_avg
+new_rule_df2['Contri_growth_Q4_vs_Q3'] = (new_rule_df2['CONTRI_Q4'] - new_rule_df2['CONTRI_Q3']) / new_rule_df2['CONTRI_Q3']
 
-df_Q4['sales_growth_Q4'] = sales_growth
+new_rule_df2 = new_rule_df2[['material_id', 'sales_growth_Q4_vs_Q3', 'Contri_index_Q4', 'Contri_growth_Q4_vs_Q3', 'gp_rank_Q4', 'sales_rank_Q4']]
+
+new_rule_df2[(new_rule_df2['gp_rank_Q4'] <= 15) & (new_rule_df2['sales_growth_Q4_vs_Q3'] > growth_avg) & (new_rule_df2['sales_growth_Q4_vs_Q3'] > 0)]
 
 # COMMAND ----------
 
-avg_growth = []
-for material in df_Q4['material_id'].unique():
-    mean = df_Q4[df_Q4['material_id'] == material]['sales_growth_Q4'].iloc[1:].mean()
-    
-    if np.isnan(mean):
-        mean = 0.0
-    
-    avg_growth.append(mean)
-
-avg_sales_growth_Q4_df = pd.DataFrame({'material_id': df_Q4['material_id'].unique(),
-                               'avg_sales_growth_Q4': avg_growth})
-
-# COMMAND ----------
-
-new_rule_df = pd.merge(new_rule_df, avg_sales_growth_Q3_df, on='material_id', how='left')
-new_rule_df = pd.merge(new_rule_df, avg_sales_growth_Q4_df, on='material_id', how='left')
-
-new_rule_df['avg_sales_growth_Q3'] = new_rule_df['avg_sales_growth_Q3'].fillna(0)
-new_rule_df['avg_sales_growth_Q4'] = new_rule_df['avg_sales_growth_Q4'].fillna(0)
-
-new_rule_df['avg_growth_Q4_vs_Q3'] = (new_rule_df['avg_sales_growth_Q4'] - new_rule_df['avg_sales_growth_Q3'])/new_rule_df['avg_sales_growth_Q3']
-
-new_rule_df['avg_growth_Q4_vs_Q3'] = new_rule_df['avg_growth_Q4_vs_Q3'].replace(float('inf'), 0)
-new_rule_df['avg_growth_Q4_vs_Q3'] = new_rule_df['avg_growth_Q4_vs_Q3'].fillna(0)
-
-# COMMAND ----------
-
-new_rule_df['overall_growth_Q4_vs_Q3'] = (new_rule_df['total_sales_Q4'] - new_rule_df['total_sales_Q3'])/new_rule_df['total_sales_Q3']
-
-new_rule_df['overall_growth_Q4_vs_Q3'] = new_rule_df['overall_growth_Q4_vs_Q3'].replace(float('inf'), 0)
-new_rule_df['overall_growth_Q4_vs_Q3'] = new_rule_df['overall_growth_Q4_vs_Q3'].fillna(0)
-
-# COMMAND ----------
-
-a = [1573921, 980147, 1012937, 1546450]
-# new_rule_df[new_rule_df['material_id'].isin(a)][['avg_sales_growth_Q4', 'avg_growth_Q4_vs_Q3', 'overall_growth_Q4_vs_Q3', 'sales_rank_Q4', 'gp_rank_Q4']].drop_duplicates()
-
-new_rule_df.drop(columns=['week_number', 'total_sales']).drop_duplicates()[(new_rule_df['sales_rank_Q4'] <= 15) & (new_rule_df['gp_rank_Q4'] <= 15)].reset_index(drop=True)
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
+# # New SKUs that are delisted
 
 # p = new_sku_growth[['material_id']]
 # p = pd.merge(p, df[['material_id', 'CONTRI_sales_and_quantity', 'final_contri']].drop_duplicates(), on = 'material_id', how='left')
