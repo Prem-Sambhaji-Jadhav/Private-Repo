@@ -1047,6 +1047,11 @@ FROM cte
 -- COMMAND ----------
 
 -- MAGIC %md
+-- MAGIC # Code-Piyush
+
+-- COMMAND ----------
+
+-- MAGIC %md
 -- MAGIC ## TMS Segment Numbers (PG)
 
 -- COMMAND ----------
@@ -1128,6 +1133,10 @@ FROM cte
 -- MAGIC     
 -- MAGIC     cust_count_temp = get_customer_count(campaign_id, segment_tuple, category_tuple)
 -- MAGIC     customer_counts_list.append(cust_count_temp)
+
+-- COMMAND ----------
+
+
 
 -- COMMAND ----------
 
@@ -1463,7 +1472,7 @@ on t1.segment = t2.segment
 -- COMMAND ----------
 
 -- MAGIC %md
--- MAGIC ## test code
+-- MAGIC ## activation code (updated)
 
 -- COMMAND ----------
 
@@ -1698,17 +1707,234 @@ on t1.segment = t2.segment
 
 -- COMMAND ----------
 
+-- MAGIC %md
+-- MAGIC ## customer campaign touches
+
+-- COMMAND ----------
+
+with customer_campaign_opens as (
+
+    select customer_key, campaign_channel, count(*) as num_campaigns,
+    sum(count(*)) over(partition by customer_key) as total_campaigns,
+    sum(case when delivery_status = 'opened' then 1 else 0 end) as num_opens,
+    sum(sum(case when delivery_status = 'opened' then 1 else 0 end)) over(partition by customer_key) as total_opens,
+    sum(sum(case when delivery_status = 'opened' then 1 else 0 end)) over(partition by customer_key)/sum(count(*)) over(partition by customer_key) as overall_open_rate
+    from analytics.campaign_delivery
+    group by customer_key, campaign_channel
+    order by customer_key
+    )
+
+
+
+select distinct customer_key, total_campaigns, total_opens, overall_open_rate,
+case when total_campaigns >=3 and overall_open_rate = 0 then 1 else 0
+     end as to_exclude_flag -- flexible definition
+from customer_campaign_opens
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ## email availibility
+
+-- COMMAND ----------
+
+ with rfm_segment_info as (
+        select customer_id, segment
+        from analytics.customer_segments
+        where country = 'uae'
+        AND month_year = '202401'
+        AND key = 'rfm'
+        AND channel = 'pos'
+        ),
+  
+  lhp_info as (
+    select account_key as customer_id, email, mobile
+    from gold.customer_profile
+    where LHRDATE is not null
+  )
+
+
+select segment,
+count(email) as num_emails,
+count(*) as num_customers,
+count(email)/count(*) as email_availability_perc
+from rfm_segment_info t1
+join lhp_info t2 on t1.customer_id = t2.customer_id
+group by segment
+order by email_availability_perc desc
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ## activation campaign product list
+
+-- COMMAND ----------
+
+drop table if exists sandbox.pg_ramandan_acquisition_items;
+
+create table sandbox.pg_ramandan_acquisition_items as (
+
+WITH input_ids AS (
+  SELECT EXPLODE(ARRAY(
+    18, 20, 22, 43, 51, 52, 53, 54, -- Fashion
+    19004, 19003, 19001, 19002, 19010, -- Home
+    36003017, 36003001, 36009002, 36007004, 16005018, 36003002, 36003003, 16005001, 
+    16004001, 16004002, -- Updated Glassware IDs for TCG
+    17013006, 17013007, 17013008, 17013009, 17014 -- TCG
+  )) AS input_id
+),
+
+
+id_theme_mapping AS (
+  SELECT id, theme
+  FROM VALUES
+    (18, 'Fashion'), (20, 'Fashion'), (22, 'Fashion'), (43, 'Fashion'), (51, 'Fashion'), (52, 'Fashion'), (53, 'Fashion'), (54, 'Fashion'),
+    (19004, 'Home'), (19003, 'Home'), (19001, 'Home'), (19002, 'Home'), (19010, 'Home'),
+    (36003017, 'TCG'), (36003001, 'TCG'), (36009002, 'TCG'), (36007004, 'TCG'), (16005018, 'TCG'), (36003002, 'TCG'), (36003003, 'TCG'), (16005001, 'TCG'), 
+    (16004001, 'TCG'), (16004002, 'TCG'), -- Updated Glassware IDs for TCG
+    (17013006, 'TCG'), (17013007, 'TCG'), (17013008, 'TCG'), (17013009, 'TCG'), (17014, 'TCG')
+  mapping(id, theme)
+),
+
+id_groupings as (
+SELECT
+DISTINCT
+  i.input_id,
+  m.theme,
+  CASE
+    WHEN d.material_id IS NOT NULL THEN 'Department'
+    WHEN c.material_id IS NOT NULL THEN 'Category'
+    WHEN mm.material_id IS NOT NULL THEN 'Material Group'
+  END AS mapped_entity
+FROM input_ids i
+JOIN id_theme_mapping m ON i.input_id = m.id
+LEFT JOIN gold.material_master d ON i.input_id = d.department_id
+LEFT JOIN gold.material_master c ON i.input_id = c.category_id
+LEFT JOIN gold.material_master mm ON i.input_id = mm.material_group_id
+WHERE d.material_id IS NOT NULL OR c.material_id IS NOT NULL OR mm.material_id IS NOT NULL)
+
+
+SELECT DISTINCT
+   CASE
+    WHEN s.theme = 'TCG' AND s.mapped_entity = 'Category' THEN m.material_group_id
+    ELSE  s.input_id
+  END AS  input_id,
+  lower(s.theme) as campaign_theme,
+  lower(CASE
+    WHEN s.theme = 'TCG' AND s.mapped_entity = 'Category' THEN 'Material Group'
+    ELSE s.mapped_entity
+  END) AS mapped_entity
+FROM id_groupings s
+LEFT JOIN gold.material_master m ON s.input_id = m.category_id
+ORDER BY campaign_theme, input_id
+
+)
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ## ATV, RPC
+
+-- COMMAND ----------
+
 -- MAGIC %python
--- MAGIC ## difference in attributes of those activated vs non activated
 -- MAGIC
--- MAGIC def ramandan_dept_activations(entity_list, filter_type):
+-- MAGIC def get_entity_ids (theme_name):
 -- MAGIC
--- MAGIC     entity_type = {'department': 'department_name', 'category': 'category_name'}.get(filter_type, None)
+-- MAGIC     query = f"""
+-- MAGIC     select distinct input_id
+-- MAGIC     from sandbox.pg_ramandan_acquisition_items
+-- MAGIC     where campaign_theme = '{theme_name}'
+-- MAGIC     """
+-- MAGIC
+-- MAGIC     id_tuple = tuple(row['input_id'] for row in spark.sql(query).collect())
+-- MAGIC     return id_tuple
+
+-- COMMAND ----------
+
+-- MAGIC %python
+-- MAGIC
+-- MAGIC from pyspark.sql import DataFrame
+-- MAGIC
+-- MAGIC def get_customer_metrics(theme_name, filter_type):
+-- MAGIC
+-- MAGIC     entity_type = {'department': 'department_id', 'category': 'category_id', 'material group': 'material_group_id'}.get(filter_type, None)
 -- MAGIC
 -- MAGIC     if entity_type is None:
 -- MAGIC         print("invalid parameter: 'filter_type'")
 -- MAGIC         return None
+-- MAGIC     
+-- MAGIC     entity_list = get_entity_ids(theme_name)
 -- MAGIC
+-- MAGIC     query = f"""
+-- MAGIC     WITH cte AS (
+-- MAGIC         SELECT
+-- MAGIC             mobile,
+-- MAGIC             segment,
+-- MAGIC             ROUND(SUM(amount),0) AS sales,
+-- MAGIC             COUNT(DISTINCT transaction_id) AS num_trans
+-- MAGIC         FROM gold.pos_transactions AS t1
+-- MAGIC         JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
+-- MAGIC         JOIN analytics.customer_segments AS t3 ON t1.customer_id = t3.customer_id
+-- MAGIC         WHERE business_day BETWEEN "2023-03-08" AND "2023-04-21"
+-- MAGIC         AND mobile IS NOT NULL
+-- MAGIC         AND amount > 0
+-- MAGIC         AND quantity > 0
+-- MAGIC         AND key = 'rfm'
+-- MAGIC         AND channel = 'pos'
+-- MAGIC         AND t3.country = 'uae'
+-- MAGIC         AND month_year = '202304'
+-- MAGIC         AND {entity_type} IN {entity_list}
+-- MAGIC         GROUP BY mobile, segment
+-- MAGIC     )
+-- MAGIC
+-- MAGIC     SELECT
+-- MAGIC         '{theme_name}' as theme,
+-- MAGIC         segment,
+-- MAGIC         ROUND(SUM(sales) / COUNT(DISTINCT mobile),2) AS RPC,
+-- MAGIC         ROUND(SUM(sales) / SUM(num_trans),2) AS ATV,
+-- MAGIC         COUNT(DISTINCT mobile) AS customers
+-- MAGIC     FROM cte
+-- MAGIC     GROUP BY segment
+-- MAGIC     """
+-- MAGIC
+-- MAGIC     output_df = spark.sql(query)
+-- MAGIC     return output_df
+-- MAGIC
+-- MAGIC
+-- MAGIC
+-- MAGIC mapping_dict = {'tcg': 'material group', 'fashion': 'department', 'home': 'category'}
+-- MAGIC
+-- MAGIC dataframes = [get_customer_metrics(theme_name, entity_type) for theme_name, entity_type in mapping_dict.items()]
+-- MAGIC
+-- MAGIC final_merged_dataframe = dataframes[0]
+-- MAGIC
+-- MAGIC for dataframe in dataframes[1:]:
+-- MAGIC     final_merged_dataframe = final_merged_dataframe.union(dataframe)
+-- MAGIC
+-- MAGIC final_merged_dataframe.display()
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ## activation code [update-2]
+-- MAGIC updated code <br>
+-- MAGIC updated list
+
+-- COMMAND ----------
+
+-- MAGIC %python
+-- MAGIC ## difference in attributes of those activated vs non activated
+-- MAGIC
+-- MAGIC def ramandan_dept_activations(theme_name, entity_type):
+-- MAGIC
+-- MAGIC     entity_name = {'department': 'department_id', 'category': 'category_id', 'material group': 'material_group_id'}.get(entity_type, None)
+-- MAGIC
+-- MAGIC     if entity_name is None:
+-- MAGIC         print("invalid parameter: 'entity_type'")
+-- MAGIC         return None
+-- MAGIC     
+-- MAGIC     entity_list = get_entity_ids(theme_name)
 -- MAGIC
 -- MAGIC     query = f"""
 -- MAGIC     with rfm_segment_info as (
@@ -1725,7 +1951,7 @@ on t1.segment = t2.segment
 -- MAGIC     inactive_customers as (
 -- MAGIC     SELECT
 -- MAGIC     t1.customer_id,
--- MAGIC     COUNT(DISTINCT CASE WHEN UPPER(t2.{entity_type}) IN {entity_list} THEN transaction_id END) AS num_trans
+-- MAGIC     COUNT(DISTINCT CASE WHEN t2.{entity_name} IN {entity_list} THEN transaction_id END) AS num_trans
 -- MAGIC     FROM gold.pos_transactions AS t1
 -- MAGIC     JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
 -- MAGIC     WHERE t1.business_day BETWEEN "2022-01-01" AND date_add('2023-03-22',-15)
@@ -1747,20 +1973,19 @@ on t1.segment = t2.segment
 -- MAGIC         from gold.pos_transactions t1
 -- MAGIC         join gold.material_master t2
 -- MAGIC         on t1.product_id = t2.material_id
--- MAGIC         join inactive_customers t3
--- MAGIC         on t1.customer_id = t3.customer_id
 -- MAGIC         where t1.business_day between date_add('2023-03-22',-14) and date_add('2023-03-22',30)
 -- MAGIC         and round(t1.amount,2) > 0
 -- MAGIC         and t1.quantity > 0
 -- MAGIC         and t1.mobile is not null
 -- MAGIC         and t1.transaction_type in ('SALE','SELL_MEDIA')
--- MAGIC         and upper(t2.{entity_type}) in {entity_list}
+-- MAGIC         and t2.{entity_name} in {entity_list}
 -- MAGIC         )
 -- MAGIC     group by customer_id
 -- MAGIC     )
 -- MAGIC
 -- MAGIC
--- MAGIC     select segment, ramadan_activated_flag, count(customer_id) as num_customers,
+-- MAGIC     select '{theme_name}' as theme, segment, ramadan_activated_flag,
+-- MAGIC     count(customer_id) as num_customers,
 -- MAGIC     sum(total_spend)/sum(total_orders) as ATV, avg(inter_purchase_time) as IPT,
 -- MAGIC     avg(recency) as recency, avg(total_orders) as frequency, avg(total_spend) as RPC
 -- MAGIC
@@ -1790,18 +2015,102 @@ on t1.segment = t2.segment
 -- MAGIC     return df
 -- MAGIC
 -- MAGIC
--- MAGIC item_dict = {'fashion':fashion_list, 'tcg': tcg_list, 'home': home_list}
+-- MAGIC mapping_dict = {'tcg': 'material group', 'fashion': 'department', 'home': 'category'}
 -- MAGIC
+-- MAGIC dataframes = [ramandan_dept_activations(theme_name, entity_type) for theme_name, entity_type in mapping_dict.items()]
 -- MAGIC
--- MAGIC df_attribute_diff = ramandan_dept_activations(home_list, filter_type='category')
--- MAGIC df_attribute_diff.display()
+-- MAGIC final_merged_dataframe = dataframes[0]
+-- MAGIC
+-- MAGIC for dataframe in dataframes[1:]:
+-- MAGIC     final_merged_dataframe = final_merged_dataframe.union(dataframe)
+-- MAGIC
+-- MAGIC final_merged_dataframe.display()
 
 -- COMMAND ----------
 
-select customer_key, campaign_channel, count(*) as num_campaigns,
-sum(count(*)) over(partition by customer_key) as total_campaigns,
-sum(case when delivery_status = 'opened' then 1 else 0 end) as num_opens,
-sum(sum(case when delivery_status = 'opened' then 1 else 0 end)) over(partition by customer_key) as total_opens
-from analytics.campaign_delivery
-group by customer_key, campaign_channel
-order by customer_key
+-- MAGIC %md
+-- MAGIC ## current inactive
+-- MAGIC acquisition candidates
+
+-- COMMAND ----------
+
+-- MAGIC %python
+-- MAGIC ## difference in attributes of those activated vs non activated
+-- MAGIC
+-- MAGIC def get_current_inactive_base(theme_name, entity_type, period_start_date, period_end_date):
+-- MAGIC
+-- MAGIC     entity_name = {'department': 'department_id', 'category': 'category_id', 'material group': 'material_group_id'}.get(entity_type, None)
+-- MAGIC
+-- MAGIC     if entity_name is None:
+-- MAGIC         print("invalid parameter: 'entity_type'")
+-- MAGIC         return None
+-- MAGIC     
+-- MAGIC     entity_list = get_entity_ids(theme_name)
+-- MAGIC
+-- MAGIC     query = f"""
+-- MAGIC     with rfm_segment_info as (
+-- MAGIC         select customer_id, segment, average_order_value,
+-- MAGIC         inter_purchase_time, total_orders, total_spend, recency
+-- MAGIC         from analytics.customer_segments
+-- MAGIC         where country = 'uae'
+-- MAGIC         AND month_year = '202401'
+-- MAGIC         AND key = 'rfm'
+-- MAGIC         AND channel = 'pos'
+-- MAGIC         AND segment in ('Frequentist','Moderate','Slipping Loyalist','VIP')
+-- MAGIC         ),
+-- MAGIC
+-- MAGIC     inactive_customers as (
+-- MAGIC     SELECT
+-- MAGIC     t1.customer_id,
+-- MAGIC     COUNT(DISTINCT CASE WHEN t2.{entity_name} IN {entity_list} THEN transaction_id END) AS num_trans
+-- MAGIC     FROM gold.pos_transactions AS t1
+-- MAGIC     JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
+-- MAGIC     WHERE t1.business_day BETWEEN '{period_start_date}' AND '{period_end_date}'
+-- MAGIC     AND t1.transaction_type in ('SALE','SELL_MEDIA')
+-- MAGIC     AND t1.mobile IS NOT NULL
+-- MAGIC     AND t1.amount > 0
+-- MAGIC     AND t1.quantity > 0
+-- MAGIC     GROUP BY t1.customer_id
+-- MAGIC     HAVING num_trans = 0
+-- MAGIC     )
+-- MAGIC
+-- MAGIC
+-- MAGIC     select '{theme_name}' as theme, t2.segment,
+-- MAGIC     count(t1.customer_id) as num_customers
+-- MAGIC     from inactive_customers t1
+-- MAGIC     join rfm_segment_info t2
+-- MAGIC     on t1.customer_id = t2.customer_id
+-- MAGIC     group by t2.segment
+-- MAGIC  
+-- MAGIC     """
+-- MAGIC
+-- MAGIC     df = spark.sql(query)
+-- MAGIC
+-- MAGIC     return df
+-- MAGIC
+-- MAGIC
+-- MAGIC period_start_date_1, period_end_date_1 = '2023-01-01', '2024-02-28' # from 2023
+-- MAGIC period_start_date_2, period_end_date_2 = '2022-01-01', '2024-02-28' # extended period (inclsive 22)
+-- MAGIC
+-- MAGIC period_type = 2
+-- MAGIC
+-- MAGIC if period_type == 1:
+-- MAGIC     period_start_date, period_end_date = period_start_date_1, period_end_date_1
+-- MAGIC
+-- MAGIC if period_type == 2:
+-- MAGIC     period_start_date, period_end_date = period_start_date_2, period_end_date_2
+-- MAGIC
+-- MAGIC
+-- MAGIC mapping_dict = {'tcg': 'material group', 'fashion': 'department', 'home': 'category'}
+-- MAGIC dataframes = [get_current_inactive_base(theme_name, entity_type, period_start_date, period_end_date) for theme_name, entity_type in mapping_dict.items()]
+-- MAGIC
+-- MAGIC final_merged_dataframe = dataframes[0]
+-- MAGIC
+-- MAGIC for dataframe in dataframes[1:]:
+-- MAGIC     final_merged_dataframe = final_merged_dataframe.union(dataframe)
+-- MAGIC
+-- MAGIC final_merged_dataframe.display()
+
+-- COMMAND ----------
+
+

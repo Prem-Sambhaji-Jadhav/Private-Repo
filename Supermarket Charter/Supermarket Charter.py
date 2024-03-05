@@ -26,7 +26,7 @@ WITH one_timers AS (
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     WHERE YEAR(business_day) = 2023
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
     GROUP BY Quarter_Info, region_name, department_name, mobile
@@ -50,7 +50,7 @@ main_table AS (
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     WHERE YEAR(business_day) = 2023
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
     GROUP BY Quarter_Info, region_name, department_name
@@ -68,7 +68,7 @@ customer_segments AS (
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     JOIN analytics.customer_segments AS t4 ON t1.customer_id = t4.customer_id
     WHERE YEAR(business_day) = 2023
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND key = 'rfm'
     AND channel = 'pos'
     AND t4.country = 'uae'
@@ -83,17 +83,16 @@ loyalty AS (
         QUARTER(business_day) AS Quarter_Info,
         region_name,
         department_name,
-        COUNT(DISTINCT t4.mobile) AS Loyalty_Customers,
+        COUNT(DISTINCT mobile) AS Loyalty_Customers,
         ROUND(SUM(amount),0) AS Loyalty_Sales
     FROM gold.pos_transactions AS t1
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
-    JOIN gold.customer_profile AS t4 ON t1.customer_id = t4.account_key
     WHERE YEAR(business_day) = 2023
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
-    AND LHRDATE IS NOT NULL
+    AND LHPRDATE IS NOT NULL
     GROUP BY Quarter_Info, region_name, department_name
 )
 
@@ -124,7 +123,7 @@ JOIN customer_segments AS t3
     ON t1.Quarter_Info = t3.Quarter_info
     AND t1.region_name = t3.region_name
     AND t1.department_name = t3.department_name
-JOIN loyalty AS t4
+LEFT JOIN loyalty AS t4
     ON t1.Quarter_Info = t4.Quarter_info
     AND t1.region_name = t4.region_name
     AND t1.department_name = t4.department_name
@@ -134,6 +133,8 @@ ORDER BY 1, 2, 3
 
 all_levels_df = spark.sql(query).toPandas()
 all_levels_df['Discount'] = all_levels_df['Discount'].fillna(0)
+all_levels_df['Loyalty_Sales'] = all_levels_df['Loyalty_Sales'].fillna(0)
+all_levels_df['Loyalty_Customers'] = all_levels_df['Loyalty_Customers'].fillna(0)
 
 # COMMAND ----------
 
@@ -212,7 +213,7 @@ WITH one_timers AS (
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     WHERE YEAR(business_day) = 2023
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
     GROUP BY Quarter_Info, department_name, mobile
@@ -235,7 +236,7 @@ main_table AS (
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     WHERE YEAR(business_day) = 2023
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
     GROUP BY Quarter_Info, department_name
@@ -252,7 +253,7 @@ customer_segments AS (
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     JOIN analytics.customer_segments AS t4 ON t1.customer_id = t4.customer_id
     WHERE YEAR(business_day) = 2023
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND key = 'rfm'
     AND channel = 'pos'
     AND t4.country = 'uae'
@@ -266,17 +267,16 @@ loyalty AS (
     SELECT
         QUARTER(business_day) AS Quarter_Info,
         department_name,
-        COUNT(DISTINCT t4.mobile) AS Loyalty_Customers,
+        COUNT(DISTINCT mobile) AS Loyalty_Customers,
         ROUND(SUM(amount),0) AS Loyalty_Sales
     FROM gold.pos_transactions AS t1
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
-    JOIN gold.customer_profile AS t4 ON t1.customer_id = t4.account_key
     WHERE YEAR(business_day) = 2023
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
-    AND LHRDATE IS NOT NULL
+    AND LHPRDATE IS NOT NULL
     GROUP BY Quarter_Info, department_name
 )
 
@@ -305,7 +305,7 @@ JOIN main_table AS t2
 JOIN customer_segments AS t3
     ON t1.Quarter_Info = t3.Quarter_info
     AND t1.department_name = t3.department_name
-JOIN loyalty AS t4
+LEFT JOIN loyalty AS t4
     ON t1.Quarter_Info = t4.Quarter_info
     AND t1.department_name = t4.department_name
 GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
@@ -314,6 +314,8 @@ ORDER BY 1, 2, 3
 
 uae_department_df = spark.sql(query).toPandas()
 uae_department_df['Discount'] = uae_department_df['Discount'].fillna(0)
+uae_department_df['Loyalty_Sales'] = uae_department_df['Loyalty_Sales'].fillna(0)
+uae_department_df['Loyalty_Customers'] = uae_department_df['Loyalty_Customers'].fillna(0)
 
 # COMMAND ----------
 
@@ -339,7 +341,7 @@ quarterly_df = pd.concat([quarterly_df, transpose_quarter(uae_department_df, 'UA
 # MAGIC     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
 # MAGIC     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
 # MAGIC     WHERE YEAR(business_day) = 2023
-# MAGIC     AND department_id BETWEEN 1 AND 13
+# MAGIC     AND department_class_id IN (1, 2)
 # MAGIC     AND ROUND(amount,2) > 0
 # MAGIC     AND quantity > 0
 # MAGIC     GROUP BY Quarter_Info, region_name, mobile
@@ -362,7 +364,7 @@ quarterly_df = pd.concat([quarterly_df, transpose_quarter(uae_department_df, 'UA
 # MAGIC     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
 # MAGIC     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
 # MAGIC     WHERE YEAR(business_day) = 2023
-# MAGIC     AND department_id BETWEEN 1 AND 13
+# MAGIC     AND department_class_id IN (1, 2)
 # MAGIC     AND ROUND(amount,2) > 0
 # MAGIC     AND quantity > 0
 # MAGIC     GROUP BY Quarter_Info, region_name
@@ -379,7 +381,7 @@ quarterly_df = pd.concat([quarterly_df, transpose_quarter(uae_department_df, 'UA
 # MAGIC     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
 # MAGIC     JOIN analytics.customer_segments AS t4 ON t1.customer_id = t4.customer_id
 # MAGIC     WHERE YEAR(business_day) = 2023
-# MAGIC     AND department_id BETWEEN 1 AND 13
+# MAGIC     AND department_class_id IN (1, 2)
 # MAGIC     AND key = 'rfm'
 # MAGIC     AND channel = 'pos'
 # MAGIC     AND t4.country = 'uae'
@@ -393,17 +395,16 @@ quarterly_df = pd.concat([quarterly_df, transpose_quarter(uae_department_df, 'UA
 # MAGIC     SELECT
 # MAGIC         QUARTER(business_day) AS Quarter_Info,
 # MAGIC         region_name,
-# MAGIC         COUNT(DISTINCT t4.mobile) AS Loyalty_Customers,
+# MAGIC         COUNT(DISTINCT mobile) AS Loyalty_Customers,
 # MAGIC         ROUND(SUM(amount),0) AS Loyalty_Sales
 # MAGIC     FROM gold.pos_transactions AS t1
 # MAGIC     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
 # MAGIC     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
-# MAGIC     JOIN gold.customer_profile AS t4 ON t1.customer_id = t4.account_key
 # MAGIC     WHERE YEAR(business_day) = 2023
-# MAGIC     AND department_id BETWEEN 1 AND 13
+# MAGIC     AND department_class_id IN (1, 2)
 # MAGIC     AND ROUND(amount,2) > 0
 # MAGIC     AND quantity > 0
-# MAGIC     AND LHRDATE IS NOT NULL
+# MAGIC     AND LHPRDATE IS NOT NULL
 # MAGIC     GROUP BY Quarter_Info, region_name
 # MAGIC )
 # MAGIC
@@ -432,7 +433,7 @@ quarterly_df = pd.concat([quarterly_df, transpose_quarter(uae_department_df, 'UA
 # MAGIC JOIN customer_segments AS t3
 # MAGIC     ON t1.Quarter_Info = t3.Quarter_info
 # MAGIC     AND t1.region_name = t3.region_name
-# MAGIC JOIN loyalty AS t4
+# MAGIC LEFT JOIN loyalty AS t4
 # MAGIC     ON t1.Quarter_Info = t4.Quarter_info
 # MAGIC     AND t1.region_name = t4.region_name
 # MAGIC GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
@@ -441,6 +442,8 @@ quarterly_df = pd.concat([quarterly_df, transpose_quarter(uae_department_df, 'UA
 # MAGIC
 # MAGIC region_level_df = spark.sql(query).toPandas()
 # MAGIC region_level_df['Discount'] = region_level_df['Discount'].fillna(0)
+# MAGIC region_level_df['Loyalty_Sales'] = region_level_df['Loyalty_Sales'].fillna(0)
+# MAGIC region_level_df['Loyalty_Customers'] = region_level_df['Loyalty_Customers'].fillna(0)
 
 # COMMAND ----------
 
@@ -467,7 +470,7 @@ WITH one_timers AS (
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     WHERE YEAR(business_day) = 2023
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
     GROUP BY Quarter_Info, mobile
@@ -489,7 +492,7 @@ main_table AS (
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     WHERE YEAR(business_day) = 2023
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
     GROUP BY Quarter_Info
@@ -505,7 +508,7 @@ customer_segments AS (
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     JOIN analytics.customer_segments AS t4 ON t1.customer_id = t4.customer_id
     WHERE YEAR(business_day) = 2023
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND key = 'rfm'
     AND channel = 'pos'
     AND t4.country = 'uae'
@@ -518,17 +521,16 @@ customer_segments AS (
 loyalty AS (
     SELECT
         QUARTER(business_day) AS Quarter_Info,
-        COUNT(DISTINCT t4.mobile) AS Loyalty_Customers,
+        COUNT(DISTINCT mobile) AS Loyalty_Customers,
         ROUND(SUM(amount),0) AS Loyalty_Sales
     FROM gold.pos_transactions AS t1
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
-    JOIN gold.customer_profile AS t4 ON t1.customer_id = t4.account_key
     WHERE YEAR(business_day) = 2023
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
-    AND LHRDATE IS NOT NULL
+    AND LHPRDATE IS NOT NULL
     GROUP BY Quarter_Info
 )
 
@@ -555,7 +557,7 @@ JOIN main_table AS t2
     ON t1.Quarter_Info = t2.Quarter_info
 JOIN customer_segments AS t3
     ON t1.Quarter_Info = t3.Quarter_info
-JOIN loyalty AS t4
+LEFT JOIN loyalty AS t4
     ON t1.Quarter_Info = t4.Quarter_info
 GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 ORDER BY 1, 2, 3
@@ -563,6 +565,8 @@ ORDER BY 1, 2, 3
 
 uae_overall_df = spark.sql(query).toPandas()
 uae_overall_df['Discount'] = uae_overall_df['Discount'].fillna(0)
+uae_overall_df['Loyalty_Sales'] = uae_overall_df['Loyalty_Sales'].fillna(0)
+uae_overall_df['Loyalty_Customers'] = uae_overall_df['Loyalty_Customers'].fillna(0)
 
 # COMMAND ----------
 
@@ -593,7 +597,7 @@ WITH one_timers AS (
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     WHERE YEAR(business_day) IN (2022, 2023)
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
     GROUP BY Year_Info, region_name, department_name, mobile
@@ -617,7 +621,7 @@ main_table AS (
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     WHERE YEAR(business_day) IN (2022, 2023)
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
     GROUP BY Year_Info, region_name, department_name
@@ -637,7 +641,7 @@ customer_segments AS (
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     JOIN analytics.customer_segments AS t4 ON t1.customer_id = t4.customer_id
     WHERE YEAR(business_day) IN (2022, 2023)
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND key = 'rfm'
     AND channel = 'pos'
     AND t4.country = 'uae'
@@ -652,17 +656,16 @@ loyalty AS (
         YEAR(business_day) AS Year_Info,
         region_name,
         department_name,
-        COUNT(DISTINCT t4.mobile) AS Loyalty_Customers,
+        COUNT(DISTINCT mobile) AS Loyalty_Customers,
         ROUND(SUM(amount),0) AS Loyalty_Sales
     FROM gold.pos_transactions AS t1
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
-    JOIN gold.customer_profile AS t4 ON t1.customer_id = t4.account_key
     WHERE YEAR(business_day) IN (2022, 2023)
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
-    AND LHRDATE IS NOT NULL
+    AND LHPRDATE IS NOT NULL
     GROUP BY Year_Info, region_name, department_name
 )
 
@@ -693,7 +696,7 @@ JOIN customer_segments AS t3
     ON t1.Year_Info = t3.Year_Info
     AND t1.region_name = t3.region_name
     AND t1.department_name = t3.department_name
-JOIN loyalty AS t4
+LEFT JOIN loyalty AS t4
     ON t1.Year_Info = t4.Year_info
     AND t1.region_name = t4.region_name
     AND t1.department_name = t4.department_name
@@ -703,6 +706,8 @@ ORDER BY 1, 2, 3
 
 all_levels_df2 = spark.sql(query).toPandas()
 all_levels_df2['Discount'] = all_levels_df2['Discount'].fillna(0)
+all_levels_df2['Loyalty_Sales'] = all_levels_df2['Loyalty_Sales'].fillna(0)
+all_levels_df2['Loyalty_Customers'] = all_levels_df2['Loyalty_Customers'].fillna(0)
 
 # COMMAND ----------
 
@@ -780,7 +785,7 @@ WITH one_timers AS (
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     WHERE YEAR(business_day) IN (2022, 2023)
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
     GROUP BY Year_Info, department_name, mobile
@@ -803,7 +808,7 @@ main_table AS (
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     WHERE YEAR(business_day) IN (2022, 2023)
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
     GROUP BY Year_Info, department_name
@@ -822,7 +827,7 @@ customer_segments AS (
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     JOIN analytics.customer_segments AS t4 ON t1.customer_id = t4.customer_id
     WHERE YEAR(business_day) IN (2022, 2023)
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND key = 'rfm'
     AND channel = 'pos'
     AND t4.country = 'uae'
@@ -836,17 +841,16 @@ loyalty AS (
     SELECT
         YEAR(business_day) AS Year_Info,
         department_name,
-        COUNT(DISTINCT t4.mobile) AS Loyalty_Customers,
+        COUNT(DISTINCT mobile) AS Loyalty_Customers,
         ROUND(SUM(amount),0) AS Loyalty_Sales
     FROM gold.pos_transactions AS t1
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
-    JOIN gold.customer_profile AS t4 ON t1.customer_id = t4.account_key
     WHERE YEAR(business_day) IN (2022, 2023)
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
-    AND LHRDATE IS NOT NULL
+    AND LHPRDATE IS NOT NULL
     GROUP BY Year_Info, department_name
 )
 
@@ -875,7 +879,7 @@ JOIN main_table AS t2
 JOIN customer_segments AS t3
     ON t1.Year_Info = t3.Year_Info
     AND t1.department_name = t3.department_name
-JOIN loyalty AS t4
+LEFT JOIN loyalty AS t4
     ON t1.Year_Info = t4.Year_info
     AND t1.department_name = t4.department_name
 GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
@@ -884,6 +888,8 @@ ORDER BY 1, 2, 3
 
 uae_department_df2 = spark.sql(query).toPandas()
 uae_department_df2['Discount'] = uae_department_df2['Discount'].fillna(0)
+uae_department_df2['Loyalty_Sales'] = uae_department_df2['Loyalty_Sales'].fillna(0)
+uae_department_df2['Loyalty_Customers'] = uae_department_df2['Loyalty_Customers'].fillna(0)
 
 # COMMAND ----------
 
@@ -908,7 +914,7 @@ WITH one_timers AS (
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     WHERE YEAR(business_day) IN (2022, 2023)
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
     GROUP BY Year_Info, region_name, mobile
@@ -931,7 +937,7 @@ main_table AS (
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     WHERE YEAR(business_day) IN (2022, 2023)
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
     GROUP BY Year_Info, region_name
@@ -950,7 +956,7 @@ customer_segments AS (
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     JOIN analytics.customer_segments AS t4 ON t1.customer_id = t4.customer_id
     WHERE YEAR(business_day) IN (2022, 2023)
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND key = 'rfm'
     AND channel = 'pos'
     AND t4.country = 'uae'
@@ -964,17 +970,16 @@ loyalty AS (
     SELECT
         YEAR(business_day) AS Year_Info,
         region_name,
-        COUNT(DISTINCT t4.mobile) AS Loyalty_Customers,
+        COUNT(DISTINCT mobile) AS Loyalty_Customers,
         ROUND(SUM(amount),0) AS Loyalty_Sales
     FROM gold.pos_transactions AS t1
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
-    JOIN gold.customer_profile AS t4 ON t1.customer_id = t4.account_key
     WHERE YEAR(business_day) IN (2022, 2023)
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
-    AND LHRDATE IS NOT NULL
+    AND LHPRDATE IS NOT NULL
     GROUP BY Year_Info, region_name
 )
 
@@ -1003,7 +1008,7 @@ JOIN main_table AS t2
 JOIN customer_segments AS t3
     ON t1.Year_Info = t3.Year_Info
     AND t1.region_name = t3.region_name
-JOIN loyalty AS t4
+LEFT JOIN loyalty AS t4
     ON t1.Year_Info = t4.Year_info
     AND t1.region_name = t4.region_name
 GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
@@ -1012,6 +1017,8 @@ ORDER BY 1, 2, 3
 
 region_level_df2 = spark.sql(query).toPandas()
 region_level_df2['Discount'] = region_level_df2['Discount'].fillna(0)
+region_level_df2['Loyalty_Sales'] = region_level_df2['Loyalty_Sales'].fillna(0)
+region_level_df2['Loyalty_Customers'] = region_level_df2['Loyalty_Customers'].fillna(0)
 
 # COMMAND ----------
 
@@ -1038,7 +1045,7 @@ WITH one_timers AS (
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     WHERE YEAR(business_day) IN (2022, 2023)
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
     GROUP BY Year_Info, mobile
@@ -1060,7 +1067,7 @@ main_table AS (
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     WHERE YEAR(business_day) IN (2022, 2023)
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
     GROUP BY Year_Info
@@ -1078,7 +1085,7 @@ customer_segments AS (
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     JOIN analytics.customer_segments AS t4 ON t1.customer_id = t4.customer_id
     WHERE YEAR(business_day) IN (2022, 2023)
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND key = 'rfm'
     AND channel = 'pos'
     AND t4.country = 'uae'
@@ -1091,17 +1098,16 @@ customer_segments AS (
 loyalty AS (
     SELECT
         YEAR(business_day) AS Year_Info,
-        COUNT(DISTINCT t4.mobile) AS Loyalty_Customers,
+        COUNT(DISTINCT mobile) AS Loyalty_Customers,
         ROUND(SUM(amount),0) AS Loyalty_Sales
     FROM gold.pos_transactions AS t1
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
-    JOIN gold.customer_profile AS t4 ON t1.customer_id = t4.account_key
     WHERE YEAR(business_day) IN (2022, 2023)
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
-    AND LHRDATE IS NOT NULL
+    AND LHPRDATE IS NOT NULL
     GROUP BY Year_Info
 )
 
@@ -1128,7 +1134,7 @@ JOIN main_table AS t2
     ON t1.Year_Info = t2.Year_Info
 JOIN customer_segments AS t3
     ON t1.Year_Info = t3.Year_Info
-JOIN loyalty AS t4
+LEFT JOIN loyalty AS t4
     ON t1.Year_Info = t4.Year_Info
 GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 ORDER BY 1, 2, 3
@@ -1136,6 +1142,8 @@ ORDER BY 1, 2, 3
 
 uae_overall_df2 = spark.sql(query).toPandas()
 uae_overall_df2['Discount'] = uae_overall_df2['Discount'].fillna(0)
+uae_overall_df2['Loyalty_Sales'] = uae_overall_df2['Loyalty_Sales'].fillna(0)
+uae_overall_df2['Loyalty_Customers'] = uae_overall_df2['Loyalty_Customers'].fillna(0)
 
 # COMMAND ----------
 
@@ -1192,7 +1200,7 @@ WITH one_timers AS (
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     WHERE YEAR(business_day) IN (2022, 2023)
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
     GROUP BY Year_Info, category_id, mobile
@@ -1214,7 +1222,7 @@ main_table AS (
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     WHERE YEAR(business_day) IN (2022, 2023)
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
     GROUP BY Year_Info, category_id
@@ -1233,7 +1241,7 @@ customer_segments AS (
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
     JOIN analytics.customer_segments AS t4 ON t1.customer_id = t4.customer_id
     WHERE YEAR(business_day) IN (2022, 2023)
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND key = 'rfm'
     AND channel = 'pos'
     AND t4.country = 'uae'
@@ -1247,17 +1255,16 @@ loyalty AS (
     SELECT
         YEAR(business_day) AS Year_Info,
         category_id,
-        COUNT(DISTINCT t4.mobile) AS Loyalty_Customers,
+        COUNT(DISTINCT mobile) AS Loyalty_Customers,
         ROUND(SUM(amount),0) AS Loyalty_Sales
     FROM gold.pos_transactions AS t1
     JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
-    JOIN gold.customer_profile AS t4 ON t1.customer_id = t4.account_key
     WHERE YEAR(business_day) IN (2022, 2023)
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND ROUND(amount,2) > 0
     AND quantity > 0
-    AND LHRDATE IS NOT NULL
+    AND LHPRDATE IS NOT NULL
     GROUP BY Year_Info, category_id
 )
 
@@ -1285,7 +1292,7 @@ JOIN main_table AS t2
 JOIN customer_segments AS t3
     ON t1.Year_Info = t3.Year_Info
     AND t1.category_id = t3.category_id
-JOIN loyalty AS t4
+LEFT JOIN loyalty AS t4
     ON t1.Year_Info = t4.Year_Info
     AND t1.category_id = t4.category_id
 GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
@@ -1294,6 +1301,8 @@ ORDER BY 1, 2, 3
 
 catg_df = spark.sql(query).toPandas()
 catg_df['Discount'] = catg_df['Discount'].fillna(0)
+catg_df['Loyalty_Sales'] = catg_df['Loyalty_Sales'].fillna(0)
+catg_df['Loyalty_Customers'] = catg_df['Loyalty_Customers'].fillna(0)
 
 # COMMAND ----------
 
@@ -1350,73 +1359,12 @@ catg_df2 = transpose_catg(catg_df, 'UAE')
 query = """
 SELECT DISTINCT category_id, category_name, department_name
 FROM gold.material_master
-WHERE department_id BETWEEN 1 AND 13
+WHERE department_class_id IN (1, 2)
 """
 
 dept_mapping = spark.sql(query).toPandas()
 catg_df2 = pd.merge(catg_df2, dept_mapping, on='category_id', how='left')
 catg_df2[['Region', 'department_name', 'category_id', 'category_name', 'Measures', 'year_2023', 'year_2022']].display()
-
-# COMMAND ----------
-
-# ETHNIC FOODS -> BAKERY, GROCERY FOOD
-# IH HOME DELIVERY -> BAKERY, IN-HOUSE KITCHEN PRODUCTION (HOT/COLD)
-
-a = catg_df2[catg_df2['Measures'] == 'Sales'].groupby(['department_name', 'category_name'])['year_2023'].sum().reset_index()
-b = a.groupby('department_name')['year_2023'].sum().reset_index()
-b.rename(columns={'year_2023': 'dept_sales'}, inplace=True)
-a.rename(columns={'year_2023': 'sales'}, inplace=True)
-a = pd.merge(a, b, on='department_name', how='left')
-
-a['Sales%'] = a['sales'] / a['dept_sales']
-a = a.sort_values(by = ['department_name', 'Sales%'], ascending = False).reset_index(drop=True)
-a['cummulative_sales%'] = a.groupby('department_name')['Sales%'].cumsum()
-
-# a[a['department_name'].isin(['BAKERY', 'GROCERY FOOD'])][['department_name', 'category_name', 'sales', 'Sales%', 'cummulative_sales%']]
-# a[a['department_name'].isin(['BAKERY', 'IN-HOUSE KITCHEN PRODUCTION (HOT/COLD)'])][['department_name', 'category_name', 'sales', 'Sales%', 'cummulative_sales%']]
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC WITH cte AS (
-# MAGIC   SELECT
-# MAGIC       department_name,
-# MAGIC       ROUND(SUM(amount),0) AS dept_sales
-# MAGIC   FROM gold.pos_transactions AS t1
-# MAGIC   JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
-# MAGIC   WHERE department_name IN ('BAKERY', 'GROCERY FOOD', 'IN-HOUSE KITCHEN PRODUCTION (HOT/COLD)')
-# MAGIC   AND YEAR(business_day) = 2023
-# MAGIC   AND ROUND(amount,2) > 0
-# MAGIC   AND quantity > 0
-# MAGIC   GROUP BY department_name
-# MAGIC ),
-# MAGIC
-# MAGIC cte2 AS (
-# MAGIC   SELECT
-# MAGIC       t2.department_name,
-# MAGIC       category_name,
-# MAGIC       ROUND(SUM(amount),0) AS sales,
-# MAGIC       dept_sales,
-# MAGIC       (sales/dept_sales) AS sales_contri
-# MAGIC   FROM gold.pos_transactions AS t1
-# MAGIC   JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
-# MAGIC   JOIN cte AS t3 ON t2.department_name = t3.department_name
-# MAGIC   WHERE t2.department_name IN ('BAKERY', 'GROCERY FOOD', 'IN-HOUSE KITCHEN PRODUCTION (HOT/COLD)')
-# MAGIC   AND YEAR(business_day) = 2023
-# MAGIC   AND ROUND(amount,2) > 0
-# MAGIC   AND quantity > 0
-# MAGIC   GROUP BY t2.department_name, category_name, dept_sales
-# MAGIC   ORDER BY t2.department_name, sales_contri DESC
-# MAGIC )
-# MAGIC
-# MAGIC SELECT
-# MAGIC     department_name,
-# MAGIC     category_name,
-# MAGIC     sales,
-# MAGIC     sales_contri,
-# MAGIC     (SUM(sales_contri) OVER (PARTITION BY department_name ORDER BY sales_contri DESC)) AS cumulative_contri
-# MAGIC FROM cte2
-# MAGIC ORDER BY department_name, sales_contri DESC
 
 # COMMAND ----------
 
@@ -1439,7 +1387,7 @@ a['cummulative_sales%'] = a.groupby('department_name')['Sales%'].cumsum()
 # MAGIC     FROM gold.pos_transactions AS t1
 # MAGIC     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
 # MAGIC     WHERE YEAR(business_day) IN (2023)
-# MAGIC     AND department_id BETWEEN 1 AND 13
+# MAGIC     AND department_class_id IN (1, 2)
 # MAGIC     AND ROUND(amount,2) > 0
 # MAGIC     AND quantity > 0
 # MAGIC     GROUP BY mobile
@@ -1455,7 +1403,7 @@ a['cummulative_sales%'] = a.groupby('department_name')['Sales%'].cumsum()
 # MAGIC     FROM gold.pos_transactions AS t1
 # MAGIC     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
 # MAGIC     WHERE YEAR(business_day) IN (2023)
-# MAGIC     AND department_id BETWEEN 1 AND 13
+# MAGIC     AND department_class_id IN (1, 2)
 # MAGIC     AND ROUND(amount,2) > 0
 # MAGIC     AND quantity > 0
 # MAGIC ),
@@ -1468,7 +1416,7 @@ a['cummulative_sales%'] = a.groupby('department_name')['Sales%'].cumsum()
 # MAGIC     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
 # MAGIC     JOIN analytics.customer_segments AS t4 ON t1.customer_id = t4.customer_id
 # MAGIC     WHERE YEAR(business_day) IN (2023)
-# MAGIC     AND department_id BETWEEN 1 AND 13
+# MAGIC     AND department_class_id IN (1, 2)
 # MAGIC     AND key = 'rfm'
 # MAGIC     AND channel = 'pos'
 # MAGIC     AND t4.country = 'uae'
@@ -1482,12 +1430,10 @@ a['cummulative_sales%'] = a.groupby('department_name')['Sales%'].cumsum()
 # MAGIC         ROUND(SUM(amount),0) AS Loyalty_Sales,
 # MAGIC         COUNT(DISTINCT t1.mobile) AS Loyalty_Customers
 # MAGIC     FROM gold.pos_transactions AS t1
-# MAGIC     JOIN gold.customer_profile AS t2 ON t1.customer_id = t2.account_key
 # MAGIC     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
 # MAGIC     WHERE YEAR(business_day) IN (2023)
-# MAGIC     AND LHRDATE IS NOT NULL
-# MAGIC     AND t1.mobile IS NOT NULL
-# MAGIC     AND department_id BETWEEN 1 AND 13
+# MAGIC     AND LHPRDATE IS NOT NULL
+# MAGIC     AND department_class_id IN (1, 2)
 # MAGIC     AND ROUND(amount,2) > 0
 # MAGIC     AND quantity > 0
 # MAGIC )
@@ -1557,13 +1503,11 @@ a['cummulative_sales%'] = a.groupby('department_name')['Sales%'].cumsum()
 # MAGIC cte4 AS (
 # MAGIC     SELECT
 # MAGIC         ROUND(SUM(amount),0) AS Loyalty_Sales,
-# MAGIC         COUNT(DISTINCT t1.mobile) AS Loyalty_Customers
+# MAGIC         COUNT(DISTINCT mobile) AS Loyalty_Customers
 # MAGIC     FROM gold.pos_transactions AS t1
-# MAGIC     JOIN gold.customer_profile AS t2 ON t1.customer_id = t2.account_key
 # MAGIC     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
 # MAGIC     WHERE YEAR(business_day) IN (2023)
-# MAGIC     AND LHRDATE IS NOT NULL
-# MAGIC     AND t1.mobile IS NOT NULL
+# MAGIC     AND LHPRDATE IS NOT NULL
 # MAGIC     AND ROUND(amount,2) > 0
 # MAGIC     AND quantity > 0
 # MAGIC )
@@ -1610,14 +1554,14 @@ a['cummulative_sales%'] = a.groupby('department_name')['Sales%'].cumsum()
 # MAGIC      JOIN gold.customer_profile AS t2 ON t1.customer_id = t2.account_key
 # MAGIC      JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
 # MAGIC      WHERE YEAR(business_day) = 2023
-# MAGIC      AND department_id BETWEEN 1 AND 13
+# MAGIC      AND department_class_id IN (1, 2)
 # MAGIC      AND ROUND(amount,2) > 0
 # MAGIC      AND quantity > 0
 # MAGIC      AND nationality_group NOT IN ("OTHERS", "NA")
 # MAGIC     )
 # MAGIC WHERE
 # MAGIC     YEAR(business_day) = 2023
-# MAGIC     AND department_id BETWEEN 1 AND 13
+# MAGIC     AND department_class_id IN (1, 2)
 # MAGIC     AND ROUND(amount,2) > 0
 # MAGIC     AND quantity > 0
 # MAGIC     AND nationality_group NOT IN ("OTHERS", "NA")
@@ -1645,7 +1589,7 @@ a['cummulative_sales%'] = a.groupby('department_name')['Sales%'].cumsum()
 # MAGIC      JOIN analytics.customer_segments AS t2 ON t1.customer_id = t2.customer_id
 # MAGIC      JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
 # MAGIC      WHERE business_day BETWEEN "2023-10-01" AND "2023-12-31"
-# MAGIC      AND department_id BETWEEN 1 AND 13
+# MAGIC      AND department_class_id IN (1, 2)
 # MAGIC      AND ROUND(amount,2) > 0
 # MAGIC      AND quantity > 0
 # MAGIC      AND key = 'rfm'
@@ -1655,7 +1599,7 @@ a['cummulative_sales%'] = a.groupby('department_name')['Sales%'].cumsum()
 # MAGIC     )
 # MAGIC WHERE
 # MAGIC     business_day BETWEEN "2023-10-01" AND "2023-12-31"
-# MAGIC     AND department_id BETWEEN 1 AND 13
+# MAGIC     AND department_class_id IN (1, 2)
 # MAGIC     AND ROUND(amount,2) > 0
 # MAGIC     AND quantity > 0
 # MAGIC     AND key = 'rfm'
@@ -1680,16 +1624,16 @@ a['cummulative_sales%'] = a.groupby('department_name')['Sales%'].cumsum()
 # MAGIC       COUNT(DISTINCT product_id) AS products
 # MAGIC   FROM gold.pos_transactions AS t1
 # MAGIC   JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
-# MAGIC   JOIN analytics.customer_segments AS t3 ON t1.customer_id = t3.customer_id
+# MAGIC   -- JOIN analytics.customer_segments AS t3 ON t1.customer_id = t3.customer_id
 # MAGIC   WHERE YEAR(business_day) = 2023
-# MAGIC   AND department_id BETWEEN 1 AND 13
+# MAGIC   AND department_class_id IN (1, 2)
 # MAGIC   AND ROUND(amount,2) > 0
 # MAGIC   AND quantity > 0
-# MAGIC   AND key = 'rfm'
-# MAGIC   AND channel = 'pos'
-# MAGIC   AND t3.country = 'uae'
-# MAGIC   AND month_year = '202312'
-# MAGIC   AND segment = 'VIP'
+# MAGIC   -- AND key = 'rfm'
+# MAGIC   -- AND channel = 'pos'
+# MAGIC   -- AND t3.country = 'uae'
+# MAGIC   -- AND month_year = '202312'
+# MAGIC   -- AND segment = 'VIP'
 # MAGIC   GROUP BY transaction_id
 # MAGIC )
 
@@ -1707,16 +1651,16 @@ a['cummulative_sales%'] = a.groupby('department_name')['Sales%'].cumsum()
 # MAGIC     FROM gold.pos_transactions AS t1
 # MAGIC     JOIN gold.customer_profile AS t2 ON t1.customer_id = t2.account_key
 # MAGIC     JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
-# MAGIC     JOIN analytics.customer_segments AS t4 ON t1.customer_id = t4.customer_id
+# MAGIC     -- JOIN analytics.customer_segments AS t4 ON t1.customer_id = t4.customer_id
 # MAGIC     WHERE YEAR(business_day) = 2023
 # MAGIC     AND t1.mobile IS NOT NULL
 # MAGIC     AND ROUND(amount,2) > 0
 # MAGIC     AND quantity > 0
-# MAGIC     AND department_id BETWEEN 1 AND 13
-# MAGIC     AND key = 'rfm'
-# MAGIC     AND channel = 'pos'
-# MAGIC     AND t4.country = 'uae'
-# MAGIC     AND month_year = '202312'
+# MAGIC     AND department_class_id IN (1, 2)
+# MAGIC     -- AND key = 'rfm'
+# MAGIC     -- AND channel = 'pos'
+# MAGIC     -- AND t4.country = 'uae'
+# MAGIC     -- AND month_year = '202312'
 # MAGIC     -- AND segment = 'Frequentist'
 # MAGIC     AND age BETWEEN 18 AND 80
 # MAGIC )
@@ -1733,7 +1677,7 @@ a['cummulative_sales%'] = a.groupby('department_name')['Sales%'].cumsum()
 # MAGIC AND t1.mobile IS NOT NULL
 # MAGIC AND ROUND(amount,2) > 0
 # MAGIC AND quantity > 0
-# MAGIC AND department_id BETWEEN 1 AND 13
+# MAGIC AND department_class_id IN (1, 2)
 # MAGIC AND key = 'rfm'
 # MAGIC AND channel = 'pos'
 # MAGIC AND t4.country = 'uae'
@@ -1759,7 +1703,7 @@ a['cummulative_sales%'] = a.groupby('department_name')['Sales%'].cumsum()
 # MAGIC WHERE YEAR(business_day) = 2023
 # MAGIC AND ROUND(amount,2) > 0
 # MAGIC AND quantity > 0
-# MAGIC -- AND department_id BETWEEN 1 AND 13
+# MAGIC AND department_class_id IN (1, 2)
 # MAGIC GROUP BY gender
 # MAGIC
 # MAGIC -- In supermarket departments
@@ -1789,7 +1733,7 @@ a['cummulative_sales%'] = a.groupby('department_name')['Sales%'].cumsum()
 # MAGIC WHERE YEAR(business_day) = 2023
 # MAGIC AND ROUND(amount,2) > 0
 # MAGIC AND quantity > 0
-# MAGIC AND department_id BETWEEN 1 AND 13
+# MAGIC AND department_class_id IN (1, 2)
 # MAGIC AND key = 'rfm'
 # MAGIC AND channel = 'pos'
 # MAGIC AND t2.country = 'uae'
@@ -1820,7 +1764,7 @@ a['cummulative_sales%'] = a.groupby('department_name')['Sales%'].cumsum()
 # MAGIC     AND mobile IS NOT NULL
 # MAGIC     AND ROUND(amount,2) > 0
 # MAGIC     AND quantity > 0
-# MAGIC     AND department_id BETWEEN 1 AND 13
+# MAGIC     AND department_class_id IN (1, 2)
 # MAGIC     AND key = 'rfm'
 # MAGIC     AND channel = 'pos'
 # MAGIC     AND t2.country = 'uae'
@@ -1846,7 +1790,7 @@ a['cummulative_sales%'] = a.groupby('department_name')['Sales%'].cumsum()
 # MAGIC     AND t1.mobile IS NOT NULL
 # MAGIC     AND ROUND(amount,2) > 0
 # MAGIC     AND quantity > 0
-# MAGIC     AND department_id BETWEEN 1 AND 13
+# MAGIC     AND department_class_id IN (1, 2)
 # MAGIC     AND key = 'rfm'
 # MAGIC     AND channel = 'pos'
 # MAGIC     AND t2.country = 'uae'
@@ -1882,7 +1826,7 @@ WITH new_products AS (
     WHERE YEAR(business_day) = 2023
     AND ROUND(amount,2) > 0
     AND quantity > 0
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND product_id NOT IN (
         SELECT DISTINCT product_id
         FROM gold.pos_transactions AS t1
@@ -1890,7 +1834,7 @@ WITH new_products AS (
         WHERE YEAR(business_day) = 2022
         AND ROUND(amount,2) > 0
         AND quantity > 0
-        AND department_id BETWEEN 1 AND 13
+        AND department_class_id IN (1, 2)
     )
     GROUP BY department_name
 ),
@@ -1902,7 +1846,7 @@ removed_products AS (
     WHERE YEAR(business_day) = 2022
     AND ROUND(amount,2) > 0
     AND quantity > 0
-    AND department_id BETWEEN 1 AND 13
+    AND department_class_id IN (1, 2)
     AND product_id NOT IN (
         SELECT DISTINCT product_id
         FROM gold.pos_transactions AS t1
@@ -1910,7 +1854,7 @@ removed_products AS (
         WHERE YEAR(business_day) = 2023
         AND ROUND(amount,2) > 0
         AND quantity > 0
-        AND department_id BETWEEN 1 AND 13
+        AND department_class_id IN (1, 2)
     )
     GROUP BY department_name
 )
@@ -1925,8 +1869,8 @@ new_products_df = spark.sql(query).toPandas()
 
 # COMMAND ----------
 
-# 11,064 products added in 2023 (15% of all products) with 4898 being in GROCERY FOOD
-# 9,112 products removed in 2022 (13% of all products) with 3594 being in GROCERY FOOD
+# 11,046 products added in 2023 (15.7% of all products) with 4898 being in GROCERY FOOD
+# 9,102 products removed in 2022 (13.3% of all products) with 3594 being in GROCERY FOOD
 
 # COMMAND ----------
 
@@ -1940,7 +1884,7 @@ JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
 WHERE YEAR(business_day) IN (2022, 2023)
 AND ROUND(amount,2) > 0
 AND quantity > 0
-AND department_id BETWEEN 1 AND 13
+AND department_class_id IN (1, 2)
 GROUP BY year_info, product_id
 """
 
@@ -1992,7 +1936,118 @@ new_products_sales, all_products_sales, new_products_contri
 # MAGIC %sql
 # MAGIC SELECT DISTINCT material_group_id, material_group_name, category_name, department_name
 # MAGIC FROM gold.material_master
-# MAGIC WHERE department_id BETWEEN 1 AND 13
+# MAGIC WHERE department_class_id IN (1, 2)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ##Sandbox Tables - Lapser Prevention Opportunity
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC CREATE OR REPLACE TABLE sandbox.pj_sm_data AS (
+# MAGIC SELECT
+# MAGIC     MONTH(business_day) AS month,
+# MAGIC     customer_id,
+# MAGIC     LHPRDATE,
+# MAGIC     transaction_id,
+# MAGIC     mocd_flag,
+# MAGIC     ROUND(SUM(amount),0) AS sales
+# MAGIC FROM gold.pos_transactions AS t1
+# MAGIC JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
+# MAGIC WHERE business_day BETWEEN "2023-03-01" AND "2024-02-29"
+# MAGIC AND department_id department_class_id IN (1, 2)
+# MAGIC AND amount > 0
+# MAGIC AND quantity > 0
+# MAGIC GROUP BY month, customer_id, LHPRDATE, transaction_id, mocd_flag
+# MAGIC )
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ##Data Numbers - Lapser Prevention Opportunity
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT
+# MAGIC     COUNT(DISTINCT customer_id) AS ss_total,
+# MAGIC     COUNT(DISTINCT CASE WHEN mocd_flag IS NULL THEN customer_id END) AS non_mocd_customers,
+# MAGIC     SUM(sales) AS total_sales,
+# MAGIC     COUNT(DISTINCT transaction_id) AS transactions,
+# MAGIC     COUNT(DISTINCT CASE WHEN mocd_flag = 1 THEN customer_id END) AS mocd_customers,
+# MAGIC     SUM(CASE WHEN mocd_flag = 1 THEN sales ELSE 0 END) AS mocd_sales,
+# MAGIC     COUNT(DISTINCT CASE WHEN mocd_flag = 1 THEN transaction_id END) AS mocd_transactions
+# MAGIC FROM sandbox.pj_sm_data
+# MAGIC WHERE month = 3
+# MAGIC AND LHPRDATE IS NOT NULL
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT
+# MAGIC     COUNT(DISTINCT customer_id) AS new_ss,
+# MAGIC     COUNT(DISTINCT CASE WHEN mocd_flag IS NULL THEN customer_id END) AS new_non_mocd_customers,
+# MAGIC     COUNT(DISTINCT CASE WHEN mocd_flag = 1 THEN customer_id END) AS new_mocd_customers
+# MAGIC FROM sandbox.pj_sm_data
+# MAGIC WHERE month = 2
+# MAGIC AND customer_id NOT IN (
+# MAGIC     SELECT
+# MAGIC         DISTINCT customer_id
+# MAGIC     FROM sandbox.pj_sm_data
+# MAGIC     -- WHERE month = 3
+# MAGIC     -- WHERE month BETWEEN 3 AND 12
+# MAGIC     WHERE month IN (1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+# MAGIC     AND customer_id IS NOT NULL
+# MAGIC )
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT
+# MAGIC     COUNT(DISTINCT customer_id) AS ss_lapsers
+# MAGIC FROM sandbox.pj_sm_data
+# MAGIC WHERE month = 4
+# MAGIC AND customer_id NOT IN (
+# MAGIC     SELECT
+# MAGIC         DISTINCT customer_id
+# MAGIC     FROM sandbox.pj_sm_data
+# MAGIC     -- WHERE month = 3
+# MAGIC     WHERE month BETWEEN 4 AND 9
+# MAGIC     -- WHERE month IN (1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+# MAGIC     AND customer_id IS NOT NULL
+# MAGIC )
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT DISTINCT department_id, department_name
+# MAGIC FROM gold.material_master
+# MAGIC WHERE UPPER(department_class_name) IN ("SUPER MARKET", "FRESH FOOD")
+# MAGIC ORDER BY department_id
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ##PL Contri in SM
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT
+# MAGIC     ROUND(SUM(CASE WHEN brand = 'LULU PRIVATE LABEL' THEN amount ELSE 0 END),0) AS pl_sales,
+# MAGIC     ROUND(SUM(amount),0) AS total_sales,
+# MAGIC     (pl_sales/total_sales) AS pl_contri
+# MAGIC FROM gold.pos_transactions AS t1
+# MAGIC JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
+# MAGIC WHERE business_day BETWEEN "2023-01-01" AND "2023-12-31"
+# MAGIC AND amount > 0
+# MAGIC AND quantity > 0
+# MAGIC AND department_class_id IN (1, 2)
+# MAGIC -- AND UPPER(department_name) IN ('ELECTRICALS', 'COMPUTERS & GAMING', 'MOBILE PHONES', 'ELECTRONICS', 'CONSUMER ELECTRONICS ACCESSORIES')
+# MAGIC -- AND UPPER(department_name) IN ('FASHION JEWELLERY & ACCESSORIES', 'FASHION LIFESTYLE', 'FASHION RETAIL', 'FOOTWEAR', 'LADIES BAGS & ACCESSORIES', 'TEXTILES')
+# MAGIC -- AND UPPER(category_name) IN ('TABLEWARE', 'KITCHENWARE')
 
 # COMMAND ----------
 
@@ -2001,3 +2056,29 @@ new_products_sales, all_products_sales, new_products_contri
 # COMMAND ----------
 
 
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT
+# MAGIC     department_id,
+# MAGIC     COUNT(DISTINCT category_id)
+# MAGIC FROM gold.material_master AS t1
+# MAGIC JOIN gold.pos_transactions AS t2 ON t1.material_id = t2.product_id
+# MAGIC WHERE department_id = 40
+# MAGIC AND amount > 0
+# MAGIC AND quantity > 0
+# MAGIC AND YEAR(business_day) = 2023
+# MAGIC GROUP BY department_id
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT department_id, department_name, COUNT(DISTINCT category_id)
+# MAGIC FROM gold.material_master AS t1
+# MAGIC JOIN gold.pos_transactions AS t2 ON t1.material_id = t2.product_id
+# MAGIC WHERE YEAR(business_day) = 2023
+# MAGIC AND amount > 0
+# MAGIC AND quantity > 0
+# MAGIC AND department_class_name IN ('SUPER MARKET', 'FRESH FOOD')
+# MAGIC GROUP BY department_id, department_name

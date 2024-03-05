@@ -5,6 +5,14 @@
 # COMMAND ----------
 
 # MAGIC %md
+# MAGIC <b>Sandbox Requirements:</b>
+# MAGIC 1. mobile<br>
+# MAGIC 2. card_key<br>
+# MAGIC 3. (variable of interest - atv/frequency/recency)
+
+# COMMAND ----------
+
+# MAGIC %md
 # MAGIC
 # MAGIC ## Intializations for Spark
 
@@ -55,6 +63,16 @@ sdf = spark.sql(f"select * from {sandbox_name}") ######## Parameter-1
 
 df = sdf.toPandas()
 df.shape
+
+# COMMAND ----------
+
+df.head()
+
+# COMMAND ----------
+
+df = df.dropna(subset=['card_key'])
+df['card_key'] = df['card_key'].astype('int64')
+df['card_key'] = df['card_key'].astype('object')
 
 # COMMAND ----------
 
@@ -139,8 +157,8 @@ else:
 
 print("Test data shape:", test_data.shape)
 print("Control data shape:", control_data.shape)
-print("Test data mean ATV", test_data.atv.mean())
-print("Control data mean ATV", control_data.atv.mean())
+print("Test data mean ATV", test_data[variable_of_interest].mean())
+print("Control data mean ATV", control_data[variable_of_interest].mean())
 
 # COMMAND ----------
 

@@ -18,18 +18,23 @@
 
 # COMMAND ----------
 
-gp_path = "/dbfs/FileStore/shared_uploads/prem@loyalytics.in/gp_report_water.csv"
+gp_report_3months_path = "/dbfs/FileStore/shared_uploads/prem@loyalytics.in/gp_report_confectionery_3m.csv"
+gp_report_12months_path = "/dbfs/FileStore/shared_uploads/prem@loyalytics.in/gp_report_confectionery_12m.csv"
+
+gp_12months_values_save_path = "/dbfs/FileStore/shared_uploads/prem@loyalytics.in/ao_gp_confectionery.csv"
+weekly_data_save_path = "/dbfs/FileStore/shared_uploads/prem@loyalytics.in/ao_products_weekly_data_confectionery.csv"
+cust_save_path = "/dbfs/FileStore/shared_uploads/prem@loyalytics.in/ao_cust_confectionery.csv"
 
 # Please make sure that the date range is EXACTLY 52 weeks (364 days) long, and does not include the present day's date
-start_date = "2023-01-01"
-end_date = "2023-12-30"
+start_date = "2023-02-01"
+end_date = "2024-01-30"
 
 LOOKALIKES_START_DATE = "2022-01-30"
 # This must be minimum 30 days after the earliest date available in the source table
 # The end date will be the same as the end date of rolling 52 weeks period
 # The day of the week should be the same as the day of the above start_date
 
-category = "WATER"
+category = "CONFECTIONERY"
 
 currently_selling_range = 51 # <specified value> to 52nd week will be categorized as 'Currently selling'
 low_no_supply_range = 44 # <specified value> to <currently_selling_range - 1> week will be categorized as 'Low/no supply'
@@ -38,7 +43,7 @@ low_no_supply_range = 44 # <specified value> to <currently_selling_range - 1> we
 sales_weightage = 50 # (% format) Weightage for sales contribution
 quantity_weightage = 100 - sales_weightage
 
-new_sku_date_range = 6 # Products launched in the last 6 months will be taken as new SKUs
+new_sku_date_range = 6 # Products launched in the last [X] months will be taken as new SKUs
 
 delist_contri_threshold = 0.03 # (% format) Contribution threshold for 'Low' contribution category to be categorized as Delist
 delist_product_count = 15 # (% format) Product count threshold for 'Low' contribution category that can be categorized as Delist
@@ -65,32 +70,32 @@ import numpy as np
 
 # COMMAND ----------
 
-# # Gathering weekly data of all materials that have had a sale in the last 52 weeks
+# Gathering weekly data of all materials that have had a sale in the last 52 weeks
 
-# query = f"""
-# WITH 52_weeks AS (SELECT material_id,
-#                          business_day,
-#                          ROUND(SUM(amount),0) AS sales,
-#                          ROUND(SUM(quantity),0) AS quantity_sold
-#                   FROM gold.pos_transactions AS t1
-#                   JOIN gold.material_master AS t2
-#                   ON t1.product_id = t2.material_id
-#                   WHERE business_day BETWEEN '{start_date}' AND '{end_date}'
-#                   AND category_name = '{category}'
-#                   AND ROUND(amount,0) > 0
-#                   AND quantity > 0
-#                   GROUP BY material_id, business_day)
+query = f"""
+WITH 52_weeks AS (SELECT material_id,
+                         business_day,
+                         ROUND(SUM(amount),0) AS sales,
+                         ROUND(SUM(quantity),0) AS quantity_sold
+                  FROM gold.pos_transactions AS t1
+                  JOIN gold.material_master AS t2
+                  ON t1.product_id = t2.material_id
+                  WHERE business_day BETWEEN '{start_date}' AND '{end_date}'
+                  AND category_name = '{category}'
+                  AND ROUND(amount,0) > 0
+                  AND quantity > 0
+                  GROUP BY material_id, business_day)
 
-# SELECT material_id,
-#         FLOOR(DATEDIFF(business_day, '{start_date}') / 7) + 1 AS week_number,
-#         SUM(sales) AS total_sales,
-#         SUM(quantity_sold) AS total_quantity_sold
-# FROM 52_weeks
-# GROUP BY material_id, week_number
-# ORDER BY material_id, week_number
-# """
+SELECT material_id,
+        FLOOR(DATEDIFF(business_day, '{start_date}') / 7) + 1 AS week_number,
+        SUM(sales) AS total_sales,
+        SUM(quantity_sold) AS total_quantity_sold
+FROM 52_weeks
+GROUP BY material_id, week_number
+ORDER BY material_id, week_number
+"""
 
-# weeks52 = spark.sql(query).toPandas()
+weeks52 = spark.sql(query).toPandas()
 
 # COMMAND ----------
 
@@ -99,7 +104,7 @@ import numpy as np
 
 # COMMAND ----------
 
-df = spark.sql("SELECT * FROM sandbox.pj_AO_52_weeks").toPandas().sort_values(by=['material_id', 'week_number']).reset_index(drop = True)
+df = weeks52.copy()
 
 # COMMAND ----------
 
@@ -170,18 +175,6 @@ df = df.drop(columns = ['CONTRI_sales_and_quantity2'])
 
 # COMMAND ----------
 
-# # Categorise the SKUs into 3 categories based on their cummulative contribution
-
-# top_contri_threshold = 0.7 # Threshold for products with top cumulative contribution to be categorized as 'Top'
-# middle_contri_threshold = 0.29 # Threshold for products with middle cumulative contribution to be categorized as 'Middle'
-# # Leftover percentage will be categorized as 'Low'
-
-# bins = [0, top_contri_threshold, top_contri_threshold + middle_contri_threshold, float('inf')]
-# labels = ['Top', 'Middle', 'Low']
-# df['final_contri'] = pd.cut(df['cumulative_contri'], bins=bins, labels=labels, include_lowest=True)
-
-# COMMAND ----------
-
 # Categorise the SKUs into 3 categories based on deciles
 
 no_contri_df = df[df['CONTRI_sales_and_quantity'] == 0].reset_index(drop=True)
@@ -203,34 +196,34 @@ df = df.sort_values(by=['material_id','week_number']).reset_index(drop = True)
 
 # COMMAND ----------
 
-# # Gathering weekly data of all materials that have had a sale 1 month after the earliest sales data available in gold.pos_transactions
+# Gathering weekly data of all materials that have had a sale 1 month after the earliest sales data available in gold.pos_transactions
 
-# query = f"""
-# WITH all_weeks AS (SELECT material_id,
-#                     business_day,
-#                     ROUND(SUM(amount),0) AS sales, ROUND(SUM(quantity),0) AS quantity_sold
-#             FROM gold.pos_transactions AS t1
-#             JOIN gold.material_master AS t2
-#             ON t1.product_id = t2.material_id
-#             WHERE business_day BETWEEN '{LOOKALIKES_START_DATE}' AND '{end_date}'
-#             AND category_name = '{category}'
-#             AND ROUND(amount,0) > 0
-#             AND quantity > 0
-#             GROUP BY material_id, business_day)
+query = f"""
+WITH all_weeks AS (SELECT material_id,
+                    business_day,
+                    ROUND(SUM(amount),0) AS sales, ROUND(SUM(quantity),0) AS quantity_sold
+            FROM gold.pos_transactions AS t1
+            JOIN gold.material_master AS t2
+            ON t1.product_id = t2.material_id
+            WHERE business_day BETWEEN '{LOOKALIKES_START_DATE}' AND '{end_date}'
+            AND category_name = '{category}'
+            AND ROUND(amount,0) > 0
+            AND quantity > 0
+            GROUP BY material_id, business_day)
 
-# SELECT material_id,
-#         FLOOR(DATEDIFF(business_day, '{LOOKALIKES_START_DATE}') / 7) + 1 AS week_number,
-#         SUM(sales) AS total_sales, SUM(quantity_sold) AS total_quantity_sold
-# FROM all_weeks
-# GROUP BY material_id, week_number
-# ORDER BY material_id, week_number
-# """
+SELECT material_id,
+        FLOOR(DATEDIFF(business_day, '{LOOKALIKES_START_DATE}') / 7) + 1 AS week_number,
+        SUM(sales) AS total_sales, SUM(quantity_sold) AS total_quantity_sold
+FROM all_weeks
+GROUP BY material_id, week_number
+ORDER BY material_id, week_number
+"""
 
-# all_weeks = spark.sql(query).toPandas()
+all_weeks = spark.sql(query).toPandas()
 
 # COMMAND ----------
 
-df2 = spark.sql("SELECT * FROM sandbox.pj_AO_all_weeks").toPandas().sort_values(by=['material_id', 'week_number']).reset_index(drop = True)
+df2 = all_weeks.copy()
 
 # COMMAND ----------
 
@@ -595,44 +588,44 @@ median_growth_middle_sku = avg_growth_middle_sku[len(avg_growth_middle_sku)//2]
 
 # COMMAND ----------
 
-# # Gathering data for number of stores where each product was sold in the last 12 weeks period
+# Gathering data for number of stores where each product was sold in the last 12 weeks period
 
-# query = f"""
-# SELECT material_id, COUNT(DISTINCT store_id) AS num_stores
-# FROM gold.pos_transactions AS t1
-# JOIN gold.material_master AS t2
-# ON t1.product_id = t2.material_id
-# WHERE business_day BETWEEN DATE_ADD('{start_date}', 280) AND '{end_date}'
-# AND category_name = '{category}'
-# AND ROUND(amount,0) > 0
-# AND quantity > 0
-# GROUP BY material_id
-# ORDER BY material_id
-# """
+query = f"""
+SELECT material_id, COUNT(DISTINCT store_id) AS num_stores
+FROM gold.pos_transactions AS t1
+JOIN gold.material_master AS t2
+ON t1.product_id = t2.material_id
+WHERE business_day BETWEEN DATE_ADD('{start_date}', 280) AND '{end_date}'
+AND category_name = '{category}'
+AND ROUND(amount,0) > 0
+AND quantity > 0
+GROUP BY material_id
+ORDER BY material_id
+"""
 
-# store_pnt = spark.sql(query).toPandas()
-
-# COMMAND ----------
-
-# # Calculating the total number of stores where a sale was made in the last 12 weeks
-
-# query = f"""
-# SELECT COUNT(DISTINCT store_id) AS total_stores
-# FROM gold.pos_transactions AS t1
-# JOIN gold.material_master AS t2
-# ON t1.product_id = t2.material_id
-# WHERE business_day BETWEEN DATE_ADD('{start_date}', 280) AND '{end_date}'
-# AND category_name = '{category}'
-# AND ROUND(amount,0) > 0
-# AND quantity > 0
-# """
-
-# total_store_count = spark.sql(query).toPandas()
+store_pnt = spark.sql(query).toPandas()
 
 # COMMAND ----------
 
-store_counts = spark.sql("SELECT * FROM sandbox.pj_AO_products_store_count").toPandas().sort_values(by = 'material_id').reset_index(drop=True)
-total_stores = spark.sql("SELECT * FROM sandbox.pj_AO_total_store_count").toPandas().values[0,0]
+# Calculating the total number of stores where a sale was made in the last 12 weeks
+
+query = f"""
+SELECT COUNT(DISTINCT store_id) AS total_stores
+FROM gold.pos_transactions AS t1
+JOIN gold.material_master AS t2
+ON t1.product_id = t2.material_id
+WHERE business_day BETWEEN DATE_ADD('{start_date}', 280) AND '{end_date}'
+AND category_name = '{category}'
+AND ROUND(amount,0) > 0
+AND quantity > 0
+"""
+
+total_store_count = spark.sql(query).toPandas()
+
+# COMMAND ----------
+
+store_counts = store_pnt.copy()
+total_stores = total_store_count.iloc[0,0]
 
 # COMMAND ----------
 
@@ -679,6 +672,9 @@ for i in range(len(materials)):
     elif (avg_weekly_growth[i] >= median_growth_middle_sku) & (category_SD_last[i] == 'Low/no supply') & (category_store_pnt[i] == 'High'):
         buckets.append('Observe')
     
+    elif (avg_weekly_growth[i] >= median_growth_middle_sku) & (category_SD_last[i] == 'Low/no supply') & (category_store_pnt[i] != 'High'): # New Rule For Confectionery
+        buckets.append('Observe')
+
     elif (avg_weekly_growth[i] < median_growth_middle_sku):
         buckets.append('Observe')
     
@@ -802,52 +798,6 @@ else:
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ##GP & Sales of 6 Months
-
-# COMMAND ----------
-
-# %sql
-# DROP TABLE IF EXISTS sandbox.pj_ao_6_months_sales;
-
-# CREATE TABLE sandbox.pj_ao_6_months_sales AS (
-#   SELECT region_name, material_id, MONTH(business_day) AS month_year, ROUND(SUM(amount),0) AS total_sales
-#   FROM gold.store_master AS t1
-#   JOIN gold.pos_transactions AS t2
-#   ON t1.store_id = t2.store_id
-#   JOIN gold.material_master AS t3
-#   ON t2.product_id = t3.material_id
-#   WHERE category_name = 'WATER'
-#   AND business_day BETWEEN "2023-07-01" AND "2023-09-30"
-#   AND ROUND(amount) > 0
-#   AND quantity > 0
-#   GROUP BY region_name, material_id, month_year
-#   ORDER BY region_name, material_id, month_year
-# )
-
-# COMMAND ----------
-
-# df_6_months = spark.sql("SELECT * FROM sandbox.pj_ao_6_months_sales").toPandas()
-
-# COMMAND ----------
-
-# gp_report_6_months = pd.read_csv("/dbfs/FileStore/shared_uploads/prem@loyalytics.in/gp_report_water_6_months.csv")
-# gp_report_6_months.rename(columns={'GP with ChargeBack & Bin Promo (%)': 'gp_perc'}, inplace=True)
-# gp_report_6_months['month_year'] = gp_report_6_months['month_year'].replace(['Jul-23', 'Aug-23', 'Sep-23'], [7, 8, 9])
-
-# COMMAND ----------
-
-# df_6_months['region_name'] = df_6_months['region_name'].replace(['ABU DHABI', 'AL AIN', 'DUBAI', 'SHARJAH'], ['AUH', 'ALN', 'DXB', 'SHJ'])
-
-# df_6_months = pd.merge(df_6_months, gp_report_6_months, how = 'left', on = ['region_name', 'material_id', 'month_year'], suffixes=('', '2'))
-
-# COMMAND ----------
-
-# df_6_months['gp_value'] = df_6_months['gp_perc'] * df_6_months['total_sales'] / 100
-# df_6_months = df_6_months.groupby('material_id')['gp_value'].sum().reset_index()
-
-# COMMAND ----------
-
-# MAGIC %md
 # MAGIC ##Step 22 - GP Contribution
 
 # COMMAND ----------
@@ -861,7 +811,7 @@ else:
 
 # COMMAND ----------
 
-gp_report = pd.read_csv(gp_path)
+gp_report = pd.read_csv(gp_report_3months_path)
 gp_report = gp_report.sort_values(by = 'material_id').reset_index(drop = True)
 gp_report.rename(columns={'GP with ChargeBack & Bin Promo (%)': 'gp_perc'}, inplace=True)
 
@@ -884,9 +834,6 @@ total_sales_12weeks = df[df['week_number'] >= 41].groupby('material_id')['total_
 
 gp_report['gp_value'] = gp_report['gp_perc'] * total_sales_12weeks['total_sales']/100
 gp_report['gp_value'] = gp_report['gp_value'].fillna(0)
-# gp_report = pd.merge(df_6_months, gp_report, on='material_id', how='outer', suffixes=('', '2'))
-# gp_report['gp_value'] = gp_report['gp_value'].fillna(0)
-# gp_report['gp_value'] = gp_report['gp_value'] + gp_report['gp_value2']
 gp_report['gp_value_positives'] = gp_report['gp_value'].apply(lambda x: max(0, x)) # Replace negative values with 0
 gp_report = gp_report.drop(columns = ['gp_perc'])
 gp_report = gp_report.sort_values(by='material_id').reset_index(drop = True)
@@ -1054,32 +1001,29 @@ df1.createOrReplaceTempView('private_labels')
 
 # # Gathering weekly data of all materials with respect to the stores they had sales during the rolling 52 weeks
 
-# query = """
+# query = f"""
 # WITH cwd AS (SELECT material_id, business_day, store_id,
 #                           ROUND(SUM(amount),0) AS sales
 #             FROM gold.pos_transactions AS t1
 #             JOIN gold.material_master AS t2
 #             ON t1.product_id = t2.material_id
-#             WHERE business_day BETWEEN '{}' AND '{}'
-#             AND category_name = '{}'
+#             WHERE business_day BETWEEN '{start_date}' AND '{end_date}'
+#             AND category_name = '{category}'
 #             AND ROUND(amount,0) > 0
 #             AND quantity > 0
-#             GROUP BY material_id, business_day, store_id),
-
-# min_date_cte AS (SELECT MIN(business_day) AS min_business_day
-#                 FROM cwd)
+#             GROUP BY material_id, business_day, store_id)
 
 # SELECT material_id,
-#         FLOOR(DATEDIFF(business_day, min_business_day) / 7) + 1 AS week_number,
+#         FLOOR(DATEDIFF(business_day, '{start_date}') / 7) + 1 AS week_number,
 #         store_id,
 #         SUM(sales) AS total_sales
-# FROM cwd, min_date_cte
+# FROM cwd
 # GROUP BY week_number, material_id, store_id
 # ORDER BY week_number, material_id, store_id
-# """.format(start_date, end_date, category)
+# """
 
 # material_store_df = spark.sql(query).toPandas()
-# material_store_df.to_csv('/dbfs/FileStore/shared_uploads/prem@loyalytics.in/ao_material_store_data.csv', index = False)
+# material_store_df.to_csv('/dbfs/FileStore/shared_uploads/prem@loyalytics.in/ao_material_store_data_confectionery.csv', index = False)
 
 # COMMAND ----------
 
@@ -1104,7 +1048,7 @@ df1.createOrReplaceTempView('private_labels')
 
 # # Gathering customer counts of all materials in the rolling 52 weeks period
 
-# query = """
+# query = f"""
 # WITH total_cust AS (SELECT COUNT(DISTINCT t3.customer_id) AS tot_cust,
 #                             COUNT(DISTINCT CASE WHEN segment = 'VIP' THEN t3.customer_id END) AS tot_vip,
 #                             COUNT(DISTINCT CASE WHEN segment = 'Frequentist' THEN t3.customer_id END) AS tot_freq
@@ -1113,11 +1057,11 @@ df1.createOrReplaceTempView('private_labels')
 #                     ON t1.product_id = t2.material_id
 #                     JOIN analytics.customer_segments AS t3
 #                     ON t1.customer_id = t3.customer_id
-#                     WHERE business_day BETWEEN '{}' AND '{}'
-#                     AND category_name = '{}'
+#                     WHERE business_day BETWEEN '{start_date}' AND '{end_date}'
+#                     AND category_name = '{category}'
 #                     AND ROUND(amount,0) > 0
 #                     AND quantity > 0
-#                     AND month_year = '202312'
+#                     AND month_year = '202401'
 #                     AND t3.country = 'uae'
 #                     AND key = 'rfm'
 #                     AND channel = 'pos'
@@ -1136,20 +1080,20 @@ df1.createOrReplaceTempView('private_labels')
 # ON t1.product_id = t2.material_id
 # JOIN analytics.customer_segments AS t3
 # ON t1.customer_id = t3.customer_id
-# WHERE business_day BETWEEN '{}' AND '{}'
-# AND category_name = '{}'
+# WHERE business_day BETWEEN '{start_date}' AND '{end_date}'
+# AND category_name = '{category}'
 # AND ROUND(amount,0) > 0
 # AND quantity > 0
-# AND month_year = '202312'
+# AND month_year = '202401'
 # AND t3.country = 'uae'
 # AND key = 'rfm'
 # AND channel = 'pos'
 # GROUP BY material_id, material_name, tot_cust, tot_vip, tot_freq
 # ORDER BY material_id
-# """.format(start_date, end_date, category, start_date, end_date, category)
+# """
 
 # cust = spark.sql(query).toPandas()
-# cust.to_csv('/dbfs/FileStore/shared_uploads/prem@loyalytics.in/ao_cust.csv', index = False)
+# cust.to_csv(cust_save_path, index = False)
 
 # COMMAND ----------
 
@@ -1161,94 +1105,51 @@ df1.createOrReplaceTempView('private_labels')
 # weekly_data = pd.merge(weeks52, cwd_df, on=['material_id', 'week_number'], how = 'inner')
 # weekly_data = weekly_data.drop(columns = 'total_sales')
 
-# weekly_data.to_csv('/dbfs/FileStore/shared_uploads/prem@loyalytics.in/ao_products_weekly_data.csv', index = False)
+# weekly_data.to_csv(weekly_data_save_path, index = False)
 
 # COMMAND ----------
 
-# %sql
-# DROP TABLE IF EXISTS sandbox.pj_ao_12_months_sales;
-
-# CREATE TABLE sandbox.pj_ao_12_months_sales AS (
-#   SELECT region_name, material_id, MONTH(business_day) AS month_year, ROUND(SUM(amount),0) AS total_sales
-#   FROM gold.store_master AS t1
-#   JOIN gold.pos_transactions AS t2
-#   ON t1.store_id = t2.store_id
-#   JOIN gold.material_master AS t3
-#   ON t2.product_id = t3.material_id
-#   WHERE category_name = 'WATER'
-#   AND business_day BETWEEN "2023-01-01" AND "2023-09-30"
-#   AND ROUND(amount) > 0
-#   AND quantity > 0
-#   GROUP BY region_name, material_id, month_year
-#   ORDER BY region_name, material_id, month_year
-# )
+gp_report_12m = pd.read_csv(gp_report_12months_path)
+gp_report_12m = gp_report_12m.sort_values(by = 'material_id').reset_index(drop = True)
+gp_report_12m.rename(columns={'GP with ChargeBack & Bin Promo (%)': 'gp_perc'}, inplace=True)
 
 # COMMAND ----------
 
-df_12_months = spark.sql("SELECT * FROM sandbox.pj_ao_12_months_sales").toPandas()
-
-# COMMAND ----------
-
-gp_report_12_months = pd.read_csv("/dbfs/FileStore/shared_uploads/prem@loyalytics.in/gp_report_water_12_months.csv")
-gp_report_12_months.rename(columns={'GP with ChargeBack & Bin Promo (%)': 'gp_perc'}, inplace=True)
-gp_report_12_months['month_year'] = gp_report_12_months['month_year'].replace(['Jan-23', 'Feb-23', 'Mar-23', 'Apr-23', 'May-23', 'Jun-23', 'Jul-23', 'Aug-23', 'Sep-23'], [1, 2, 3, 4, 5, 6, 7, 8, 9])
-
-# COMMAND ----------
-
-df_12_months['region_name'] = df_12_months['region_name'].replace(['ABU DHABI', 'AL AIN', 'DUBAI', 'SHARJAH'], ['AUH', 'ALN', 'DXB', 'SHJ'])
-
-df_12_months = pd.merge(df_12_months, gp_report_12_months, how = 'left', on = ['region_name', 'material_id', 'month_year'], suffixes=('', '2'))
-
-# COMMAND ----------
-
-df_12_months['gp_value'] = df_12_months['gp_perc'] * df_12_months['total_sales'] / 100
-df_12_months = df_12_months.groupby('material_id')['gp_value'].sum().reset_index()
-
-# COMMAND ----------
-
-temp = pd.read_csv("/dbfs/FileStore/shared_uploads/prem@loyalytics.in/gp_report_water.csv")
-temp = temp.sort_values(by = 'material_id').reset_index(drop = True)
-temp.rename(columns={'GP with ChargeBack & Bin Promo (%)': 'gp_perc'}, inplace=True)
-
-# COMMAND ----------
-
-# Add the extra materials from the rolling 52 weeks period into the gp_report and set their GP as 0
+# Add the extra materials from the rolling 52 weeks period into the gp_report_12m and set their GP as 0
 # This is because they had no sales in the last 12 weeks period
 
-materials_to_add = pd.merge(df['material_id'].drop_duplicates(), temp['material_id'].drop_duplicates(), on='material_id', how='left', indicator=True).query('_merge == "left_only"').drop('_merge', axis=1).reset_index(drop=True)
+materials_to_add = pd.merge(df['material_id'].drop_duplicates(), gp_report_12m['material_id'].drop_duplicates(), on='material_id', how='left', indicator=True).query('_merge == "left_only"').drop('_merge', axis=1).reset_index(drop=True)
 
 materials_to_add['gp_perc'] = 0
 
-temp = pd.concat([temp, materials_to_add], ignore_index=True)
+gp_report_12m = pd.concat([gp_report_12m, materials_to_add], ignore_index=True)
 
 # COMMAND ----------
 
 # Calculate the GP value
 
-total_sales_12weeks = df[df['week_number'] >= 41].groupby('material_id')['total_sales'].sum().reset_index()
+total_sales = df.groupby('material_id')['total_sales'].sum().reset_index()
 
-temp['gp_value'] = temp['gp_perc'] * total_sales_12weeks['total_sales']/100
-temp['gp_value'] = temp['gp_value'].fillna(0)
-df_12_months = pd.merge(df_12_months, temp, on='material_id', how='outer', suffixes=('', '2'))
-df_12_months['gp_value'] = df_12_months['gp_value'].fillna(0)
-df_12_months['gp_value'] = df_12_months['gp_value'] + df_12_months['gp_value2']
-df_12_months['gp_value_positives'] = df_12_months['gp_value'].apply(lambda x: max(0, x)) # Replace negative values with 0
-df_12_months = df_12_months.drop(columns = ['gp_perc', 'gp_value2'])
-df_12_months = df_12_months.sort_values(by='material_id').reset_index(drop = True)
+gp_report_12m = pd.merge(gp_report_12m, total_sales, on='material_id', how='inner')
+gp_report_12m['gp_value'] = gp_report_12m['gp_perc'] * gp_report_12m['total_sales']/100
+gp_report_12m['gp_value'] = gp_report_12m['gp_value'].fillna(0)
+gp_report_12m['gp_value_positives'] = gp_report_12m['gp_value'].apply(lambda x: max(0, x)) # Replace negative values with 0
+gp_report_12m = gp_report_12m.drop(columns = ['gp_perc', 'total_sales'])
+gp_report_12m = gp_report_12m.sort_values(by='material_id').reset_index(drop = True)
 
 # COMMAND ----------
 
 # Calculate the GP contribution
 
-total_gp_value = df_12_months['gp_value_positives'].sum()
-df_12_months['gp_contri'] = df_12_months['gp_value_positives'] / total_gp_value
+total_gp_value = gp_report_12m['gp_value_positives'].sum()
+gp_report_12m['gp_contri'] = gp_report_12m['gp_value_positives'] / total_gp_value
 
 # COMMAND ----------
 
-# df_12_months = pd.merge(df_12_months, all_products_catg, on='material_id', how = 'inner')
+# gp_report_12m = pd.merge(gp_report_12m, all_products_catg, on='material_id', how = 'inner')
 
-# df_12_months.rename(columns={'gp_value': 'GP'}, inplace=True)
-# df_12_months[['material_id', 'GP', 'gp_value_positives', 'gp_contri', 'new_buckets']].to_csv('/dbfs/FileStore/shared_uploads/prem@loyalytics.in/ao_gp.csv', index = False)
+# gp_report_12m.rename(columns={'gp_value': 'GP'}, inplace=True)
+# gp_report_12m.to_csv(gp_12months_values_save_path, index = False)
 
 # COMMAND ----------
 
@@ -1361,15 +1262,3 @@ new_rule_df2[(new_rule_df2['gp_rank_Q4'] <= 15) & (new_rule_df2['sales_growth_Q4
 # p = pd.merge(p, gp_report[['material_id', 'category_contri']], on='material_id', how='left')
 # print(median_growth_low_sku)
 # p[p['new_buckets'] == 'Delist']
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
-
