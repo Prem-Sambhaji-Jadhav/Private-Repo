@@ -55,7 +55,6 @@ dbutils.widgets.text(name='folder_path', defaultValue='null')
 
 # COMMAND ----------
 
-### assuming we are running a campaign on all vips
 sandbox_name = dbutils.widgets.get('sandbox_table_name')
 sdf = spark.sql(f"select * from {sandbox_name}") ######## Parameter-1
 
@@ -66,11 +65,19 @@ df.shape
 
 # COMMAND ----------
 
-df.head()
+df = df.dropna(subset=['card_key', 'mobile'])
+df = df.drop_duplicates(subset=['mobile'], keep = 'first', ignore_index=True)
 
 # COMMAND ----------
 
-df = df.dropna(subset=['card_key'])
+df.nunique()
+
+# COMMAND ----------
+
+df.info()
+
+# COMMAND ----------
+
 df['card_key'] = df['card_key'].astype('int64')
 df['card_key'] = df['card_key'].astype('object')
 
@@ -177,17 +184,14 @@ control_data.display()
 
 # MAGIC %md
 # MAGIC ##Write CSV to DBFS
+# MAGIC Please comment the below code block at all times when its not being used. This is to avoid running the code and rewritting existing files in the directory by mistake.
 
 # COMMAND ----------
 
-# directory = dbutils.widgets.get('folder_path')  ######## Parameter-9
+directory = dbutils.widgets.get('folder_path')  ######## Parameter-9
 
-# test_data[['mobile']].to_csv(directory + 'test_mobile.csv' , sep = '|', index = False)
+test_data[['mobile']].to_csv(directory + 'test_mobile.csv' , sep = '|', index = False)
 
-# test_data[['mobile', 'card_key']].to_csv(directory + 'test_cardkey.csv' , sep = '|', index = False)
+test_data[['mobile', 'card_key']].to_csv(directory + 'test_cardkey.csv' , sep = '|', index = False)
 
-# control_data[['mobile']].to_csv(directory + 'control_mobile.csv' , sep = '|', index = False)
-
-# COMMAND ----------
-
-
+control_data[['mobile']].to_csv(directory + 'control_mobile.csv' , sep = '|', index = False)

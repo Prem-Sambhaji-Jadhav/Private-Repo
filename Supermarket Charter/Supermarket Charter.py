@@ -1457,6 +1457,34 @@ catg_df2[['Region', 'department_name', 'category_id', 'category_name', 'Measures
 # COMMAND ----------
 
 # MAGIC %sql
+# MAGIC SELECT
+# MAGIC     COUNT(DISTINCT t1.customer_id) AS Loyalty_Customers
+# MAGIC FROM gold.pos_transactions AS t1
+# MAGIC JOIN gold.customer_profile AS t2 ON t1.customer_id = t2.account_key
+# MAGIC JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
+# MAGIC WHERE YEAR(business_day) IN (2023)
+# MAGIC AND LHRDATE IS NOT NULL
+# MAGIC AND department_class_id IN (1, 2)
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT
+# MAGIC     COUNT(DISTINCT t1.customer_id) AS VIP_Customers
+# MAGIC FROM gold.pos_transactions AS t1
+# MAGIC -- JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
+# MAGIC JOIN analytics.customer_segments AS t4 ON t1.customer_id = t4.customer_id
+# MAGIC WHERE YEAR(business_day) IN (2023)
+# MAGIC -- AND department_class_id IN (1, 2)
+# MAGIC AND key = 'rfm'
+# MAGIC AND channel = 'pos'
+# MAGIC AND t4.country = 'uae'
+# MAGIC AND month_year IN ('202402')
+# MAGIC AND segment = "VIP"
+
+# COMMAND ----------
+
+# MAGIC %sql
 # MAGIC WITH cte AS (
 # MAGIC     SELECT
 # MAGIC         mobile,
@@ -1957,7 +1985,7 @@ new_products_sales, all_products_sales, new_products_contri
 # MAGIC FROM gold.pos_transactions AS t1
 # MAGIC JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
 # MAGIC WHERE business_day BETWEEN "2023-03-01" AND "2024-02-29"
-# MAGIC AND department_id department_class_id IN (1, 2)
+# MAGIC AND department_class_id IN (1, 2)
 # MAGIC AND amount > 0
 # MAGIC AND quantity > 0
 # MAGIC GROUP BY month, customer_id, LHPRDATE, transaction_id, mocd_flag
@@ -1991,14 +2019,14 @@ new_products_sales, all_products_sales, new_products_contri
 # MAGIC     COUNT(DISTINCT CASE WHEN mocd_flag IS NULL THEN customer_id END) AS new_non_mocd_customers,
 # MAGIC     COUNT(DISTINCT CASE WHEN mocd_flag = 1 THEN customer_id END) AS new_mocd_customers
 # MAGIC FROM sandbox.pj_sm_data
-# MAGIC WHERE month = 2
+# MAGIC WHERE month = 4
 # MAGIC AND customer_id NOT IN (
 # MAGIC     SELECT
 # MAGIC         DISTINCT customer_id
 # MAGIC     FROM sandbox.pj_sm_data
-# MAGIC     -- WHERE month = 3
+# MAGIC     WHERE month = 3
 # MAGIC     -- WHERE month BETWEEN 3 AND 12
-# MAGIC     WHERE month IN (1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+# MAGIC     -- WHERE month IN (1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
 # MAGIC     AND customer_id IS NOT NULL
 # MAGIC )
 
@@ -2018,14 +2046,6 @@ new_products_sales, all_products_sales, new_products_contri
 # MAGIC     -- WHERE month IN (1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
 # MAGIC     AND customer_id IS NOT NULL
 # MAGIC )
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC SELECT DISTINCT department_id, department_name
-# MAGIC FROM gold.material_master
-# MAGIC WHERE UPPER(department_class_name) IN ("SUPER MARKET", "FRESH FOOD")
-# MAGIC ORDER BY department_id
 
 # COMMAND ----------
 
@@ -2082,3 +2102,40 @@ new_products_sales, all_products_sales, new_products_contri
 # MAGIC AND quantity > 0
 # MAGIC AND department_class_name IN ('SUPER MARKET', 'FRESH FOOD')
 # MAGIC GROUP BY department_id, department_name
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ##Material Group Level ATV
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT
+# MAGIC     material_group_name,
+# MAGIC     ROUND(SUM(amount),0) AS Sales,
+# MAGIC     COUNT(DISTINCT transaction_id) AS Transactions,
+# MAGIC     ROUND(Sales/Transactions,2) AS ATV
+# MAGIC FROM gold.pos_transactions AS t1
+# MAGIC JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
+# MAGIC WHERE YEAR(business_day) IN (2023)
+# MAGIC AND department_class_id IN (1, 2)
+# MAGIC AND ROUND(amount,2) > 0
+# MAGIC AND quantity > 0
+# MAGIC GROUP BY material_group_name
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+

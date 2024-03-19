@@ -6,7 +6,7 @@
 
 -- %py
 
--- df1 = spark.read.format("csv").option("header", "true").option("inferSchema", "true").load("dbfs:/FileStore/shared_uploads/prem@loyalytics.in/product_list.csv")
+-- df1 = spark.read.format("csv").option("header", "true").option("inferSchema", "true").load("dbfs:/FileStore/shared_uploads/prem@loyalytics.in/pl_product_list.csv")
 -- df1.createOrReplaceTempView('private_labels')
 
 -- COMMAND ----------

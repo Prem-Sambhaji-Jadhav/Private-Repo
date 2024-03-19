@@ -18,7 +18,7 @@
 
 # COMMAND ----------
 
-gp_path = "/dbfs/FileStore/shared_uploads/prem@loyalytics.in/gp_report_water.csv"
+gp_path = "/dbfs/FileStore/shared_uploads/prem@loyalytics.in/assortment_optimization/water/gp_report_water.csv"
 
 # Please make sure that the date range is EXACTLY 52 weeks (364 days) long, and does not include the present day's date
 start_date = "2023-01-01"
@@ -77,7 +77,7 @@ import numpy as np
 #                   ON t1.product_id = t2.material_id
 #                   WHERE business_day BETWEEN '{start_date}' AND '{end_date}'
 #                   AND category_name = '{category}'
-#                   AND ROUND(amount,0) > 0
+#                   AND amount > 0
 #                   AND quantity > 0
 #                   GROUP BY material_id, business_day)
 
@@ -214,7 +214,7 @@ df = df.sort_values(by=['material_id','week_number']).reset_index(drop = True)
 #             ON t1.product_id = t2.material_id
 #             WHERE business_day BETWEEN '{LOOKALIKES_START_DATE}' AND '{end_date}'
 #             AND category_name = '{category}'
-#             AND ROUND(amount,0) > 0
+#             AND amount > 0
 #             AND quantity > 0
 #             GROUP BY material_id, business_day)
 
@@ -604,7 +604,7 @@ median_growth_middle_sku = avg_growth_middle_sku[len(avg_growth_middle_sku)//2]
 # ON t1.product_id = t2.material_id
 # WHERE business_day BETWEEN DATE_ADD('{start_date}', 280) AND '{end_date}'
 # AND category_name = '{category}'
-# AND ROUND(amount,0) > 0
+# AND amount > 0
 # AND quantity > 0
 # GROUP BY material_id
 # ORDER BY material_id
@@ -787,7 +787,7 @@ materials_to_delist = low_sku_growth[(low_sku_growth['material_id'].isin(materia
 delist_materials_count = len(materials_to_delist)
 
 if delist_materials_count > allowed_product_count:
-    print("The number of products that can be delisted are {}, which is greater than {}% of the total number of products ({}). Please decrease the contribution threshold ({}%) or increase the product count percentage ({})".format(delist_materials_count, delist_product_count, allowed_product_count, delist_contri_threshold, delist_product_count))
+    print(f"The number of products that can be delisted are {delist_materials_count}, which is greater than {delist_product_count}% of the total number of products ({allowed_product_count}). Please decrease the contribution threshold ({delist_contri_threshold}%) or increase the product count percentage ({delist_product_count})")
 
 else:
     for i in range(len(materials)):
@@ -830,7 +830,7 @@ else:
 
 # COMMAND ----------
 
-# gp_report_6_months = pd.read_csv("/dbfs/FileStore/shared_uploads/prem@loyalytics.in/gp_report_water_6_months.csv")
+# gp_report_6_months = pd.read_csv("/dbfs/FileStore/shared_uploads/prem@loyalytics.in/assortment_optimization/water/gp_report_water_6_months.csv")
 # gp_report_6_months.rename(columns={'GP with ChargeBack & Bin Promo (%)': 'gp_perc'}, inplace=True)
 # gp_report_6_months['month_year'] = gp_report_6_months['month_year'].replace(['Jul-23', 'Aug-23', 'Sep-23'], [7, 8, 9])
 
@@ -1036,7 +1036,7 @@ all_products_catg_sdf.createOrReplaceTempView('all_products_catg')
 
 # COMMAND ----------
 
-df1 = spark.read.format("csv").option("header", "true").option("inferSchema", "true").load("dbfs:/FileStore/shared_uploads/prem@loyalytics.in/product_list.csv")
+df1 = spark.read.format("csv").option("header", "true").option("inferSchema", "true").load("dbfs:/FileStore/shared_uploads/prem@loyalytics.in/pl_product_list.csv")
 df1.createOrReplaceTempView('private_labels')
 
 # COMMAND ----------
@@ -1062,7 +1062,7 @@ df1.createOrReplaceTempView('private_labels')
 #             ON t1.product_id = t2.material_id
 #             WHERE business_day BETWEEN '{}' AND '{}'
 #             AND category_name = '{}'
-#             AND ROUND(amount,0) > 0
+#             AND amount > 0
 #             AND quantity > 0
 #             GROUP BY material_id, business_day, store_id),
 
@@ -1079,7 +1079,7 @@ df1.createOrReplaceTempView('private_labels')
 # """.format(start_date, end_date, category)
 
 # material_store_df = spark.sql(query).toPandas()
-# material_store_df.to_csv('/dbfs/FileStore/shared_uploads/prem@loyalytics.in/ao_material_store_data.csv', index = False)
+# material_store_df.to_csv('/dbfs/FileStore/shared_uploads/prem@loyalytics.in/assortment_optimization/water/ao_material_store_data.csv', index = False)
 
 # COMMAND ----------
 
@@ -1149,7 +1149,7 @@ df1.createOrReplaceTempView('private_labels')
 # """.format(start_date, end_date, category, start_date, end_date, category)
 
 # cust = spark.sql(query).toPandas()
-# cust.to_csv('/dbfs/FileStore/shared_uploads/prem@loyalytics.in/ao_cust.csv', index = False)
+# cust.to_csv('/dbfs/FileStore/shared_uploads/prem@loyalytics.in/assortment_optimization/water/ao_cust.csv', index = False)
 
 # COMMAND ----------
 
@@ -1161,7 +1161,7 @@ df1.createOrReplaceTempView('private_labels')
 # weekly_data = pd.merge(weeks52, cwd_df, on=['material_id', 'week_number'], how = 'inner')
 # weekly_data = weekly_data.drop(columns = 'total_sales')
 
-# weekly_data.to_csv('/dbfs/FileStore/shared_uploads/prem@loyalytics.in/ao_products_weekly_data.csv', index = False)
+# weekly_data.to_csv('/dbfs/FileStore/shared_uploads/prem@loyalytics.in/assortment_optimization/water/ao_products_weekly_data.csv', index = False)
 
 # COMMAND ----------
 
@@ -1189,7 +1189,7 @@ df_12_months = spark.sql("SELECT * FROM sandbox.pj_ao_12_months_sales").toPandas
 
 # COMMAND ----------
 
-gp_report_12_months = pd.read_csv("/dbfs/FileStore/shared_uploads/prem@loyalytics.in/gp_report_water_12_months.csv")
+gp_report_12_months = pd.read_csv("/dbfs/FileStore/shared_uploads/prem@loyalytics.in/assortment_optimization/water/gp_report_water_12_months.csv")
 gp_report_12_months.rename(columns={'GP with ChargeBack & Bin Promo (%)': 'gp_perc'}, inplace=True)
 gp_report_12_months['month_year'] = gp_report_12_months['month_year'].replace(['Jan-23', 'Feb-23', 'Mar-23', 'Apr-23', 'May-23', 'Jun-23', 'Jul-23', 'Aug-23', 'Sep-23'], [1, 2, 3, 4, 5, 6, 7, 8, 9])
 
@@ -1206,7 +1206,7 @@ df_12_months = df_12_months.groupby('material_id')['gp_value'].sum().reset_index
 
 # COMMAND ----------
 
-temp = pd.read_csv("/dbfs/FileStore/shared_uploads/prem@loyalytics.in/gp_report_water.csv")
+temp = pd.read_csv("/dbfs/FileStore/shared_uploads/prem@loyalytics.in/assortment_optimization/water/gp_report_water.csv")
 temp = temp.sort_values(by = 'material_id').reset_index(drop = True)
 temp.rename(columns={'GP with ChargeBack & Bin Promo (%)': 'gp_perc'}, inplace=True)
 
@@ -1248,13 +1248,13 @@ df_12_months['gp_contri'] = df_12_months['gp_value_positives'] / total_gp_value
 # df_12_months = pd.merge(df_12_months, all_products_catg, on='material_id', how = 'inner')
 
 # df_12_months.rename(columns={'gp_value': 'GP'}, inplace=True)
-# df_12_months[['material_id', 'GP', 'gp_value_positives', 'gp_contri', 'new_buckets']].to_csv('/dbfs/FileStore/shared_uploads/prem@loyalytics.in/ao_gp.csv', index = False)
+# df_12_months[['material_id', 'GP', 'gp_value_positives', 'gp_contri', 'new_buckets']].to_csv('/dbfs/FileStore/shared_uploads/prem@loyalytics.in/assortment_optimization/water/ao_gp.csv', index = False)
 
 # COMMAND ----------
 
 # a = timeline.copy()
 
-# b = pd.read_csv("/dbfs/FileStore/shared_uploads/prem@loyalytics.in/ao_gp_2022.csv")
+# b = pd.read_csv("/dbfs/FileStore/shared_uploads/prem@loyalytics.in/assortment_optimization/water/ao_gp_2022.csv")
 # c = b.copy()
 # b = b[b['new_buckets'] != 'Delist']
 # b.rename(columns={'new_buckets': 'buckets'}, inplace=True)

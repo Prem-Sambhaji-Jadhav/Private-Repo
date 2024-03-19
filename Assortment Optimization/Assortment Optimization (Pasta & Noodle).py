@@ -5,9 +5,10 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC GP Report should have only the following two columns (column name should match as well):
-# MAGIC 1. material_id - Integer data type
-# MAGIC 2. GP with ChargeBack & Bin Promo (%) - Float data type
+# MAGIC GP Report should have only the following three columns (column name should match as well):
+# MAGIC 1. region_name - String data type
+# MAGIC 2. material_id - Integer data type
+# MAGIC 3. GP with ChargeBack & Bin Promo (%) - Float data type
 # MAGIC
 # MAGIC Also, please make sure that the GP report is of the last 3 months period of the respective date range that you have taken for the analysis
 
@@ -18,25 +19,28 @@
 
 # COMMAND ----------
 
-directory = '/dbfs/FileStore/shared_uploads/prem@loyalytics.in/assortment_optimization/confectionery'
-gp_report_3months_path = directory + 'gp_report_confectionery_3m.csv'
-gp_report_12months_path = directory + 'gp_report_confectionery_12m.csv'
+category = "PASTA & NOODLE"
+material_group_name = "PASTA" # Leave it blank if you want the recommendations on category level
+store_region = "ABU DHABI" # ABU DHABI, AL AIN, DUBAI, SHARJAH
 
-gp_12months_values_save_path = directory + 'ao_gp_confectionery.csv'
-weekly_data_save_path = directory + 'ao_products_weekly_data_confectionery.csv'
-cust_save_path = directory + 'ao_cust_confectionery.csv'
-material_store_data_save_path = directory + 'ao_material_store_data_confectionery.csv'
+directory = '/dbfs/FileStore/shared_uploads/prem@loyalytics.in/assortment_optimization/pasta/'
+gp_report_3months_path = directory + 'gp_report_pasta_3m.csv'
+gp_report_12months_path = directory + 'gp_report_pasta_12m.csv'
+
+material_store_data_save_path = directory + 'ao_material_store_data_pasta.csv'
+gp_12months_values_save_path = directory + 'ao_gp_pasta.csv'
+weekly_data_save_path = directory + 'ao_products_weekly_data_pasta.csv'
+cust_save_path = directory + 'ao_cust_pasta.csv'
 
 # Please make sure that the date range is EXACTLY 52 weeks (364 days) long, and does not include the present day's date
-start_date = "2023-02-01"
-end_date = "2024-01-30"
+start_date = "2023-03-01"
+end_date = "2024-02-27"
 
 LOOKALIKES_START_DATE = "2022-01-30"
 # This must be minimum 30 days after the earliest date available in the source table
-# The end date will be the same as the end date of rolling 52 weeks period
-# The day of the week should be the same as the day of the above start_date
+# The day here should be the same as the day of the above start_date
 
-category = "CONFECTIONERY"
+# COMMAND ----------
 
 currently_selling_range = 51 # <specified value> to 52nd week will be categorized as 'Currently selling'
 low_no_supply_range = 44 # <specified value> to <currently_selling_range - 1> week will be categorized as 'Low/no supply'
@@ -74,24 +78,36 @@ import numpy as np
 
 # Gathering weekly data of all materials that have had a sale in the last 52 weeks
 
-query = f"""
-WITH 52_weeks AS (SELECT material_id,
-                         business_day,
-                         ROUND(SUM(amount),0) AS sales,
-                         ROUND(SUM(quantity),0) AS quantity_sold
-                  FROM gold.pos_transactions AS t1
-                  JOIN gold.material_master AS t2
-                  ON t1.product_id = t2.material_id
-                  WHERE business_day BETWEEN '{start_date}' AND '{end_date}'
-                  AND category_name = '{category}'
-                  AND amount > 0
-                  AND quantity > 0
-                  GROUP BY material_id, business_day)
+if material_group_name == "":
+    material_group_condition = ""
+else:
+    material_group_condition = "AND material_group_name = '" + material_group_name + "'"
 
-SELECT material_id,
-        FLOOR(DATEDIFF(business_day, '{start_date}') / 7) + 1 AS week_number,
-        SUM(sales) AS total_sales,
-        SUM(quantity_sold) AS total_quantity_sold
+query = f"""
+WITH 52_weeks AS (
+  SELECT
+      material_id,
+      business_day,
+      ROUND(SUM(amount),0) AS sales,
+      ROUND(SUM(quantity),0) AS quantity_sold
+  FROM gold.pos_transactions AS t1
+  JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
+  JOIN gold.store_master AS t3 ON t1.store_id = t3.store_id
+  WHERE
+      business_day BETWEEN '{start_date}' AND '{end_date}'
+      AND category_name = '{category}'
+      {material_group_condition}
+      AND region_name = '{store_region}'
+      AND amount > 0
+      AND quantity > 0
+  GROUP BY material_id, business_day
+)
+
+SELECT
+    material_id,
+    FLOOR(DATEDIFF(business_day, '{start_date}') / 7) + 1 AS week_number,
+    SUM(sales) AS total_sales,
+    SUM(quantity_sold) AS total_quantity_sold
 FROM 52_weeks
 GROUP BY material_id, week_number
 ORDER BY material_id, week_number
@@ -201,21 +217,29 @@ df = df.sort_values(by=['material_id','week_number']).reset_index(drop = True)
 # Gathering weekly data of all materials that have had a sale 1 month after the earliest sales data available in gold.pos_transactions
 
 query = f"""
-WITH all_weeks AS (SELECT material_id,
-                    business_day,
-                    ROUND(SUM(amount),0) AS sales, ROUND(SUM(quantity),0) AS quantity_sold
-            FROM gold.pos_transactions AS t1
-            JOIN gold.material_master AS t2
-            ON t1.product_id = t2.material_id
-            WHERE business_day BETWEEN '{LOOKALIKES_START_DATE}' AND '{end_date}'
-            AND category_name = '{category}'
-            AND amount > 0
-            AND quantity > 0
-            GROUP BY material_id, business_day)
+WITH all_weeks AS (
+  SELECT
+      material_id,
+      business_day,
+      ROUND(SUM(amount),0) AS sales,
+      ROUND(SUM(quantity),0) AS quantity_sold
+  FROM gold.pos_transactions AS t1
+  JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
+  JOIN gold.store_master AS t3 ON t1.store_id = t3.store_id
+  WHERE
+      business_day BETWEEN '{LOOKALIKES_START_DATE}' AND '{end_date}'
+      AND category_name = '{category}'
+      '{material_group_condition}'
+      AND region_name = '{store_region}'
+      AND amount > 0
+      AND quantity > 0
+  GROUP BY material_id, business_day)
 
-SELECT material_id,
-        FLOOR(DATEDIFF(business_day, '{LOOKALIKES_START_DATE}') / 7) + 1 AS week_number,
-        SUM(sales) AS total_sales, SUM(quantity_sold) AS total_quantity_sold
+SELECT
+    material_id,
+    FLOOR(DATEDIFF(business_day, '{LOOKALIKES_START_DATE}') / 7) + 1 AS week_number,
+    SUM(sales) AS total_sales,
+    SUM(quantity_sold) AS total_quantity_sold
 FROM all_weeks
 GROUP BY material_id, week_number
 ORDER BY material_id, week_number
@@ -593,14 +617,19 @@ median_growth_middle_sku = avg_growth_middle_sku[len(avg_growth_middle_sku)//2]
 # Gathering data for number of stores where each product was sold in the last 12 weeks period
 
 query = f"""
-SELECT material_id, COUNT(DISTINCT store_id) AS num_stores
+SELECT
+    material_id,
+    COUNT(DISTINCT store_id) AS num_stores
 FROM gold.pos_transactions AS t1
-JOIN gold.material_master AS t2
-ON t1.product_id = t2.material_id
-WHERE business_day BETWEEN DATE_ADD('{start_date}', 280) AND '{end_date}'
-AND category_name = '{category}'
-AND amount > 0
-AND quantity > 0
+JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
+JOIN gold.store_master AS t3 ON t1.store_id = t3.store_id
+WHERE
+    business_day BETWEEN DATE_ADD('{start_date}', 280) AND '{end_date}'
+    AND category_name = '{category}'
+    {material_group_condition}
+    AND region_name = '{store_region}'
+    AND amount > 0
+    AND quantity > 0
 GROUP BY material_id
 ORDER BY material_id
 """
@@ -614,12 +643,15 @@ store_pnt = spark.sql(query).toPandas()
 query = f"""
 SELECT COUNT(DISTINCT store_id) AS total_stores
 FROM gold.pos_transactions AS t1
-JOIN gold.material_master AS t2
-ON t1.product_id = t2.material_id
-WHERE business_day BETWEEN DATE_ADD('{start_date}', 280) AND '{end_date}'
-AND category_name = '{category}'
-AND ROUND(amount,0) > 0
-AND quantity > 0
+JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
+JOIN gold.store_master AS t3 ON t1.store_id = t3.store_id
+WHERE
+    business_day BETWEEN DATE_ADD('{start_date}', 280) AND '{end_date}'
+    AND category_name = '{category}'
+    {material_group_condition}
+    AND region_name = '{store_region}'
+    AND amount > 0
+    AND quantity > 0
 """
 
 total_store_count = spark.sql(query).toPandas()
@@ -805,9 +837,10 @@ else:
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC GP Report should have only the following two columns (column name should match as well):
-# MAGIC 1. material_id - Integer data type
-# MAGIC 2. GP with ChargeBack & Bin Promo (%) - Float data type
+# MAGIC GP Report should have only the following three columns (column name should match as well):
+# MAGIC 1. region_name - String data type
+# MAGIC 2. material_id - Integer data type
+# MAGIC 3. GP with ChargeBack & Bin Promo (%) - Float data type
 # MAGIC
 # MAGIC Also, please make sure that the GP report is of the last 3 months period of the respective date range that you have taken for the analysis
 
@@ -1001,113 +1034,122 @@ df1.createOrReplaceTempView('private_labels')
 
 # COMMAND ----------
 
-# # Gathering weekly data of all materials with respect to the stores they had sales during the rolling 52 weeks
+# Gathering weekly data of all materials with respect to the stores they had sales during the rolling 52 weeks
 
-# query = f"""
-# WITH cwd AS (SELECT material_id, business_day, store_id,
-#                           ROUND(SUM(amount),0) AS sales
-#             FROM gold.pos_transactions AS t1
-#             JOIN gold.material_master AS t2
-#             ON t1.product_id = t2.material_id
-#             WHERE business_day BETWEEN '{start_date}' AND '{end_date}'
-#             AND category_name = '{category}'
-#             AND amount > 0
-#             AND quantity > 0
-#             GROUP BY material_id, business_day, store_id)
+query = f"""
+WITH cwd AS (
+  SELECT
+      material_id,
+      business_day,
+      store_id,
+      ROUND(SUM(amount),0) AS sales
+  FROM gold.pos_transactions AS t1
+  JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
+  WHERE
+      business_day BETWEEN '{start_date}' AND '{end_date}'
+      AND category_name = '{category}'
+      '{material_group_condition}'
+      AND region_name = '{store_region}'
+      AND amount > 0
+      AND quantity > 0
+  GROUP BY material_id, business_day, store_id)
 
-# SELECT material_id,
-#         FLOOR(DATEDIFF(business_day, '{start_date}') / 7) + 1 AS week_number,
-#         store_id,
-#         SUM(sales) AS total_sales
-# FROM cwd
-# GROUP BY week_number, material_id, store_id
-# ORDER BY week_number, material_id, store_id
-# """
+SELECT
+    material_id,
+    FLOOR(DATEDIFF(business_day, '{start_date}') / 7) + 1 AS week_number,
+    store_id,
+    SUM(sales) AS total_sales
+FROM cwd
+GROUP BY week_number, material_id, store_id
+ORDER BY week_number, material_id, store_id
+"""
 
-# material_store_df = spark.sql(query).toPandas()
-# material_store_df.to_csv(material_store_data_save_path, index = False)
-
-# COMMAND ----------
-
-# # Calculate Category Weighted Distribution for each material in every week
-
-# cwd_df = material_store_df.copy()
-# cwd = []
-# for week in cwd_df['week_number'].unique():
-#   sales = cwd_df[cwd_df['week_number'] == week][['material_id', 'store_id', 'total_sales']]
-#   all_store_sales = sales['total_sales'].sum()
-#   for material in sales['material_id'].unique():
-#     stores = sales[sales['material_id'] == material]['store_id'].unique()
-#     material_store_sales = sales[sales['store_id'].isin(stores)]['total_sales'].sum()
-#     cwd.append(material_store_sales/all_store_sales)
-
-# cwd_df['material_store_count'] = cwd_df.groupby('material_id')['store_id'].transform('nunique')
-# cwd_df['material_weekly_store_count'] = cwd_df.groupby(['material_id', 'week_number'])['store_id'].transform('nunique')
-# cwd_df = cwd_df.groupby(['week_number', 'material_id']).agg({'total_sales': 'sum', 'material_store_count': 'mean', 'material_weekly_store_count': 'mean'}).reset_index()
-# cwd_df['cwd'] = cwd
+material_store_df = spark.sql(query).toPandas()
+material_store_df.to_csv(material_store_data_save_path, index = False)
 
 # COMMAND ----------
 
-# # Gathering customer counts of all materials in the rolling 52 weeks period
+# Calculate Category Weighted Distribution for each material in every week
 
-# query = f"""
-# WITH total_cust AS (SELECT COUNT(DISTINCT t3.customer_id) AS tot_cust,
-#                             COUNT(DISTINCT CASE WHEN segment = 'VIP' THEN t3.customer_id END) AS tot_vip,
-#                             COUNT(DISTINCT CASE WHEN segment = 'Frequentist' THEN t3.customer_id END) AS tot_freq
-#                     FROM gold.pos_transactions AS t1
-#                     JOIN gold.material_master AS t2
-#                     ON t1.product_id = t2.material_id
-#                     JOIN analytics.customer_segments AS t3
-#                     ON t1.customer_id = t3.customer_id
-#                     WHERE business_day BETWEEN '{start_date}' AND '{end_date}'
-#                     AND category_name = '{category}'
-#                     AND ROUND(amount,0) > 0
-#                     AND quantity > 0
-#                     AND month_year = '202401'
-#                     AND t3.country = 'uae'
-#                     AND key = 'rfm'
-#                     AND channel = 'pos'
-# )
+cwd_df = material_store_df.copy()
+cwd = []
+for week in cwd_df['week_number'].unique():
+  sales = cwd_df[cwd_df['week_number'] == week][['material_id', 'store_id', 'total_sales']]
+  all_store_sales = sales['total_sales'].sum()
+  for material in sales['material_id'].unique():
+    stores = sales[sales['material_id'] == material]['store_id'].unique()
+    material_store_sales = sales[sales['store_id'].isin(stores)]['total_sales'].sum()
+    cwd.append(material_store_sales/all_store_sales)
 
-# SELECT material_id, material_name,
-#         COUNT(DISTINCT t3.customer_id) AS cust,
-#         COUNT(DISTINCT CASE WHEN segment = 'VIP' THEN t3.customer_id END) AS vip_cust,
-#         COUNT(DISTINCT CASE WHEN segment = 'Frequentist' THEN t3.customer_id END) AS freq_cust,
-#         tot_cust, tot_vip, tot_freq,
-#         (cust/tot_cust) AS tot_cust_perc,
-#         (vip_cust/tot_vip) AS vip_cust_perc,
-#         (freq_cust/tot_freq) AS freq_cust_perc
-# FROM total_cust, gold.pos_transactions AS t1
-# JOIN gold.material_master AS t2
-# ON t1.product_id = t2.material_id
-# JOIN analytics.customer_segments AS t3
-# ON t1.customer_id = t3.customer_id
-# WHERE business_day BETWEEN '{start_date}' AND '{end_date}'
-# AND category_name = '{category}'
-# AND ROUND(amount,0) > 0
-# AND quantity > 0
-# AND month_year = '202401'
-# AND t3.country = 'uae'
-# AND key = 'rfm'
-# AND channel = 'pos'
-# GROUP BY material_id, material_name, tot_cust, tot_vip, tot_freq
-# ORDER BY material_id
-# """
-
-# cust = spark.sql(query).toPandas()
-# cust.to_csv(cust_save_path, index = False)
+cwd_df['material_store_count'] = cwd_df.groupby('material_id')['store_id'].transform('nunique')
+cwd_df['material_weekly_store_count'] = cwd_df.groupby(['material_id', 'week_number'])['store_id'].transform('nunique')
+cwd_df = cwd_df.groupby(['week_number', 'material_id']).agg({'total_sales': 'sum', 'material_store_count': 'mean', 'material_weekly_store_count': 'mean'}).reset_index()
+cwd_df['cwd'] = cwd
 
 # COMMAND ----------
 
-# # Save all the weekly data of the materials into csv formats to be used in the EDA notebook
+# Gathering customer counts of all materials in the rolling 52 weeks period
 
-# weeks52.rename(columns={'total_sales': 'sale'}, inplace=True)
-# weeks52.rename(columns={'total_quantity_sold': 'vol'}, inplace=True)
+query = f"""
+WITH total_cust AS (SELECT COUNT(DISTINCT t3.customer_id) AS tot_cust,
+                            COUNT(DISTINCT CASE WHEN segment = 'VIP' THEN t3.customer_id END) AS tot_vip,
+                            COUNT(DISTINCT CASE WHEN segment = 'Frequentist' THEN t3.customer_id END) AS tot_freq
+                    FROM gold.pos_transactions AS t1
+                    JOIN gold.material_master AS t2
+                    ON t1.product_id = t2.material_id
+                    JOIN analytics.customer_segments AS t3
+                    ON t1.customer_id = t3.customer_id
+                    WHERE business_day BETWEEN '{start_date}' AND '{end_date}'
+                    AND category_name = '{category}'
+                    AND material_group_name = '{material_group_name}'
+                    AND ROUND(amount,0) > 0
+                    AND quantity > 0
+                    AND month_year = '202401'
+                    AND t3.country = 'uae'
+                    AND key = 'rfm'
+                    AND channel = 'pos'
+)
 
-# weekly_data = pd.merge(weeks52, cwd_df, on=['material_id', 'week_number'], how = 'inner')
-# weekly_data = weekly_data.drop(columns = 'total_sales')
+SELECT material_id, material_name,
+        COUNT(DISTINCT t3.customer_id) AS cust,
+        COUNT(DISTINCT CASE WHEN segment = 'VIP' THEN t3.customer_id END) AS vip_cust,
+        COUNT(DISTINCT CASE WHEN segment = 'Frequentist' THEN t3.customer_id END) AS freq_cust,
+        tot_cust, tot_vip, tot_freq,
+        (cust/tot_cust) AS tot_cust_perc,
+        (vip_cust/tot_vip) AS vip_cust_perc,
+        (freq_cust/tot_freq) AS freq_cust_perc
+FROM total_cust, gold.pos_transactions AS t1
+JOIN gold.material_master AS t2
+ON t1.product_id = t2.material_id
+JOIN analytics.customer_segments AS t3
+ON t1.customer_id = t3.customer_id
+WHERE business_day BETWEEN '{start_date}' AND '{end_date}'
+AND category_name = '{category}'
+AND material_group_name = '{material_group_name}'
+AND ROUND(amount,0) > 0
+AND quantity > 0
+AND month_year = '202401'
+AND t3.country = 'uae'
+AND key = 'rfm'
+AND channel = 'pos'
+GROUP BY material_id, material_name, tot_cust, tot_vip, tot_freq
+ORDER BY material_id
+"""
 
-# weekly_data.to_csv(weekly_data_save_path, index = False)
+cust = spark.sql(query).toPandas()
+cust.to_csv(cust_save_path, index = False)
+
+# COMMAND ----------
+
+# Save all the weekly data of the materials into csv formats to be used in the EDA notebook
+
+weeks52.rename(columns={'total_sales': 'sale'}, inplace=True)
+weeks52.rename(columns={'total_quantity_sold': 'vol'}, inplace=True)
+
+weekly_data = pd.merge(weeks52, cwd_df, on=['material_id', 'week_number'], how = 'inner')
+weekly_data = weekly_data.drop(columns = 'total_sales')
+
+weekly_data.to_csv(weekly_data_save_path, index = False)
 
 # COMMAND ----------
 
