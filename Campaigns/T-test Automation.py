@@ -19,14 +19,10 @@
 # COMMAND ----------
 
 import pyspark.pandas as ps
-
 from scipy.stats import ttest_ind
 from scipy.stats import levene
 import numpy as np
 import pandas as pd
-
-# COMMAND ----------
-
 ps.set_option('compute.ops_on_diff_frames', True)
 
 # COMMAND ----------
@@ -38,9 +34,6 @@ ps.set_option('compute.ops_on_diff_frames', True)
 # COMMAND ----------
 
 pd.set_option('display.max_columns', None)
-
-# COMMAND ----------
-
 dbutils.widgets.text(name='sandbox_table_name', defaultValue='null')
 dbutils.widgets.text(name='test_size', defaultValue='null')
 dbutils.widgets.text(name='control_size', defaultValue='null')
@@ -57,29 +50,21 @@ dbutils.widgets.text(name='folder_path', defaultValue='null')
 
 sandbox_name = dbutils.widgets.get('sandbox_table_name')
 sdf = spark.sql(f"select * from {sandbox_name}") ######## Parameter-1
-
-# COMMAND ----------
-
 df = sdf.toPandas()
 df.shape
+
 
 # COMMAND ----------
 
 df = df.dropna(subset=['card_key', 'mobile'])
 df = df.drop_duplicates(subset=['mobile'], keep = 'first', ignore_index=True)
-
-# COMMAND ----------
-
+df['card_key'] = df['card_key'].astype('int64')
+df['card_key'] = df['card_key'].astype('object')
 df.nunique()
 
 # COMMAND ----------
 
 df.info()
-
-# COMMAND ----------
-
-df['card_key'] = df['card_key'].astype('int64')
-df['card_key'] = df['card_key'].astype('object')
 
 # COMMAND ----------
 
@@ -93,14 +78,13 @@ df.head()
 # COMMAND ----------
 
 test_size = int(dbutils.widgets.get('test_size'))  ######## Parameter-2
-np.random.seed(2) # Change the seed of the test set here, if necessary
+np.random.seed(9) # Change the seed of the test set here, if necessary
 test_data = df.sample(n=test_size)
 test_id_list=test_data.mobile.tolist()
 control_available_for_sel=df[~df['mobile'].isin(test_id_list)]
 
 control_size=int(dbutils.widgets.get('control_size')) ############# Parameter-3
 
-# Initialize loop parameters
 max_iterations = 1000 ############### Optional Parameter-4
 current_iteration = 0 ################## Optional Parameter-5
 significance_level = 0.001 ################## Optional Parameter-6
@@ -116,7 +100,6 @@ while current_iteration < max_iterations:
     # Perform levene test
     statistic_lv, p_value_lv = levene(test_data[variable_of_interest], control_data[variable_of_interest])
     
-    # print(p_value_lv)
     if p_value_lv < significance_level:
         print(f"Levene test: Null hypothesis rejected, p value is {round(p_value_lv,5)}. Population variation is not equal.")
         var_pop = False
@@ -164,8 +147,8 @@ else:
 
 print("Test data shape:", test_data.shape)
 print("Control data shape:", control_data.shape)
-print("Test data mean ATV", test_data[variable_of_interest].mean())
-print("Control data mean ATV", control_data[variable_of_interest].mean())
+print(f"Test data mean {variable_of_interest}", test_data[variable_of_interest].mean())
+print(f"Control data mean {variable_of_interest}", control_data[variable_of_interest].mean())
 
 # COMMAND ----------
 
@@ -190,8 +173,12 @@ control_data.display()
 
 directory = dbutils.widgets.get('folder_path')  ######## Parameter-9
 
-test_data[['mobile']].to_csv(directory + 'test_mobile.csv' , sep = '|', index = False)
+test_data[['mobile']].to_csv(directory + 'samsung_test_5000_mobile.csv' , sep = '|', index = False)
 
-test_data[['mobile', 'card_key']].to_csv(directory + 'test_cardkey.csv' , sep = '|', index = False)
+test_data[['mobile', 'card_key']].to_csv(directory + 'samsung_test_5000_cardkey.csv' , sep = '|', index = False)
 
-control_data[['mobile']].to_csv(directory + 'control_mobile.csv' , sep = '|', index = False)
+control_data[['mobile']].to_csv(directory + 'samsung_250_control_mobile.csv' , sep = '|', index = False)
+
+# COMMAND ----------
+
+

@@ -646,11 +646,27 @@ fig2.show()
 
 # COMMAND ----------
 
-
+# MAGIC %md
+# MAGIC #Abu Dhabi Delisted SKUs Performance
 
 # COMMAND ----------
 
-
+# MAGIC %sql
+# MAGIC SELECT
+# MAGIC     material_id,
+# MAGIC     material_name,
+# MAGIC     business_day,
+# MAGIC     ROUND(SUM(amount),0) AS sales
+# MAGIC FROM gold.pos_transactions AS t1
+# MAGIC JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
+# MAGIC JOIN gold.store_master AS t3 ON t1.store_id = t3.store_id
+# MAGIC WHERE business_day BETWEEN "2024-03-07" AND "2024-03-20"
+# MAGIC AND amount > 0
+# MAGIC AND quantity > 0
+# MAGIC AND material_id IN (2083789, 1403107, 1403108, 1193068, 1168340, 1306396, 130454, 2079852, 132825, 356145, 5531, 5539, 72593, 554815, 1333721, 45025, 356144, 958777, 969199, 1021745, 1274721, 1306395, 1462834, 1743443, 1745916, 1877061, 814870)
+# MAGIC AND region_name = "ABU DHABI"
+# MAGIC GROUP BY 1, 2, 3
+# MAGIC ORDER BY 1, 2, 3
 
 # COMMAND ----------
 
