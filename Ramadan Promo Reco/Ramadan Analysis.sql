@@ -1047,6 +1047,77 @@ FROM cte
 -- COMMAND ----------
 
 -- MAGIC %md
+-- MAGIC ###Segment-wise RPC, ATV, Customers
+
+-- COMMAND ----------
+
+WITH cte AS (
+    SELECT
+        mobile,
+        segment,
+        ROUND(SUM(amount),0) AS sales,
+        COUNT(DISTINCT transaction_id) AS num_trans
+    FROM gold.pos_transactions AS t1
+    JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
+    JOIN analytics.customer_segments AS t3 ON t1.customer_id = t3.customer_id
+    WHERE business_day BETWEEN "2023-03-08" AND "2023-04-21"
+    AND mobile IS NOT NULL
+    AND amount > 0
+    AND quantity > 0
+    AND key = 'rfm'
+    AND channel = 'pos'
+    AND t3.country = 'uae'
+    AND month_year = '202304'
+    -- AND UPPER(category_name) IN ('TABLEWARE', 'KITCHENWARE')
+    -- AND UPPER(department_name) IN ('FASHION JEWELLERY & ACCESSORIES', 'FASHION LIFESTYLE', 'FASHION RETAIL', 'FOOTWEAR', 'LADIES BAGS & ACCESSORIES', 'TEXTILES')
+    AND UPPER(department_name) IN ('ELECTRICALS', 'COMPUTERS & GAMING', 'MOBILE PHONES', 'ELECTRONICS', 'CONSUMER ELECTRONICS ACCESSORIES')
+    GROUP BY mobile, segment
+)
+
+SELECT
+    segment,
+    ROUND(SUM(sales) / COUNT(DISTINCT mobile),2) AS RPC,
+    ROUND(SUM(sales) / SUM(num_trans),2) AS ATV,
+    COUNT(DISTINCT mobile) AS customers
+FROM cte
+GROUP BY segment
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ###Never Transacted in Category
+
+-- COMMAND ----------
+
+WITH cte AS (
+    SELECT
+        mobile,
+        segment,
+        COUNT(DISTINCT CASE WHEN UPPER(category_name) IN ('TABLEWARE', 'KITCHENWARE') THEN transaction_id END) AS num_trans
+    FROM gold.pos_transactions AS t1
+    JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
+    JOIN analytics.customer_segments AS t3 ON t1.customer_id = t3.customer_id
+    WHERE business_day BETWEEN "2022-01-01" AND "2023-12-31"
+    AND mobile IS NOT NULL
+    AND amount > 0
+    AND quantity > 0
+    AND key = 'rfm'
+    AND channel = 'pos'
+    AND t3.country = 'uae'
+    AND month_year = '202401'
+    GROUP BY mobile, segment
+    HAVING num_trans = 0
+)
+
+SELECT
+    segment,
+    COUNT(DISTINCT mobile) AS customers
+FROM cte
+GROUP BY segment
+
+-- COMMAND ----------
+
+-- MAGIC %md
 -- MAGIC # Code-Piyush
 
 -- COMMAND ----------
