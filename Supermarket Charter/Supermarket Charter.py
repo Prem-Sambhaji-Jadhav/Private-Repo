@@ -1457,6 +1457,8 @@ catg_df2[['Region', 'department_name', 'category_id', 'category_name', 'Measures
 # COMMAND ----------
 
 # MAGIC %sql
+# MAGIC -- Loyalty customers who made a loyalty or non-loyalty transaction
+# MAGIC     
 # MAGIC SELECT
 # MAGIC     COUNT(DISTINCT t1.customer_id) AS Loyalty_Customers
 # MAGIC FROM gold.pos_transactions AS t1
