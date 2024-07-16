@@ -1,20 +1,20 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC <b>Note:</b> Number of customers in the sandbox table should be greater than the target audience.
+# MAGIC
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC <b>Sandbox Requirements:</b>
-# MAGIC 1. mobile<br>
+# MAGIC 1. customer_key<br>
 # MAGIC 2. card_key<br>
-# MAGIC 3. (variable of interest - atv/frequency/recency)
+# MAGIC 3. variable of interest - atv/frequency/recency
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC
-# MAGIC ## Intializations for Spark
+# MAGIC #Import Libraries
 
 # COMMAND ----------
 
@@ -24,43 +24,55 @@ from scipy.stats import levene
 import numpy as np
 import pandas as pd
 ps.set_option('compute.ops_on_diff_frames', True)
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC
-# MAGIC ## Intializations for Python
-
-# COMMAND ----------
-
 pd.set_option('display.max_columns', None)
-dbutils.widgets.text(name='sandbox_table_name', defaultValue='null')
-dbutils.widgets.text(name='test_size', defaultValue='null')
-dbutils.widgets.text(name='control_size', defaultValue='null')
-dbutils.widgets.text(name='variable_of_interest', defaultValue='null')
-dbutils.widgets.text(name='folder_path', defaultValue='null')
-# dbutils.widgets.text(name='significance_level', defaultValue='null')
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Create Dataframe From Sandbox Table
+# MAGIC #Intializations for User Inputs
 
 # COMMAND ----------
 
-sandbox_name = dbutils.widgets.get('sandbox_table_name')
+dbutils.widgets.text(name='Sandbox Table Name', defaultValue='null')
+dbutils.widgets.text(name='Test Size', defaultValue='null')
+dbutils.widgets.text(name='Control Size', defaultValue='null')
+dbutils.widgets.text(name='Variable of Interest', defaultValue='null')
+dbutils.widgets.text(name='Folder Path', defaultValue='null')
+# dbutils.widgets.text(name='significance_level', defaultValue='null')
+# dbutils.widgets.multiselect("filter")
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC #Create Dataframe From Sandbox Table
+
+# COMMAND ----------
+
+sandbox_name = dbutils.widgets.get('Sandbox Table Name')
 sdf = spark.sql(f"select * from {sandbox_name}") ######## Parameter-1
 df = sdf.toPandas()
 df.shape
 
+# COMMAND ----------
+
+# df = df.dropna(subset=['card_key', 'customer_key'])
+df = df.drop_duplicates(subset=['customer_key'], keep = 'first', ignore_index=True)
+df['customer_key'] = df['customer_key'].astype(str)
+# df['customer_key'] = df['customer_key'].apply(lambda x: f'{x:016d}')
+# df['card_key'] = df['card_key'].astype('int64')
+# df['card_key'] = df['card_key'].astype('object')
+df.nunique()
 
 # COMMAND ----------
 
-df = df.dropna(subset=['card_key', 'mobile'])
-df = df.drop_duplicates(subset=['mobile'], keep = 'first', ignore_index=True)
-df['card_key'] = df['card_key'].astype('int64')
-df['card_key'] = df['card_key'].astype('object')
-df.nunique()
+suggested_test_size = round(len(df)*0.95)
+suggested_control_size = round(len(df)*0.05)
+
+if int(str(len(df)*0.95).split('.')[1]) == 5:
+    suggested_test_size += 1
+
+print(f"Suggested test size (95%): {suggested_test_size}")
+print(f"Suggested control size (5%): {suggested_control_size}")
 
 # COMMAND ----------
 
@@ -73,22 +85,22 @@ df.head()
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Test-Control split and T-test
+# MAGIC #Test-Control split and T-test
 
 # COMMAND ----------
 
-test_size = int(dbutils.widgets.get('test_size'))  ######## Parameter-2
-np.random.seed(9) # Change the seed of the test set here, if necessary
+test_size = int(dbutils.widgets.get('Test Size'))  ######## Parameter-2
+np.random.seed(7) # Change the seed of the test set here, if necessary
 test_data = df.sample(n=test_size)
-test_id_list=test_data.mobile.tolist()
-control_available_for_sel=df[~df['mobile'].isin(test_id_list)]
+test_id_list=test_data.customer_key.tolist()
+control_available_for_sel=df[~df['customer_key'].isin(test_id_list)]
 
-control_size=int(dbutils.widgets.get('control_size')) ############# Parameter-3
+control_size=int(dbutils.widgets.get('Control Size')) ############# Parameter-3
 
 max_iterations = 1000 ############### Optional Parameter-4
 current_iteration = 0 ################## Optional Parameter-5
 significance_level = 0.001 ################## Optional Parameter-6
-variable_of_interest = str(dbutils.widgets.get('variable_of_interest')) ############## Parameter-7
+variable_of_interest = str(dbutils.widgets.get('Variable of Interest')) ############## Parameter-7
 seed_value = 1 ################ Optional Parameter-8
 
 while current_iteration < max_iterations:
@@ -127,21 +139,21 @@ else:
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ##Mobiles should be mutually exclusive
+# MAGIC #Customer Keys should be mutually exclusive
 
 # COMMAND ----------
 
-control_id_list = control_data.mobile.tolist()
+control_id_list = control_data.customer_key.tolist()
 common = set(test_id_list).intersection(set(control_id_list))
 if common:
-    print("There are intersecting mobile numbers!!")
+    print("There are intersecting customer keys numbers!!")
 else:
     print("Test and control set are mutually exclusive")
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ##Manual Check for Variable of Interest
+# MAGIC #Manual Check for Variable of Interest
 
 # COMMAND ----------
 
@@ -153,7 +165,7 @@ print(f"Control data mean {variable_of_interest}", control_data[variable_of_inte
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ##Final Test and Control Tables
+# MAGIC #Final Test and Control Tables
 
 # COMMAND ----------
 
@@ -161,24 +173,29 @@ test_data.display()
 
 # COMMAND ----------
 
+# segment_counts = test_data.groupby('segment').size()
+# print(segment_counts)
+
+# COMMAND ----------
+
 control_data.display()
 
 # COMMAND ----------
 
+# segment_counts = control_data.groupby('segment').size()
+# print(segment_counts)
+
+# COMMAND ----------
+
 # MAGIC %md
-# MAGIC ##Write CSV to DBFS
-# MAGIC Please comment the below code block at all times when its not being used. This is to avoid running the code and rewritting existing files in the directory by mistake.
+# MAGIC #Write CSV to DBFS
 
 # COMMAND ----------
 
-directory = dbutils.widgets.get('folder_path')  ######## Parameter-9
-
-test_data[['mobile']].to_csv(directory + 'samsung_test_5000_mobile.csv' , sep = '|', index = False)
-
-test_data[['mobile', 'card_key']].to_csv(directory + 'samsung_test_5000_cardkey.csv' , sep = '|', index = False)
-
-control_data[['mobile']].to_csv(directory + 'samsung_250_control_mobile.csv' , sep = '|', index = False)
+directory = dbutils.widgets.get('Folder Path')  ######## Parameter-9
 
 # COMMAND ----------
 
-
+test_data[['customer_key']].to_csv(directory + 'freq_rpc_increase_test_customerkey.csv' , sep = '|', index = False)
+# test_data[['customer_key', 'card_key']].to_csv(directory + 'lapser_win_back_test_cardkey.csv' , sep = '|', index = False)
+control_data[['customer_key']].to_csv(directory + 'freq_rpc_increase_control_customerkey.csv' , sep = '|', index = False)
