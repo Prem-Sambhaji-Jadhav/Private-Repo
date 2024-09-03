@@ -1904,6 +1904,23 @@ new_products_df = spark.sql(query).toPandas()
 
 # COMMAND ----------
 
+# MAGIC %sql
+# MAGIC SELECT
+# MAGIC     category_id,
+# MAGIC     ROUND(SUM(amount)) AS sales,
+# MAGIC     ROUND(SUM(amount) / SUM(SUM(amount)) OVER(), 4) AS sales_contri
+# MAGIC FROM gold.transaction.uae_pos_transactions AS t1
+# MAGIC JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+# MAGIC WHERE
+# MAGIC     business_day BETWEEN "2023-08-01" AND "2024-07-31"
+# MAGIC     AND department_class_id IN (1, 2)
+# MAGIC     AND transaction_type IN ("SALE", "SELL_MEDIA")
+# MAGIC     AND amount > 0
+# MAGIC     AND quantity > 0
+# MAGIC GROUP BY 1
+
+# COMMAND ----------
+
 query = """
 SELECT
     YEAR(business_day) AS year_info,
