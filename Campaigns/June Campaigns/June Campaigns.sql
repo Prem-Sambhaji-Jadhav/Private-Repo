@@ -227,19 +227,3 @@ CREATE OR REPLACE TABLE sandbox.pj_lapser_win_back AS (
 
 SELECT COUNT(*), COUNT(DISTINCT mobile)
 FROM sandbox.pj_lapser_win_back
-
--- COMMAND ----------
-
-
-
--- COMMAND ----------
-
-
-
--- COMMAND ----------
-
-
-
--- COMMAND ----------
-
-
