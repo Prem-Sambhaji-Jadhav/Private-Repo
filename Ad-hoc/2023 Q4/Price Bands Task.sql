@@ -80,7 +80,7 @@
 
 -- COMMAND ----------
 
-CREATE OR REPLACE TABLE sandbox.pj_tcg_price_slabs_view AS (
+CREATE OR REPLACE TABLE dev.sandbox.pj_tcg_price_slabs_view AS (
     SELECT *
     FROM category_price_slabs_view
 )
