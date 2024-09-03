@@ -1,13 +1,52 @@
 -- Databricks notebook source
+WITH sales AS (
+    SELECT
+        region_name,
+        INT(CONCAT(YEAR(business_day), LPAD(MONTH(business_day), 2, '0'))) AS year_month,
+        material_id,
+        SUM(amount) AS sales
+    FROM gold.transaction.uae_pos_transactions AS t1
+    JOIN gold.store.store_master AS t2 ON t1.store_id = t2.store_id
+    JOIN gold.material.material_master AS t3 ON t1.product_id = t3.material_id
+    WHERE
+        business_day BETWEEN "2023-09-01" AND "2024-08-31"
+        AND department_class_id = 1
+        AND tayeb_flag = 0
+        AND transaction_type IN ("SALE", "SELL_MEDIA")
+        AND amount > 0
+        AND quantity > 0
+    GROUP BY 1, 2, 3
+),
 
+gp AS (
+    SELECT
+        CASE WHEN region = "AUH" THEN "ABU DHABI"
+            WHEN region = "ALN" THEN "AL AIN"
+            WHEN region = "DXB" THEN "DUBAI"
+            WHEN region = "SHJ" THEN "SHARJAH"
+            END AS region_name,
+        year_month,
+        material_id,
+        gp_wth_chargeback
+    FROM gold.business.gross_profit
+    WHERE country = 'AE'
+    AND year_month BETWEEN 202309 AND 202408
+),
 
--- COMMAND ----------
+combined AS (
+    SELECT
+        *,
+        COALESCE(sales*gp_wth_chargeback/100, 0) AS gp_abs
+    FROM sales AS t1
+    LEFT JOIN gp AS t2
+        ON t1.region_name = t2.region_name
+        AND t1.year_month = t2.year_month
+        AND t1.material_id = t2.material_id
+)
 
-
-
--- COMMAND ----------
-
-
+SELECT
+    ROUND(SUM(gp_abs)/SUM(sales), 4) AS gp_margin
+FROM combined
 
 -- COMMAND ----------
 
@@ -222,11 +261,11 @@ SELECT
     category_name,
     material_group_id,
     material_group_name
-FROM gold.pos_transactions AS t1
-JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
+FROM gold.transaction.uae_pos_transactions AS t1
+JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
 WHERE
-    business_day BETWEEN "2023-07-01" AND "2024-06-28"
-    AND material_group_name = "RICE & OAT CAKE"
+    business_day BETWEEN "2023-08-01" AND "2024-07-29"
+    AND material_group_name = "SPICES"
     AND transaction_type IN ("SALE", "SELL_MEDIA")
     AND amount > 0
     AND quantity > 0
@@ -238,19 +277,136 @@ SELECT
     category_name,
     material_group_name,
     COUNT(DISTINCT material_id) AS SKUs
-FROM gold.pos_transactions AS t1
-JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
+FROM gold.transaction.uae_pos_transactions AS t1
+JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
 WHERE
-    business_day BETWEEN "2023-07-01" AND "2024-06-28"
+    business_day BETWEEN "2023-09-01" AND "2024-08-29"
     AND (
         category_name IN ("ICE CREAM & DESSERTS", "PAPER GOODS", "CANNED MEATS", "BISCUITS & CAKES")
         OR material_group_name IN ("PULSES", "SPICES", "CHOCOLATE BAGS", "PICKLES", "JAMS", "HONEY", "CHOCO SPREAD", "PEANUT BUTTER", "VINEGAR")
         )
     AND transaction_type IN ("SALE", "SELL_MEDIA")
+    AND tayeb_flag = 0
     AND amount > 0
     AND quantity > 0
 GROUP BY 1, 2
 ORDER BY 3
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC #Mobiles Margin
+
+-- COMMAND ----------
+
+WITH sales AS (
+    SELECT
+        region_name,
+        INT(CONCAT(YEAR(business_day), LPAD(MONTH(business_day), 2, '0'))) AS year_month,
+        material_id,
+        SUM(amount) AS sales
+    FROM gold.transaction.uae_pos_transactions AS t1
+    JOIN gold.store.store_master AS t2 ON t1.store_id = t2.store_id
+    JOIN gold.material.material_master AS t3 ON t1.product_id = t3.material_id
+    WHERE
+        business_day BETWEEN "2023-08-01" AND "2024-07-31"
+        AND department_name = "MOBILE PHONES"
+        AND tayeb_flag = 0
+        AND transaction_type IN ("SALE", "SELL_MEDIA")
+        AND amount > 0
+        AND quantity > 0
+    GROUP BY 1, 2, 3
+),
+
+gp AS (
+    SELECT
+        CASE WHEN region = "AUH" THEN "ABU DHABI"
+            WHEN region = "ALN" THEN "AL AIN"
+            WHEN region = "DXB" THEN "DUBAI"
+            WHEN region = "SHJ" THEN "SHARJAH"
+            END AS region_name,
+        year_month,
+        material_id,
+        gp_wth_chargeback
+    FROM gold.business.gross_profit
+    WHERE country = 'AE'
+    AND year_month BETWEEN 202308 AND 202407
+),
+
+combined AS (
+    SELECT
+        *,
+        COALESCE(sales*gp_wth_chargeback/100, 0) AS gp_abs
+    FROM sales AS t1
+    LEFT JOIN gp AS t2
+        ON t1.region_name = t2.region_name
+        AND t1.year_month = t2.year_month
+        AND t1.material_id = t2.material_id
+)
+
+SELECT
+    ROUND(SUM(gp_abs)/SUM(sales), 4) AS gp_margin
+FROM combined
+
+-- COMMAND ----------
+
+WITH sales AS (
+    SELECT
+        region_name,
+        INT(CONCAT(YEAR(business_day), LPAD(MONTH(business_day), 2, '0'))) AS year_month,
+        material_id,
+        brand,
+        SUM(amount) AS sales
+    FROM gold.transaction.uae_pos_transactions AS t1
+    JOIN gold.store.store_master AS t2 ON t1.store_id = t2.store_id
+    JOIN gold.material.material_master AS t3 ON t1.product_id = t3.material_id
+    WHERE
+        business_day BETWEEN "2023-08-01" AND "2024-07-31"
+        AND department_name = "MOBILE PHONES"
+        AND brand IN ("APPLE", "SAMSUNG")
+        AND tayeb_flag = 0
+        AND transaction_type IN ("SALE", "SELL_MEDIA")
+        AND amount > 0
+        AND quantity > 0
+    GROUP BY 1, 2, 3, 4
+),
+
+gp AS (
+    SELECT
+        CASE WHEN region = "AUH" THEN "ABU DHABI"
+            WHEN region = "ALN" THEN "AL AIN"
+            WHEN region = "DXB" THEN "DUBAI"
+            WHEN region = "SHJ" THEN "SHARJAH"
+            END AS region_name,
+        year_month,
+        material_id,
+        gp_wth_chargeback
+    FROM gold.business.gross_profit
+    WHERE country = 'AE'
+    AND year_month BETWEEN 202308 AND 202407
+),
+
+combined AS (
+    SELECT
+        *,
+        COALESCE(sales*gp_wth_chargeback/100, 0) AS gp_abs
+    FROM sales AS t1
+    LEFT JOIN gp AS t2
+        ON t1.region_name = t2.region_name
+        AND t1.year_month = t2.year_month
+        AND t1.material_id = t2.material_id
+)
+
+SELECT
+    brand,
+    ROUND(SUM(gp_abs)/SUM(sales), 4) AS gp_margin
+FROM combined
+GROUP BY 1
+
+-- COMMAND ----------
+
+
 
 -- COMMAND ----------
 
@@ -860,10 +1016,31 @@ ORDER BY 1, 2, 3, 4, 5, 6, 7
 -- COMMAND ----------
 
 SELECT *
-FROM gold.gross_profit
+FROM gold.business.gross_profit
 WHERE material_id = 2171837001
+AND region = 'AUH'
+AND year_month = 202403
 -- 000000002171837001
 -- 2171804004
+
+-- COMMAND ----------
+
+SELECT *
+FROM gold.gross_profit
+WHERE material_id = 1644658
+AND region = 'AUH'
+AND year_month = 202403
+
+-- COMMAND ----------
+
+SELECT
+    SUM(amount) AS all_trans_sales,
+    SUM(CASE WHEN transaction_type IN ("SALE", "SELL_MEDIA") THEN amount ELSE 0 END) AS only_sales
+FROM gold.pos_transactions AS t1
+JOIN gold.store_master AS t2 ON t1.store_id = t2.store_id
+WHERE business_day BETWEEN "2024-03-01" AND "2024-03-31"
+AND product_id = 1644658
+AND region_name = "ABU DHABI"
 
 -- COMMAND ----------
 
@@ -962,3 +1139,19 @@ WHERE country = 'AE'
 -- COMMAND ----------
 
 SELECT ROUND((342605 + 465) / 7314393, 4)
+
+-- COMMAND ----------
+
+
+
+-- COMMAND ----------
+
+
+
+-- COMMAND ----------
+
+
+
+-- COMMAND ----------
+
+
