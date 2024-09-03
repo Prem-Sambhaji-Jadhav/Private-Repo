@@ -1,6 +1,6 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC #Import Statements
+# MAGIC #Import Libraries
 
 # COMMAND ----------
 
@@ -19,21 +19,19 @@ import numpy as np
 
 # COMMAND ----------
 
-category = "BISCUITS & CAKES" # Mandatory field
-material_group_name = "RICE & OAT CAKE" # Leave it blank if you want the recommendations on category level
+category = "CANNED MEATS" # Mandatory field
+material_group_name = "CANNED CORNED BEEF" # Leave it blank if you want the recommendations on category level
 region = "SHARJAH" # ABU DHABI, AL AIN, DUBAI, SHARJAH
 
-catg_lower = material_group_name.lower() # 'material_group_name' OR 'category'
+# catg_lower = material_group_name.lower() # 'material_group_name' OR 'category'
 
 # Please make sure that the date range is EXACTLY 52 weeks (364 days) long, and does not include the present day's date
-start_date = "2023-07-01"
-end_date = "2024-06-28"
+start_date = "2023-08-01"
+end_date = "2024-07-29"
 
-LOOKALIKES_START_DATE = "2022-02-05"
+LOOKALIKES_START_DATE = "2022-02-01"
 # This must be minimum 30 days after the earliest date available in the source table
 # The day here should be the same as the day of the above start_date
-
-rfm_month_year = 202406
 
 # COMMAND ----------
 
@@ -76,16 +74,26 @@ elif region == "DUBAI":
 else:
     region_abr = "shj"
 
-catg_lower = catg_lower.replace(' ', '_')
-directory = f'/dbfs/FileStore/shared_uploads/prem@loyalytics.in/assortment_optimization/{catg_lower}/'
+# catg_lower = catg_lower.replace(' ', '_')
+# directory = f'/dbfs/FileStore/shared_uploads/prem@loyalytics.in/assortment_optimization/{catg_lower}/'
 
-attributes_file_path = f'{directory}{catg_lower}_attributes.csv'
+# attributes_file_path = f'{directory}{catg_lower}_attributes.csv'
 
-material_store_data_save_path = f'{directory}ao_material_store_data_{catg_lower}_{region_abr}.csv'
-gp_12months_values_save_path = f'{directory}ao_gp_{catg_lower}_{region_abr}.csv'
-gp_3months_values_save_path = f'{directory}ao_gp_{catg_lower}_{region_abr}_3m.csv'
-weekly_data_save_path = f'{directory}ao_products_weekly_data_{catg_lower}_{region_abr}.csv'
-cust_save_path = f'{directory}ao_cust_{catg_lower}_{region_abr}.csv'
+# material_store_data_save_path = f'{directory}ao_material_store_data_{catg_lower}_{region_abr}.csv'
+# gp_12months_values_save_path = f'{directory}ao_gp_{catg_lower}_{region_abr}.csv'
+# gp_3months_values_save_path = f'{directory}ao_gp_{catg_lower}_{region_abr}_3m.csv'
+# weekly_data_save_path = f'{directory}ao_products_weekly_data_{catg_lower}_{region_abr}.csv'
+# cust_save_path = f'{directory}ao_cust_{catg_lower}_{region_abr}.csv'
+
+query = """
+SELECT MAX(month_year)
+FROM analytics.segment.customer_segments
+WHERE
+    key = 'rfm'
+    AND country = 'uae'
+    AND channel = 'pos'
+"""
+rfm_month_year = spark.sql(query).toPandas().iloc[0,0]
 
 if material_group_name == "":
     material_group_condition = ""
@@ -111,7 +119,7 @@ else:
 #     SELECT
 #         customer_id,
 #         segment
-#     FROM analytics.customer_segments
+#     FROM analytics.segment.customer_segments
 #     WHERE key = 'rfm'
 #     AND channel = 'pos'
 #     AND country = 'uae'
@@ -124,13 +132,15 @@ else:
 #     t1.store_id,
 #     material_id,
 #     brand,
+#     material_group_name,
+#     category_name,
 #     t1.customer_id,
 #     segment,
 #     SUM(amount) AS sales,
 #     SUM(quantity) AS quantity_sold
-# FROM gold.pos_transactions AS t1
-# JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
-# JOIN gold.store_master AS t3 ON t1.store_id = t3.store_id
+# FROM gold.transaction.uae_pos_transactions AS t1
+# JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+# JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
 # LEFT JOIN customer_segments AS t4 ON t1.customer_id = t4.customer_id
 # WHERE
 #     business_day BETWEEN '{LOOKALIKES_START_DATE}' AND '{end_date}'
@@ -140,11 +150,11 @@ else:
 #     AND amount > 0
 #     AND quantity > 0
 #     AND tayeb_flag = 0
-# GROUP BY business_day, region_name, t1.store_id, brand, material_id, t1.customer_id, segment
+# GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9
 # """
 
 # spark_df = spark.sql(query)
-# spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("sandbox.pj_assortment_framework_data")
+# spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable("dev.sandbox.pj_assortment_framework_data")
 
 # COMMAND ----------
 
@@ -161,10 +171,12 @@ SELECT
     FLOOR(DATEDIFF(business_day, '{start_date}') / 7) + 1 AS week_number,
     SUM(sales) AS total_sales,
     SUM(quantity_sold) AS total_quantity_sold
-FROM sandbox.pj_assortment_framework_data
+FROM dev.sandbox.pj_assortment_framework_data
 WHERE
     business_day >= '{start_date}'
     AND region_name = '{region}'
+    AND category_name = '{category}'
+    {material_group_condition}
 GROUP BY material_id, week_number
 ORDER BY material_id, week_number
 """
@@ -280,8 +292,11 @@ SELECT
     FLOOR(DATEDIFF(business_day, '{LOOKALIKES_START_DATE}') / 7) + 1 AS week_number,
     SUM(sales) AS total_sales,
     SUM(quantity_sold) AS total_quantity_sold
-FROM sandbox.pj_assortment_framework_data
-WHERE region_name = '{region}'
+FROM dev.sandbox.pj_assortment_framework_data
+WHERE
+    region_name = '{region}'
+    AND category_name = '{category}'
+    {material_group_condition}
 GROUP BY material_id, week_number
 ORDER BY material_id, week_number
 """
@@ -684,10 +699,12 @@ query = f"""
 SELECT
     material_id,
     COUNT(DISTINCT store_id) AS num_stores
-FROM sandbox.pj_assortment_framework_data
+FROM dev.sandbox.pj_assortment_framework_data
 WHERE
     business_day >= DATE_ADD('{start_date}', {analysis_period_days})
     AND region_name = '{region}'
+    AND category_name = '{category}'
+    {material_group_condition}
 GROUP BY material_id
 ORDER BY material_id
 """
@@ -700,14 +717,15 @@ store_pnt = spark.sql(query).toPandas()
 
 query = f"""
 SELECT COUNT(DISTINCT t1.store_id) AS total_stores
-FROM gold.pos_transactions AS t1
-JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
-JOIN gold.store_master AS t3 ON t1.store_id = t3.store_id
+FROM gold.transaction.uae_pos_transactions AS t1
+JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
 WHERE
     business_day BETWEEN DATE_ADD('{start_date}', {analysis_period_days}) AND '{end_date}'
     AND category_name = '{category}'
     {material_group_condition}
     AND region_name = '{region}'
+    AND tayeb_flag = 0
     AND transaction_type IN ('SALE', 'SELL_MEDIA')
     AND amount > 0
     AND quantity > 0
@@ -921,10 +939,12 @@ SELECT
     material_id,
     INT(CONCAT(YEAR(business_day), LPAD(MONTH(business_day), 2, '0'))) AS year_month,
     SUM(sales) AS sales
-FROM sandbox.pj_assortment_framework_data
+FROM dev.sandbox.pj_assortment_framework_data
 WHERE
     business_day >= '{start_date}'
     AND region_name = '{region}'
+    AND category_name = '{category}'
+    {material_group_condition}
 GROUP BY material_id, year_month
 ORDER BY material_id, year_month
 """
@@ -949,11 +969,12 @@ SELECT
     material_id,
     year_month,
     gp_wth_chargeback
-FROM gold.gross_profit
+FROM gold.business.gross_profit
 WHERE
     country = 'AE'
     AND region = '{region_abr.upper()}'
     AND year_month BETWEEN {year_month_start} AND {year_month_end}
+    AND material_id IS NOT NULL
 ORDER BY material_id, year_month
 """
 
@@ -971,20 +992,6 @@ gp_df = gp_df[gp_df['material_id'].isin(materials)].reset_index(drop = True)
 # Extract the GP data of only the analysis period
 
 gp_report = gp_df[gp_df['year_month'] >= analysis_period_start_month].reset_index(drop = True)
-
-# COMMAND ----------
-
-# Check for mismatching records in the two dataframes
-
-gp_sales['key'] = gp_sales['material_id'].astype(str) + gp_sales['year_month'].astype(str)
-a = gp_sales['key'].unique()
-gp_report['key'] = gp_report['material_id'].astype(str) + gp_report['year_month'].astype(str)
-b = gp_report['key'].unique()
-
-unique_to_sales = np.setdiff1d(a, b)
-unique_to_gp = np.setdiff1d(b, a)
-
-unique_to_sales, unique_to_gp
 
 # COMMAND ----------
 
@@ -1159,7 +1166,7 @@ low_sku_growth['new_buckets'] = new_buckets
 
 # Identify PL SKUs recommended for delist and change their bucket to observe
 
-attr = pd.read_csv(attributes_file_path)
+attr = spark.sql('SELECT * FROM dev.sandbox.pj_assortment_attributes').toPandas()
 
 temp = low_sku_growth[['material_id', 'new_buckets']]
 temp = pd.merge(temp, attr[['material_id', 'brand']], on='material_id', how='inner')
@@ -1341,17 +1348,24 @@ SELECT
     FLOOR(DATEDIFF(business_day, '{start_date}') / 7) + 1 AS week_number,
     store_id,
     SUM(sales) AS total_sales
-FROM sandbox.pj_assortment_framework_data
+FROM dev.sandbox.pj_assortment_framework_data
 WHERE
     business_day >= '{start_date}'
     AND region_name = '{region}'
+    AND category_name = '{category}'
+    {material_group_condition}
 GROUP BY week_number, material_id, store_id
 ORDER BY week_number, material_id, store_id
 """
 
 material_store_df = spark.sql(query).toPandas()
 if save_files_flag == 1:
-    material_store_df.to_csv(material_store_data_save_path, index = False)
+    temp = material_store_df.copy()
+    temp['region_name'] = region
+    temp['category_name'] = category
+    temp['material_group_name'] = material_group_name
+    spark_df = spark.createDataFrame(temp)
+    spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable("dev.sandbox.pj_assortment_material_store_data")
 
 # COMMAND ----------
 
@@ -1396,7 +1410,12 @@ weekly_data = pd.merge(weeks52, cwd_df, on=['material_id', 'week_number'], how =
 weekly_data = weekly_data.drop(columns = 'total_sales')
 
 if save_files_flag == 1:
-    weekly_data.to_csv(weekly_data_save_path, index = False)
+    temp = weekly_data.copy()
+    temp['region_name'] = region
+    temp['category_name'] = category
+    temp['material_group_name'] = material_group_name
+    spark_df = spark.createDataFrame(temp)
+    spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable("dev.sandbox.pj_assortment_weekly_data")
 
 # COMMAND ----------
 
@@ -1408,10 +1427,12 @@ WITH total_cust AS (
         COUNT(DISTINCT customer_id) AS tot_cust,
         COUNT(DISTINCT CASE WHEN segment = 'VIP' THEN customer_id END) AS tot_vip,
         COUNT(DISTINCT CASE WHEN segment = 'Frequentist' THEN customer_id END) AS tot_freq
-    FROM sandbox.pj_assortment_framework_data
+    FROM dev.sandbox.pj_assortment_framework_data
     WHERE
         business_day >= '{start_date}'
         AND region_name = '{region}'
+        AND category_name = '{category}'
+        {material_group_condition}
 )
 
 SELECT
@@ -1425,10 +1446,12 @@ SELECT
     (cust/tot_cust) AS tot_cust_perc,
     (vip_cust/tot_vip) AS vip_cust_perc,
     (freq_cust/tot_freq) AS freq_cust_perc
-FROM total_cust, sandbox.pj_assortment_framework_data
+FROM total_cust, dev.sandbox.pj_assortment_framework_data
 WHERE
     business_day >= '{start_date}'
     AND region_name = '{region}'
+    AND category_name = '{category}'
+    {material_group_condition}
 GROUP BY material_id, tot_cust, tot_vip, tot_freq
 ORDER BY material_id
 """
@@ -1437,7 +1460,12 @@ cust = spark.sql(query).toPandas()
 cust = pd.merge(cust, attr[['material_id', 'material_name']], on = 'material_id', how = 'inner')
 
 if save_files_flag == 1:
-    cust.to_csv(cust_save_path, index = False)
+    temp = cust.copy()
+    temp['region_name'] = region
+    temp['category_name'] = category
+    temp['material_group_name'] = material_group_name
+    spark_df = spark.createDataFrame(temp)
+    spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable("dev.sandbox.pj_assortment_customer_data")
 
 # COMMAND ----------
 
@@ -1453,7 +1481,12 @@ gp_report.rename(columns={'gp_contri': 'gp_contri_Q4'}, inplace=True)
 gp_report = gp_report[['material_id', 'gp_abs_Q4', 'gp_contri_Q4']]
 
 if save_files_flag == 1:
-    gp_report.to_csv(gp_3months_values_save_path, index = False)
+    temp = gp_report.copy()
+    temp['region_name'] = region
+    temp['category_name'] = category
+    temp['material_group_name'] = material_group_name
+    spark_df = spark.createDataFrame(temp)
+    spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable("dev.sandbox.pj_assortment_gp_3months")
 
 # COMMAND ----------
 
@@ -1498,16 +1531,9 @@ gp_report_12m = pd.merge(gp_report_12m, all_products_catg, on='material_id', how
 gp_report_12m.rename(columns={'gp_value': 'GP'}, inplace=True)
 
 if save_files_flag == 1:
-    gp_report_12m.to_csv(gp_12months_values_save_path, index = False)
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
-
+    temp = gp_report_12m.copy()
+    temp['region_name'] = region
+    temp['category_name'] = category
+    temp['material_group_name'] = material_group_name
+    spark_df = spark.createDataFrame(temp)
+    spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable("dev.sandbox.pj_assortment_gp_12months")
