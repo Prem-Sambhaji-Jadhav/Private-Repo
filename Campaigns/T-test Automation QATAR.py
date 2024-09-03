@@ -46,7 +46,7 @@ dbutils.widgets.text(name='Trigger ID', defaultValue='null')
 # COMMAND ----------
 
 sandbox_name = dbutils.widgets.get('Sandbox Table Name')
-sdf = spark.sql(f"SELECT * FROM {sandbox_name}") # Parameter-3
+sdf = spark.sql(f"select * from {sandbox_name}") # Parameter-3
 df = sdf.toPandas()
 df.shape
 
@@ -206,7 +206,7 @@ campaign_name = str(dbutils.widgets.get('Campaign Name')) # Parameter-2
 
 query = f"""
 SELECT *
-FROM dev.sandbox.campaign_customer_details
+FROM dev.sandbox.qatar_campaign_customer_details
 WHERE campaign_id = {campaign_id}
 AND campaign_name = '{campaign_name}'
 """
@@ -240,30 +240,14 @@ if data_empty:
 
 if data_empty:
     spark_df = spark.createDataFrame(sandbox_df)
-    spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable("dev.sandbox.campaign_customer_details")
+    spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable("dev.sandbox.qatar_campaign_customer_details")
 
     spark_df = spark.createDataFrame(test_cardkeys_df)
-    spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable("dev.sandbox.campaign_test_cardkeys")
+    spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable("dev.sandbox.qatar_campaign_test_cardkeys")
 
 # COMMAND ----------
 
 print(data_empty)
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC SELECT campaign_id, COUNT(DISTINCT `customer_key|card_key`)
-# MAGIC FROM dev.sandbox.campaign_test_cardkeys
-# MAGIC WHERE campaign_id >= 143
-# MAGIC GROUP BY 1
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC SELECT campaign_id, COUNT(DISTINCT customer_key)
-# MAGIC FROM dev.sandbox.campaign_customer_details
-# MAGIC WHERE campaign_id >= 143
-# MAGIC GROUP BY 1
 
 # COMMAND ----------
 
@@ -275,6 +259,9 @@ print(data_empty)
 if data_empty == False:
     customer_key_lst = test_data['customer_key'].astype(str).tolist()
 
+# COMMAND ----------
+
+if data_empty == False:
     all_strings = all(isinstance(item, str) for item in customer_key_lst)
 
     # Check if all elements are integers
@@ -282,17 +269,39 @@ if data_empty == False:
 
     print(f"All elements are strings: {all_strings}")
     print(f"All elements are integers: {all_integers}")
-    print(f"\nNumber of Customers: {len(customer_key_lst)}")
+
+# COMMAND ----------
+
+if data_empty == False:
+    print(len(customer_key_lst))
+
+# COMMAND ----------
+
+import pandas as pd
+query = """select a.customer_key
+                    from dev.sandbox.qatar_campaign_customer_details a
+                    join gold.customer.vynamic_customer_profile b on a.customer_key = b.customer_key
+                    where b.nationality IN ('QATAR','TUNISIA','JORDAN','EGYPT')
+                    and a.campaign_set = 'test'
+                    group by 1"""
+
+df = spark.sql(query).toPandas()
+customer_key_lst = df['customer_key'].astype(str).tolist()
+all_strings = all(isinstance(item, str) for item in customer_key_lst)
+
+# Check if all elements are integers
+all_integers = all(isinstance(item, int) for item in customer_key_lst)
+
+print(f"All elements are strings: {all_strings}")
+print(f"All elements are integers: {all_integers}")
+print(len(customer_key_lst))
+##data_empty = False
 
 # COMMAND ----------
 
 if data_empty == False:
     trigger_id = int(dbutils.widgets.get('Trigger ID')) # Parameter-7
-    print(f"Trigger ID: {trigger_id}")
-
-# COMMAND ----------
-
-customer_key_lst
+    print(trigger_id)
 
 # COMMAND ----------
 
