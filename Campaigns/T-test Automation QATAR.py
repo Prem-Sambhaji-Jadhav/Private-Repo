@@ -216,7 +216,7 @@ data_empty = spark.sql(query).toPandas().empty
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC select distinct campaign_id,campaign_name from dev.sandbox.campaign_customer_details  
+# MAGIC select distinct campaign_id,campaign_name from dev.sandbox.qatar_campaign_customer_details  
 
 # COMMAND ----------
 
@@ -279,23 +279,21 @@ if data_empty == False:
 
 import pandas as pd
 query = """select a.customer_key
-                    from dev.sandbox.qatar_campaign_customer_details a
-                    join gold.customer.vynamic_customer_profile b on a.customer_key = b.customer_key
-                    where b.nationality IN ('QATAR','TUNISIA','JORDAN','EGYPT')
-                    and a.campaign_set = 'test'
-                    group by 1"""
+from dev.sandbox.qatar_campaign_customer_details a
+left join gold.customer.vynamic_customer_profile b on a.customer_key = b.customer_key
+where campaign_set = 'test'
+and b.nationality IN ('QATAR','TUNISIA','JORDAN','EGYPT')
+group by 1"""
 
-df = spark.sql(query).toPandas()
-customer_key_lst = df['customer_key'].astype(str).tolist()
+df = spark.sql(query)
+customer_key_lst = [str(row.customer_key) for row in df.collect()]
+
 all_strings = all(isinstance(item, str) for item in customer_key_lst)
-
-# Check if all elements are integers
 all_integers = all(isinstance(item, int) for item in customer_key_lst)
 
 print(f"All elements are strings: {all_strings}")
 print(f"All elements are integers: {all_integers}")
 print(len(customer_key_lst))
-##data_empty = False
 
 # COMMAND ----------
 

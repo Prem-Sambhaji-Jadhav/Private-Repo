@@ -7,7 +7,7 @@
 # MAGIC <b>Sandbox Requirements:</b>
 # MAGIC 1. customer_key<br>
 # MAGIC 2. card_key<br>
-# MAGIC 3. variable of interest - rpc/atv/frequency/recency
+# MAGIC 3. variable of interest - rpc/atv/frequency/recency/etc
 
 # COMMAND ----------
 
@@ -215,11 +215,6 @@ data_empty = spark.sql(query).toPandas().empty
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC select distinct campaign_id,campaign_name from dev.sandbox.campaign_customer_details  
-
-# COMMAND ----------
-
 if data_empty:
     test_data = test_data.drop(columns = variable_of_interest)
     control_data = control_data.drop(columns = variable_of_interest)
@@ -247,23 +242,23 @@ if data_empty:
 
 # COMMAND ----------
 
-print(data_empty)
-
-# COMMAND ----------
-
 # MAGIC %sql
-# MAGIC SELECT campaign_id, COUNT(DISTINCT `customer_key|card_key`)
-# MAGIC FROM dev.sandbox.campaign_test_cardkeys
-# MAGIC WHERE campaign_id >= 143
-# MAGIC GROUP BY 1
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC SELECT campaign_id, COUNT(DISTINCT customer_key)
+# MAGIC SELECT campaign_id, campaign_name, COUNT(*)
 # MAGIC FROM dev.sandbox.campaign_customer_details
-# MAGIC WHERE campaign_id >= 143
-# MAGIC GROUP BY 1
+# MAGIC GROUP BY 1, 2
+# MAGIC ORDER BY 1 DESC
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT campaign_id, campaign_name, COUNT(*)
+# MAGIC FROM dev.sandbox.campaign_test_cardkeys
+# MAGIC GROUP BY 1, 2
+# MAGIC ORDER BY 1 DESC
+
+# COMMAND ----------
+
+print(data_empty)
 
 # COMMAND ----------
 
@@ -292,7 +287,7 @@ if data_empty == False:
 
 # COMMAND ----------
 
-customer_key_lst
+ingage_api_key = dbutils.secrets.get("lulucdp-secret-scope", "ingageapikey")
 
 # COMMAND ----------
 
@@ -305,7 +300,7 @@ if data_empty == False:
 
     # Headers
     headers = {
-        "ingageapikey": "571f161edc011fe405563857684568",
+        "ingageapikey":ingage_api_key,
         "Content-Type": "application/json"
     }
 
@@ -339,3 +334,7 @@ if data_empty == False:
             continue
         else:
             break
+
+# COMMAND ----------
+
+
