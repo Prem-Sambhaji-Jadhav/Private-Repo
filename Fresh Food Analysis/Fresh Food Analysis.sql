@@ -1576,6 +1576,7 @@ ORDER BY material_group_name, department_name
 
 -- COMMAND ----------
 
+
 WITH mg_sales_contri AS (
     SELECT
         department_name,
@@ -1633,6 +1634,7 @@ SELECT
 FROM mg_rfm_trans
 GROUP BY department_name, material_group_name
 ORDER BY material_group_name, department_name
+
 
 -- COMMAND ----------
 
