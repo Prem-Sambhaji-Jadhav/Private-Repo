@@ -693,16 +693,17 @@ demand_group_temp = 'DG-2'
 
 print(f'Starting Iteration for {mg_name_temp}, {demand_group_temp}')
 
-df_mds_temp = get_mg_dg_mds(material_group_name=mg_name_temp, mg_demand_group=demand_group_temp)
 
 temp_cols = ['week_number', 'region_name', 'material_id', 'quantity', 'avg_unit_price', 'material_proxy_identifier']
+
+df_mds_temp = get_mg_dg_mds(material_group_name=mg_name_temp, mg_demand_group=demand_group_temp)[temp_cols]
 
 
 num_sku_temp = df_mds_temp.material_id.nunique()
 
 print(f'Total Distinct SKUs: {num_sku_temp}\n')
 
-df_mds_temp[temp_cols]
+df_mds_temp.head()
 
 
 # COMMAND ----------
@@ -710,7 +711,7 @@ df_mds_temp[temp_cols]
 # debug code
 
 # group by region_name and count the distinct SKUs in each region (pandas df)
-num_sku_temp.groupby('region_name').
+df_mds_temp.groupby('region_name').material_id.nunique()
 
 # COMMAND ----------
 
