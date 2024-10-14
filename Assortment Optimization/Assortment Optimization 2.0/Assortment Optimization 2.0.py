@@ -8,21 +8,21 @@
 # MAGIC CREATE OR REPLACE TABLE dev.sandbox.pj_ao_v2 AS (
 # MAGIC     WITH sales_data AS (
 # MAGIC         SELECT
-# MAGIC             business_day,
-# MAGIC             INT(CONCAT(YEAR(business_day), LPAD(MONTH(business_day), 2, '0'))) AS year_month,
-# MAGIC             region_name,
-# MAGIC             transaction_id,
+# MAGIC             t1.business_day,
+# MAGIC             INT(CONCAT(YEAR(t1.business_day), LPAD(MONTH(t1.business_day), 2, '0'))) AS year_month,
+# MAGIC             t3.region_name,
+# MAGIC             t1.transaction_id,
 # MAGIC             t2.material_id,
 # MAGIC             t2.material_name,
 # MAGIC             t2.brand,
 # MAGIC             t1.ean,
-# MAGIC             INT(conversion_numerator) AS conversion_numerator,
-# MAGIC             unit_price,
-# MAGIC             regular_unit_price,
-# MAGIC             quantity AS quantity,
-# MAGIC             regular_unit_price * quantity AS amount,
-# MAGIC             ROUND(unit_price - regular_unit_price, 2) AS discount,
-# MAGIC             ROUND(discount/unit_price) AS discount_perc,
+# MAGIC             INT(t4.conversion_numerator) AS conversion_numerator,
+# MAGIC             t1.unit_price,
+# MAGIC             t1.regular_unit_price,
+# MAGIC             t1.quantity AS quantity,
+# MAGIC             t1.regular_unit_price * t1.quantity AS amount,
+# MAGIC             ROUND(t1.unit_price - t1.regular_unit_price, 2) AS discount,
+# MAGIC             ROUND(discount/t1.unit_price) AS discount_perc,
 # MAGIC             CASE WHEN discount > 0 THEN 1 ELSE 0 END AS discount_flag,
 # MAGIC             1 AS purchase_flag
 # MAGIC         FROM gold.transaction.uae_pos_transactions AS t1
@@ -30,14 +30,14 @@
 # MAGIC         LEFT JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
 # MAGIC         LEFT JOIN gold.material.material_attributes AS t4 ON t1.ean = t4.ean
 # MAGIC         WHERE
-# MAGIC             business_day BETWEEN "2023-07-01" AND "2024-06-30"
+# MAGIC             t1.business_day BETWEEN "2023-07-01" AND "2024-06-30"
 # MAGIC             AND t2.category_name = "PASTA & NOODLE"
 # MAGIC             AND t2.material_group_name = "PASTA"
 # MAGIC             AND t1.store_id = 2370 -- AL WAHDA, AUH
-# MAGIC             AND tayeb_flag = 0
-# MAGIC             AND transaction_type IN ("SALE", "SELL_MEDIA")
-# MAGIC             AND amount > 0
-# MAGIC             AND quantity > 0
+# MAGIC             AND t3.tayeb_flag = 0
+# MAGIC             AND t1.transaction_type IN ("SALE", "SELL_MEDIA")
+# MAGIC             AND t1.amount > 0
+# MAGIC             AND t1.quantity > 0
 # MAGIC         GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 # MAGIC         ORDER BY 1, 4, 5
 # MAGIC     ),
@@ -58,7 +58,7 @@
 # MAGIC
 # MAGIC     SELECT
 # MAGIC         t1.*,
-# MAGIC         ROUND(COALESCE(amount*gp_wth_chargeback/100, 0), 2) AS abs_gp
+# MAGIC         ROUND(COALESCE(t1.amount * t2.gp_wth_chargeback / 100, 0), 2) AS abs_gp
 # MAGIC     FROM sales_data AS t1
 # MAGIC     LEFT JOIN gp_data AS t2
 # MAGIC         ON t1.region_name = t2.region_name
@@ -75,10 +75,6 @@
 
 import pandas as pd
 import numpy as np
-# import plotly.express as px
-# from plotly.subplots import make_subplots
-# import plotly.graph_objects as go
-# import matplotlib.pyplot as plt
 
 # COMMAND ----------
 
@@ -89,8 +85,6 @@ item_counts = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 types = ['Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Spaghetti', 'Macaroni', 'Macaroni', 'Spaghetti', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Spaghetti', 'Macaroni', 'Macaroni', 'Macaroni', 'Rigatoni', 'Spaghetti', 'Spaghetti', 'Spaghetti', 'Farfalle', 'Penne Rigate', 'Fusili', 'Penne Rigate', 'Lasagna', 'Canneloni', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Spaghetti', 'Not Available', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Spaghetti', 'Penne Rigate', 'Spaghetti', 'Macaroni', 'Macaroni', 'Spaghetti', 'Macaroni', 'Penne Rigate', 'Fusili', 'Fusili', 'Tagliatelle', 'Lasagna', 'Farfalle', 'Penne Rigate', 'Penne Rigate', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Spaghetti', 'Spaghetti', 'Lasagna', 'Lasagna', 'Penne Rigate', 'Fusili', 'Lasagna', 'Macaroni', 'Spaghetti', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Angel Hair', 'Spaghetti', 'Macaroni', 'Vermicelli', 'Tagliatelle', 'Lasagna', 'Penne Rigate', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Serpentini', 'Chifferini', 'Linguine', 'Angel Hair', 'Fusili', 'Spaghetti', 'Penne Rigate', 'Fettuccine', 'Macaroni', 'Tortiglioni', 'Lasagna', 'Mac&Cheese', 'Spaghetti', 'Fettuccine', 'Mac&Cheese', 'Farfalle', 'Spaghetti', 'Spaghetti', 'Mac&Cheese', 'Penne Rigate', 'Macaroni', 'Fusili', 'Spaghetti', 'Linguine', 'Spaghetti', 'Not Available', 'Fettuccine', 'Fettuccine', 'Penne Rigate', 'Rigatoni', 'Penne Rigate', 'Not Available', 'Spaghetti', 'Spaghetti', 'Penne Rigate', 'Macaroni', 'Penne Rigate', 'Linguine', 'Fusili', 'Farfalle', 'Rigatoni', 'Spaghetti', 'Penne Rigate', 'Fusili', 'Fettuccine', 'Lasagna', 'Not Available', 'Mac&Cheese', 'Vermicelli', 'Spaghetti', 'Penne Rigate', 'Fusili', 'Spaghetti', 'Not Available', 'Canneloni', 'Not Available', 'Macaroni', 'Macaroni', 'Lasagna', 'Fusili', 'Not Available', 'Spaghetti', 'Spaghetti', 'Lasagna', 'Not Available', 'Fusili', 'Not Available', 'Macaroni', 'Macaroni', 'Rotini', 'Macaroni', 'Macaroni', 'Spaghetti', 'Spaghetti', 'Not Available', 'Rotini', 'Not Available', 'Lasagna', 'Bunny Shaped', 'Spaghetti', 'Spaghetti', 'Fettuccine', 'Spaghetti', 'Spaghetti', 'Fettuccine', 'Not Available', 'Penne Rigate', 'Spaghetti', 'Mac&Cheese', 'Not Available', 'Not Available', 'Fusili', 'Linguine', 'Not Available', 'Tagliatelle', 'Fusili', 'Penne Rigate', 'Not Available', 'Spaghetti', 'Penne Rigate', 'Penne Rigate', 'Angel Hair', 'Rigatoni', 'Not Available', 'Tortiglioni', 'Not Available', 'Spaghetti', 'Chifferini', 'Macaroni', 'Penne Rigate', 'Fusili', 'Mac&Cheese', 'Not Available', 'Linguine', 'Not Available', 'Not Available', 'Not Available', 'Not Available', 'Not Available', 'Mac&Cheese', 'Chifferini', 'Not Available', 'Penne Rigate', 'Not Available', 'Macaroni', 'Mac&Cheese', 'Spaghetti', 'Spaghetti', 'Alphabet Shaped', 'Not Available', 'Spaghetti', 'Fusili', 'Penne Rigate', 'Spaghetti', 'Farfalle', 'Mac&Cheese', 'Penne Rigate', 'Fusili', 'Spaghetti', 'Lasagna', 'Not Available', 'Penne Rigate', 'Spaghetti', 'Penne Rigate', 'Not Available', 'Spaghetti', 'Macaroni', 'Macaroni', 'Macaroni', 'Penne Rigate', 'Penne Rigate', 'Lasagna', 'Macaroni', 'Mac&Cheese', 'Macaroni', 'Macaroni', 'Penne Rigate', 'Macaroni', 'Fusili', 'Spaghetti', 'Not Available', 'Fusili', 'Spaghetti', 'Tortiglioni', 'Macaroni', 'Spaghetti', 'Spaghetti', 'Fusili', 'Penne Rigate', 'Not Available', 'Farfalle', 'Spaghetti', 'Not Available', 'Tortiglioni', 'Fusili', 'Penne Rigate', 'Not Available', 'Farfalle', 'Spaghetti', 'Tortiglioni', 'Fusili', 'Penne Rigate', 'Farfalle', 'Fusili', 'Not Available', 'Penne Rigate', 'Spaghetti', 'Tagliatelle', 'Tortiglioni', 'Fusili', 'Spaghetti', 'Fusili', 'Tortiglioni', 'Penne Rigate', 'Penne Rigate', 'Not Available', 'Fusili', 'Tagliatelle', 'Tagliatelle', 'Lasagna', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Macaroni', 'Not Available', 'Farfalle', 'Tagliatelle', 'Macaroni', 'Macaroni', 'Not Available', 'Not Available', 'Lasagna', 'Macaroni', 'Spaghetti', 'Penne Rigate', 'Instant', 'Gnocchi', 'Instant', 'Rigatoni', 'Spaghetti', 'Instant', 'Instant', 'Instant', 'Not Available', 'Not Available', 'Not Available', 'Fusili', 'Rigatoni', 'Not Available', 'Fusili', 'Penne Rigate', 'Fusili', 'Penne Rigate', 'Spaghetti', 'Penne Rigate', 'Fusili', 'Fusili', 'Not Available', 'Spaghetti', 'Not Available', 'Instant', 'Fusili', 'Penne Rigate', 'Angel Hair', 'Linguine', 'Linguine', 'Not Available', 'Not Available', 'Spaghetti', 'Not Available', 'Spaghetti', 'Linguine', 'Not Available', 'Penne Rigate', 'Mac&Cheese', 'Mac&Cheese', 'Farfalle', 'Tagliatelle', 'Chifferini', 'Mac&Cheese', 'Lasagna', 'Spaghetti', 'Fusili', 'Macaroni', 'Lasagna', 'Spaghetti', 'Fusili', 'Not Available', 'Macaroni', 'Macaroni', 'Fusili', 'Not Available', 'Instant', 'Instant', 'Instant', 'Instant', 'Instant', 'Tagliatelle', 'Macaroni', 'Macaroni', 'Spaghetti', 'Not Available', 'Fettuccine', 'Penne Rigate', 'Spaghetti', 'Spaghetti', 'Fusili', 'Mac&Cheese', 'Mac&Cheese', 'Mac&Cheese', 'Not Available', 'Not Available', 'Not Available', 'Penne Rigate', 'Mac&Cheese', 'Mac&Cheese', 'Mac&Cheese', 'Instant', 'Instant', 'Instant', 'Spaghetti', 'Penne Rigate', 'Lasagna', 'Spaghetti', 'Fusili', 'Spaghetti', 'Fusili', 'Penne Rigate', 'Macaroni', 'Spaghetti', 'Fettuccine', 'Not Available', 'Not Available', 'Not Available', 'Fettuccine', 'Not Available', 'Lasagna', 'Not Available', 'Spaghetti', 'Tagliatelle', 'Penne Rigate', 'Penne Rigate', 'Penne Rigate', 'Not Available', 'Rotini', 'Spaghetti', 'Rotini', 'Fusili', 'Penne Rigate', 'Fusili', 'Penne Rigate', 'Spaghetti', 'Macaroni', 'Lasagna', 'Mac&Cheese', 'Mac&Cheese', 'Spaghetti', 'Fettuccine', 'Spaghetti', 'Angel Hair', 'Macaroni', 'Words Shaped', 'Number Shaped', 'Minion Shaped', 'Spongebob Shaped', 'Cars Shaped', 'Spaghetti', 'Macaroni', 'Macaroni', 'Macaroni', 'Penne Rigate', 'Spaghetti', 'Cocciolini', 'Ditalini', 'Vermicelli', 'Fusili', 'Spaghetti', 'Penne Rigate', 'Macaroni', 'Not Available', 'Mac&Cheese', 'Fusili']
 
 volume_in_grams = [400, 400, 400, 400, 400, 500, 400, 400, 400, 450, 450, 450, 450, 400, 450, 450, 500, 450, 500, 500, 500, 500, 500, 500, 500, 500, 250, 400, 450, 400, 400, 400, 400, 400, 400, 500, 500, 500, 500, 400, 400, 400, 900, 800, 450, 500, 500, 500, 450, 400, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 900, 500, 500, 400, 400, 400, 500, 500, 400, 400, 500, 300, 500, 400, 400, 400, 400, 400, 500, 400, 400, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 400, 500, 500, 500, 500, 500, 500, 500, 500, 400, 500, 500, 206, 400, 500, 170, 500, 450, 400, 156, 500, 400, 500, 500, 500, 500, 500, 500, 250, 400, 400, 400, 400, 400, 500, 500, 400, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 170, 454, 454, 500, 500, 500, 400, 250, 500, 500, 500, 500, 400, 250, 400, 900, 250, 340, 340, 340, 300, 400, 454, 400, 400, 500, 500, 454, 454, 454, 450, 170, 250, 200, 200, 800, 400, 121, 125, 500, 500, 156, 220, 250, 340, 250, 250, 250, 400, 400, 400, 400, 400, 400, 500, 500, 500, 500, 500, 500, 500, 450, 500, 400, 213, 235, 500, 116, 124, 121, 124, 127, 73, 500, 385, 270, 250, 337, 156, 500, 500, 453, 250, 500, 500, 500, 500, 454, 156, 400, 400, 400, 500, 500, 400, 500, 400, 400, 400, 500, 400, 400, 250, 250, 250, 450, 170, 400, 400, 400, 400, 500, 500, 250, 400, 500, 500, 400, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 250, 400, 400, 400, 250, 250, 250, 250, 250, 250, 250, 400, 250, 250, 250, 400, 400, 500, 500, 500, 500, 400, 150, 500, 250, 400, 400, 99, 250, 250, 500, 500, 400, 155, 300, 105, 500, 400, 67, 67, 67, 400, 400, 400, 500, 340, 250, 250, 250, 500, 500, 500, 500, 500, 500, 500, 500, 250, 70, 70, 70, 250, 250, 250, 250, 400, 400, 400, 500, 500, 500, 500, 164, 160, 400, 400, 500, 170, 250, 250, 250, 400, 500, 450, 450, 450, 340, 340, 340, 250, 70, 70, 70, 70, 70, 450, 170, 400, 400, 300, 300, 300, 300, 300, 300, 58, 156, 170, 250, 250, 250, 250, 264, 240, 256, 67, 67, 67, 500, 400, 454, 500, 500, 500, 500, 500, 500, 500, 500, 240, 240, 240, 500, 500, 500, 300, 250, 250, 170, 400, 454, 340, 454, 226, 340, 500, 500, 500, 500, 500, 500, 454, 66, 170, 400, 200, 200, 200, 400, 500, 500, 500, 500, 500, 400, 500, 400, 400, 400, 400, 500, 500, 500, 400, 500, 400, 500, 500, 275, 500]
-
-# COMMAND ----------
 
 attr = pd.DataFrame({'material_id': materials,
                      'item_count': item_counts,
@@ -116,14 +110,21 @@ df = pd.merge(df, attr, on = 'material_id', how = 'left')
 
 # COMMAND ----------
 
+# Make a column for number of packs in a material
 df['item_count'] = df['item_count'].astype(str)
 df['Packs'] = np.where(df.item_count == '1', df.item_count + ' Pack', df.item_count + ' Packs')
 df['item_count'] = df['item_count'].astype('int32')
+
+# Calculate unit weight price for each product
 df['conversion_numerator'] = df['conversion_numerator'].fillna(1)
 df['unit_wgt_price'] = df['amount'] / (df['conversion_numerator'] * df['volume_in_grams'] * df['quantity'] * df['item_count'])
+
+# Convert volume_in_grams to string type and concatenate the units to it
 df['volume_in_grams'] = df['volume_in_grams'].astype(str)
 df['volume_in_grams'] = df['volume_in_grams'] + 'G'
-df['attribute_combination'] = df['type'] + ", " + df['volume_in_grams'] + ", " + df['Packs']
+
+# Concatenate all the attributes into one column
+df['attribute_combination'] = df['type'] + ", " + df['volume_in_grams'] + ", " + df['Packs'] + ", " + df['brand']
 
 # COMMAND ----------
 
@@ -135,20 +136,12 @@ df.head().display()
 
 # COMMAND ----------
 
-# df['customer_id'].nunique(), df['material_id'].nunique(), df['business_day'].nunique()
-# display(pd.DataFrame(df.groupby('customer_id')['material_id'].nunique()).reset_index())
-# temp = df.groupby('customer_id')[['material_id', 'business_day']].nunique().reset_index()
-# temp[temp['business_day'] >= 3]['customer_id'].nunique()
-# display(temp)
-# display(pd.DataFrame(df.groupby('customer_id')['material_id'].nunique()).reset_index())
-
-# COMMAND ----------
-
 # MAGIC %md
 # MAGIC #Attribute Shares Check
 
 # COMMAND ----------
 
+# Calculating cumulative sum of sales contribution for the unique type of products available in the category
 attr_share_df = df.groupby('type')['amount'].sum().reset_index()
 attr_share_df = attr_share_df.rename(columns={'amount': 'type_sales'})
 attr_share_df = attr_share_df.sort_values(by = 'type_sales', ascending = False).reset_index(drop = True)
@@ -157,6 +150,7 @@ attr_share_df['type_sales_perc'] = round(attr_share_df.type_sales.cumsum() / att
 
 df = pd.merge(df, attr_share_df, on='type', how='inner')
 
+# Calculating cumulative sum of sales contribution for the unique product volumes available in the category
 attr_share_df = df.groupby('volume_in_grams')['amount'].sum().reset_index()
 attr_share_df = attr_share_df.rename(columns={'amount': 'volume_sales'})
 attr_share_df = attr_share_df.sort_values(by = 'volume_sales', ascending = False).reset_index(drop = True)
@@ -164,6 +158,7 @@ attr_share_df['volume_sales'] = round(attr_share_df['volume_sales'], 0)
 attr_share_df['volume_sales_perc'] = round(attr_share_df.volume_sales.cumsum() / attr_share_df.volume_sales.sum() * 100, 2)
 df = pd.merge(df, attr_share_df, on='volume_in_grams', how='inner')
 
+# Calculating cumulative sum of sales contribution for the unique pack types available in the category
 attr_share_df = df.groupby('Packs')['amount'].sum().reset_index()
 attr_share_df = attr_share_df.rename(columns={'amount': 'Pack_sales'})
 attr_share_df = attr_share_df.sort_values(by = 'Pack_sales', ascending = False).reset_index(drop = True)
@@ -171,6 +166,7 @@ attr_share_df['Pack_sales'] = round(attr_share_df['Pack_sales'], 0)
 attr_share_df['Pack_sales_perc'] = round(attr_share_df.Pack_sales.cumsum() / attr_share_df.Pack_sales.sum() * 100, 2)
 df = pd.merge(df, attr_share_df, on='Packs', how='inner')
 
+# Calculating cumulative sum of sales contribution for the unique attribute combinations available in the category
 attr_share_df = df.groupby('attribute_combination')['amount'].sum().reset_index()
 attr_share_df = attr_share_df.rename(columns={'amount': 'attr_combo_sales'})
 attr_share_df = attr_share_df.sort_values(by = 'attr_combo_sales', ascending = False).reset_index(drop = True)
@@ -178,10 +174,12 @@ attr_share_df['attr_combo_sales'] = round(attr_share_df['attr_combo_sales'], 0)
 attr_share_df['attr_combo_sales_perc'] = round(attr_share_df.attr_combo_sales.cumsum() / attr_share_df.attr_combo_sales.sum() * 100, 2)
 df = pd.merge(df, attr_share_df, on='attribute_combination', how='inner')
 
+# Storing only the relevant columns from above into a dataframe
 attr_share_df = df[['type', 'type_sales', 'type_sales_perc', 'volume_in_grams', 'volume_sales', 'volume_sales_perc', 'Packs', 'Pack_sales', 'Pack_sales_perc', 'attribute_combination', 'attr_combo_sales', 'attr_combo_sales_perc']].drop_duplicates().sort_values(by='attr_combo_sales_perc', ascending = True).reset_index(drop=True)
 
 # COMMAND ----------
 
+# Save the attribute shares data to a sandbox
 spark_df = spark.createDataFrame(attr_share_df)
 spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("dev.sandbox.pj_ao_v2_attribute_sales")
 
@@ -202,10 +200,12 @@ attr_share_df.iloc[:, 9:].drop_duplicates().sort_values(by = 'attr_combo_sales',
 
 # COMMAND ----------
 
+# Attributes that fall in the bottom 20% of sales are combined together and labeled as "Others" 
 top_attrs_count = len(attr_share_df[attr_share_df['attr_combo_sales_perc'] < 80]) + 1
 top_attrs = attr_share_df[:top_attrs_count]['attribute_combination'].tolist()
 df['attribute_combination'] = np.where(df.attribute_combination.isin(top_attrs), df.attribute_combination, 'Others')
 
+# Aggregating the data on a transaction and attribute level
 df2 = df.groupby(['business_day', 'transaction_id', 'attribute_combination']).agg(
     {'unit_wgt_price': 'mean',
      'amount': 'sum',
@@ -215,13 +215,19 @@ df2 = df.groupby(['business_day', 'transaction_id', 'attribute_combination']).ag
      'purchase_flag': 'mean',
      'discount_flag': 'mean'}).reset_index()
 
+# Correcting the datatypes of boolean columns
 df2['discount_flag'] = round(df2['discount_flag']).astype('int32')
 df2['purchase_flag'] = df2['purchase_flag'].astype('int32')
+
+# Rounding off values for float type columns
 df2['unit_wgt_price'] = round(df2['unit_wgt_price'], 4)
 df2['amount'] = round(df2['amount'], 2)
 df2['discount'] = round(df2['discount'], 2)
+
+# Re-calculating discount percentage column
 df2['discount_perc'] = round(df2['discount']/(df2['amount'] + df2['discount']), 4)
 
+# Renaming columns to aggregated level names
 df2 = df2.rename(columns={'unit_wgt_price': 'avg_unit_wgt_price', 'amount': 'sales', 'discount_flag': 'dominant_discount_flag'})
 
 # COMMAND ----------
@@ -230,6 +236,7 @@ df2.head().display()
 
 # COMMAND ----------
 
+# Records reduced from the data compression
 len(df) - len(df2)
 
 # COMMAND ----------
@@ -238,6 +245,8 @@ len(df) - len(df2)
 # MAGIC #Non-Purchase Incidences Data Creation
 
 # COMMAND ----------
+
+# Creating all instances of purchases and non-purchases
 
 temp1 = df2[['transaction_id']].drop_duplicates().reset_index(drop = True)
 temp2 = df2[['attribute_combination']].drop_duplicates().reset_index(drop = True)
@@ -251,6 +260,7 @@ df3.info()
 
 # COMMAND ----------
 
+# Impute null values for non-purchases incidences
 df3['business_day'] = df3.groupby('transaction_id')['business_day'].transform(lambda x: x.ffill().bfill())
 df3['purchase_flag'] = df3['purchase_flag'].fillna(0)
 df3['sales'] = df3['sales'].fillna(0)
@@ -258,19 +268,19 @@ df3['quantity'] = df3['quantity'].fillna(0)
 df3['abs_gp'] = df3['abs_gp'].fillna(0)
 df3['discount'] = df3['discount'].fillna(0)
 
-# columns_to_impute = ['sales', 'quantity', 'abs_gp', 'discount']
-# for col in columns_to_impute:
-#     df3[col] = df3.groupby('attribute_combination')[col].transform(lambda x: x.fillna(x.mean()))
-
 # COMMAND ----------
 
+# Impute null values for non-purchase incidences
+# Price and Discount are values independent of purchase incidences. So, we impute them differently
 columns_to_impute = ['avg_unit_wgt_price', 'discount_perc', 'dominant_discount_flag']
 df3['business_day'] = pd.to_datetime(df3['business_day'])
 
+# If a purchase occured for the matching attribute on the same day, then use its values for imputation
 for col in columns_to_impute:
     df_same_day = df3.groupby(['business_day', 'attribute_combination'])[col].transform(lambda x: x.fillna(method='ffill').fillna(method='bfill'))
     df3[col] = df3[col].fillna(df_same_day)
 
+# If a purchase did not occur for the matching attribute on the same day, then look for the next closest date where a purchase did occur and use its values for imputation
 def impute_closest_date(row, df3, col):
     if pd.notna(row[col]):
         return row[col]
@@ -288,6 +298,7 @@ for col in columns_to_impute:
 
 # COMMAND ----------
 
+# Convert the data type of business_day to string type
 df3['business_day'] = df3['business_day'].dt.strftime('%Y-%m-%d')
 
 # COMMAND ----------
@@ -296,20 +307,24 @@ df3.info()
 
 # COMMAND ----------
 
-df3[['type', 'volume', 'item_count']] = df3['attribute_combination'].str.split(',', expand=True)
+# Model Dataset Preparation
 
-# df3['volume'] = df3['volume'].str.replace('G', '').astype(int)
-# df3['item_count'] = df3['item_count'].str[0].astype(int)
+# Split the attribute combination column back to their original individual attribute columns
+df3[['type', 'volume', 'item_count', 'brand']] = df3['attribute_combination'].str.split(',', expand=True)
 
+# For the attribute combination "Others", the split will result in null values. Impute them with "Others"
 df3['volume'] = df3['volume'].fillna('Others')
 df3['item_count'] = df3['item_count'].fillna('Others')
+df3['brand'] = df3['brand'].fillna('Others')
 
-df3 = df3[['type', 'volume', 'item_count', 'avg_unit_wgt_price', 'discount_perc', 'dominant_discount_flag', 'purchase_flag']]
+# Taking only relevant columns for model dataset
+df3 = df3[['type', 'volume', 'item_count', 'brand', 'avg_unit_wgt_price', 'discount_perc', 'dominant_discount_flag', 'purchase_flag']]
 
 # COMMAND ----------
 
+# Save the model dataset to a sandbox
 spark_df = spark.createDataFrame(df3)
-spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("dev.sandbox.pj_ao_v2_data")
+spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("dev.sandbox.pj_ao_v2_mds")
 
 # COMMAND ----------
 
@@ -318,50 +333,58 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 
 # COMMAND ----------
 
-from sklearn.preprocessing import MinMaxScaler
-import pandas as pd
-import numpy as np
-
-data_df = spark.sql("SELECT * FROM dev.sandbox.pj_ao_v2_data").toPandas()
-
-scaler = MinMaxScaler()
-columns_to_scale = ['avg_unit_wgt_price', 'discount_perc']
-data_df[columns_to_scale] = scaler.fit_transform(data_df[columns_to_scale])
-
-df_encoded = pd.get_dummies(data_df, columns=['type', 'volume', 'item_count'], drop_first=True)
-
-# COMMAND ----------
-
-import seaborn as sns
-import matplotlib.pyplot as plt
-
-plt.figure(figsize=(10, 8))
-sns.heatmap(df_encoded.corr(), annot=True, cmap="viridis", fmt=".2f", linewidths=0.5)
-plt.title("Heatmap")
-plt.show()
+# MAGIC %md
+# MAGIC ##MDS Prep
 
 # COMMAND ----------
 
 from statsmodels.stats.outliers_influence import variance_inflation_factor
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.utils import resample
+import pandas as pd
+import numpy as np
 
-X = np.array(df_encoded, dtype=float)
-vif_data = pd.DataFrame()
-vif_data["feature"] = df_encoded.columns
-vif_data["VIF"] = [variance_inflation_factor(X, i) for i in range(X.shape[1])]
-vif_data.sort_values(by = 'VIF', ascending = False).reset_index(drop = True)
+# Read model dataset
+data_df = spark.sql("SELECT * FROM dev.sandbox.pj_ao_v2_mds").toPandas()
+
+# Normalize numeric columns
+scaler = MinMaxScaler()
+columns_to_scale = ['avg_unit_wgt_price', 'discount_perc']
+data_df[columns_to_scale] = scaler.fit_transform(data_df[columns_to_scale])
+
+# Perform one-hot encoding for categorical columns
+df_encoded = pd.get_dummies(data_df, columns=['type', 'volume', 'item_count', 'brand'], drop_first = True)
 
 # COMMAND ----------
 
-# from sklearn.decomposition import PCA
+# Undersample the majority class
 
-# pca = PCA(n_components=8)
-# principal_components = pca.fit_transform(df_encoded.drop(columns = 'purchase_flag'))
-# principal_df = pd.DataFrame(data=principal_components, 
-#                             columns=[f'PC{i+1}' for i in range(8)])
-# explained_variance = pca.explained_variance_ratio_
+# Separate majority (class 0) and minority (class 1) classes
+df_majority = df_encoded[df_encoded.purchase_flag == 0]
+df_minority = df_encoded[df_encoded.purchase_flag == 1]
 
-# print("Explained variance:", explained_variance)
-# print("Total Variance explained:", sum(explained_variance))
+# Undersample the majority class (class 0) to have the same number of instances as the minority class
+df_majority_undersampled = resample(df_majority, 
+                                    replace = False,    # Do not replace samples
+                                    n_samples = len(df_minority),  # Make the size equal to the minority class
+                                    random_state = 42)  # Ensure reproducibility
+
+# Combine the undersampled majority class with the minority class
+df_balanced = pd.concat([df_majority_undersampled, df_minority])
+
+# Shuffle the resulting dataframe
+df_balanced = df_balanced.sample(frac = 1, random_state = 42).reset_index(drop=True)
+
+# Check the new class distribution
+print(df_balanced['purchase_flag'].value_counts())
+
+# COMMAND ----------
+
+# X = np.array(df_balanced, dtype=float)
+# vif_data = pd.DataFrame()
+# vif_data["feature"] = df_balanced.columns
+# vif_data["VIF"] = [variance_inflation_factor(X, i) for i in range(X.shape[1])]
+# vif_data.sort_values(by = 'VIF', ascending = False).reset_index(drop = True)
 
 # COMMAND ----------
 
@@ -370,7 +393,7 @@ vif_data.sort_values(by = 'VIF', ascending = False).reset_index(drop = True)
 
 # COMMAND ----------
 
-pip install xgboost lightgbm catboost imblearn eli5 optuna
+# pip install eli5
 
 # COMMAND ----------
 
@@ -380,17 +403,16 @@ stderr = sys.stderr
 sys.stderr = open(os.devnull, 'w')
 
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import randint, uniform
-from imblearn.over_sampling import SMOTE
 import optuna
 
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
@@ -398,43 +420,42 @@ from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 from catboost import CatBoostClassifier
 
-X_train, X_test, y_train, y_test = train_test_split(df_encoded.drop(columns = 'purchase_flag'), df_encoded['purchase_flag'], test_size=0.3, random_state=42)
+# COMMAND ----------
 
-smote = SMOTE(random_state=42)
-X_train_2, y_train_2 = smote.fit_resample(X_train, y_train)
+X_train, X_test, y_train, y_test = train_test_split(df_balanced.drop(columns = 'purchase_flag'), df_balanced['purchase_flag'], test_size=0.3, random_state=42)
 
 models = {
-    "Logistic Regression": LogisticRegression(),
-    "Decision Tree": DecisionTreeClassifier(),
-    "Random Forest": RandomForestClassifier(),
-    "Gradient Boosting": GradientBoostingClassifier(),
-    # "Support Vector Classifier": SVC(),
+    "Logistic Regression": LogisticRegression(max_iter=10000),
+    "Decision Tree": DecisionTreeClassifier(random_state = 42),
+    "Random Forest": RandomForestClassifier(random_state = 42),
+    "Gradient Boosting": GradientBoostingClassifier(random_state = 42),
+    # "Support Vector Classifier": SVC(random_state = 42),
     "K-Nearest Neighbors": KNeighborsClassifier(),
     "Naive Bayes": GaussianNB(),
-    "XGBoost": XGBClassifier(),
-    "LightGBM": LGBMClassifier(verbosity=-1, silent=True),
-    "CatBoost": CatBoostClassifier(verbose=0)
+    "XGBoost": XGBClassifier(random_state = 42),
+    "LightGBM": LGBMClassifier(verbosity=-1, silent=True, random_state = 42),
+    "CatBoost": CatBoostClassifier(verbose=0, random_state = 42),
+    "AdaBoost": AdaBoostClassifier(random_state = 42)
 }
 
 for model_name, model in models.items():
-    model.fit(X_train_2, y_train_2)
-    train_score = accuracy_score(y_train_2, model.predict(X_train_2))
+    model.fit(X_train, y_train)
+    train_score = accuracy_score(y_train, model.predict(X_train))
     test_score = accuracy_score(y_test, model.predict(X_test))
     print(f"{model_name} - Train Score: {train_score:.3f}, Test Score: {test_score:.3f}")
 
 for model_name, model in models.items():
-    cm = confusion_matrix(y_test, model.predict(X_test))
-    plt.figure(figsize=(6, 4))
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
-    plt.title(f"{model_name} - Confusion Matrix")
-    plt.ylabel('Actual')
-    plt.xlabel('Predicted')
-    plt.show()
+    y_pred = model.predict(X_test)
+    conf_matrix = confusion_matrix(y_test, y_pred)
+    # class_report = classification_report(y_test, y_pred)
+    print(f"\n{model_name}:")
+    print(f"Confusion Matrix:\n{conf_matrix}")
+    # print(f"\nClassification Report:\n{class_report}")
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ##Testing Models
+# MAGIC ##Model Testing
 
 # COMMAND ----------
 
@@ -447,33 +468,28 @@ param_dist = {'penalty': ['l1', 'l2', 'elasticnet', 'none'],
               'C': np.logspace(-4, 4, 20),
               'solver': ['liblinear', 'saga']}
 
-X_train, X_test, y_train, y_test = train_test_split(df_encoded.drop(columns = 'purchase_flag'), df_encoded['purchase_flag'], test_size=0.2, random_state=42)
-
-smote = SMOTE(random_state=42)
-X_train_2, y_train_2 = smote.fit_resample(X_train, y_train)
-
-model = LogisticRegression()
+model = LogisticRegression(max_iter = 10000)
 
 random_search = RandomizedSearchCV(
-    estimator=model,
-    param_distributions=param_dist,
-    n_iter=100,
-    cv=5,
-    scoring='accuracy',
-    random_state=42
+    estimator = model,
+    param_distributions = param_dist,
+    n_iter = 100,
+    cv = 5,
+    scoring = 'accuracy',
+    random_state = 42
 )
 
-random_search.fit(X_train_2, y_train_2)
+random_search.fit(X_train, y_train)
 
 # print("Best Parameters:", random_search.best_params_, "\n")
 
-train_score = np.round(random_search.score(X_train_2, y_train_2), 3)
+train_score = np.round(random_search.score(X_train, y_train), 3)
 test_score = np.round(random_search.score(X_test, y_test), 3)
 print(f'Train Score: {train_score}\nTest Score: {test_score}')
 
 best_model = random_search.best_estimator_
 coefficients = best_model.coef_.flatten()
-importance_df = pd.DataFrame({'Feature': X_train_2.columns, 'Importance': coefficients})
+importance_df = pd.DataFrame({'Feature': X_train.columns, 'Importance': coefficients})
 importance_df = importance_df.sort_values(by='Importance', ascending=False)
 importance_df.display()
 
@@ -500,22 +516,17 @@ param_dist = {
     'max_features': ['sqrt', 'log2']
 }
 
-X_train, X_test, y_train, y_test = train_test_split(df_encoded.drop(columns = 'purchase_flag'), df_encoded['purchase_flag'], test_size=0.2, random_state=42)
-
-smote = SMOTE(random_state=42)
-X_train_2, y_train_2 = smote.fit_resample(X_train, y_train)
-
-rf = RandomForestClassifier()
+rf = RandomForestClassifier(random_state = 42)
 random_search = RandomizedSearchCV(rf, param_distributions=param_dist, n_iter=100, cv=5, random_state=42, n_jobs=-1)
-random_search.fit(X_train_2, y_train_2)
+random_search.fit(X_train, y_train)
 
-train_score = np.round(random_search.score(X_train_2, y_train_2), 3)
+train_score = np.round(random_search.score(X_train, y_train), 3)
 test_score = np.round(random_search.score(X_test, y_test), 3)
 print(f'Train Score: {train_score}\nTest Score: {test_score}')
 
 best_clf = random_search.best_estimator_
 importances = best_clf.feature_importances_
-feature_names = X_train_2.columns
+feature_names = X_train.columns
 importance_df = pd.DataFrame({
     'Feature': feature_names,
     'Importance': importances
@@ -532,23 +543,18 @@ importance_df.display()
 # from eli5.sklearn import PermutationImportance
 # import eli5
 
-# svc = SVC()
+# svc = SVC(random_state = 42)
 
 # param_dist = {'C': uniform(0.1, 100),
 #               'gamma': uniform(0.001, 1),
 #               'kernel': ['linear', 'rbf', 'poly', 'sigmoid']}
 
-# X_train, X_test, y_train, y_test = train_test_split(df_encoded.drop(columns = 'purchase_flag'), df_encoded['purchase_flag'], test_size=0.3, random_state=42)
-
-# smote = SMOTE(random_state=42)
-# X_train_2, y_train_2 = smote.fit_resample(X_train, y_train)
-
 # random_search = RandomizedSearchCV(svc, param_dist, n_iter=50, cv=5, n_jobs=-1, verbose=0, random_state=42)
-# random_search.fit(X_train_2, y_train_2)
+# random_search.fit(X_train, y_train)
 
 # # print("Best Parameters:", random_search.best_params_, "\n")
 
-# train_score = np.round(random_search.score(X_train_2, y_train_2), 3)
+# train_score = np.round(random_search.score(X_train, y_train), 3)
 # test_score = np.round(random_search.score(X_test, y_test), 3)
 # print(f'Train Score: {train_score}\nTest Score: {test_score}')
 
@@ -565,23 +571,18 @@ importance_df.display()
 # param_dist = {'C': uniform(0.1, 100),
 #               'gamma': uniform(0.001, 1)}
 
-# X_train, X_test, y_train, y_test = train_test_split(df_encoded.drop(columns = 'purchase_flag'), df_encoded['purchase_flag'], test_size=0.3, random_state=42)
-
-# smote = SMOTE(random_state=42)
-# X_train_2, y_train_2 = smote.fit_resample(X_train, y_train)
-
 # random_search = RandomizedSearchCV(svc, param_dist, n_iter=50, cv=5, n_jobs=-1, verbose=0, random_state=42)
-# random_search.fit(X_train_2, y_train_2)
+# random_search.fit(X_train, y_train)
 
 # # print("Best Parameters:", random_search.best_params_, "\n")
 
-# train_score = np.round(random_search.score(X_train_2, y_train_2), 3)
+# train_score = np.round(random_search.score(X_train, y_train), 3)
 # test_score = np.round(random_search.score(X_test, y_test), 3)
 # print(f'Train Score: {train_score}\nTest Score: {test_score}')
 
 # best_model = random_search.best_estimator_
 # coefficients = best_model.coef_.flatten()
-# importance_df = pd.DataFrame({'Feature': X_train_2.columns, 'Importance': coefficients})
+# importance_df = pd.DataFrame({'Feature': X_train.columns, 'Importance': coefficients})
 # importance_df = importance_df.sort_values(by='Importance', ascending=False)
 # importance_df.display()
 
@@ -591,11 +592,6 @@ importance_df.display()
 # MAGIC ###XGBoost
 
 # COMMAND ----------
-
-X_train, X_test, y_train, y_test = train_test_split(df_encoded.drop(columns = 'purchase_flag'), df_encoded['purchase_flag'], test_size=0.2, random_state=42)
-
-smote = SMOTE(random_state=42)
-X_train_2, y_train_2 = smote.fit_resample(X_train, y_train)
 
 def objective(trial):
     params = {
@@ -614,8 +610,8 @@ def objective(trial):
         "min_child_weight": trial.suggest_int("min_child_weight", 1, 10),
     }
 
-    model = XGBClassifier(**params)
-    model.fit(X_train_2, y_train_2)
+    model = XGBClassifier(random_state = 42, **params)
+    model.fit(X_train, y_train)
     
     preds = model.predict(X_test)
     accuracy = accuracy_score(y_test, preds)
@@ -623,22 +619,22 @@ def objective(trial):
     return accuracy
 
 study = optuna.create_study(direction="maximize")
-study.optimize(objective, n_trials=20)
+study.optimize(objective, n_trials=50)
 # print("Best hyperparameters:", study.best_params)
 
 best_trial = study.best_trial
 best_params = best_trial.params
 final_model = XGBClassifier(**best_params)
-final_model.fit(X_train_2, y_train_2)
-final_train_preds = final_model.predict(X_train_2)
+final_model.fit(X_train, y_train)
+final_train_preds = final_model.predict(X_train)
 final_test_preds = final_model.predict(X_test)
-final_train_accuracy = accuracy_score(y_train_2, final_train_preds)
+final_train_accuracy = accuracy_score(y_train, final_train_preds)
 final_test_accuracy = accuracy_score(y_test, final_test_preds)
 print(f"Final Train Accuracy: {final_train_accuracy:.3f}")
 print(f"Final Test Accuracy: {final_test_accuracy:.3f}")
 
 feature_importances = final_model.feature_importances_
-importance_df = pd.DataFrame({'Feature': X_train_2.columns,
+importance_df = pd.DataFrame({'Feature': X_train.columns,
                               'Importance': feature_importances})
 importance_df = importance_df.sort_values(by='Importance', ascending=False).reset_index(drop=True).display()
 
@@ -653,23 +649,18 @@ param_grid = {
     'gamma': uniform(0, 1)
 }
 
-X_train, X_test, y_train, y_test = train_test_split(df_encoded.drop(columns = 'purchase_flag'), df_encoded['purchase_flag'], test_size=0.2, random_state=42)
-
-smote = SMOTE(random_state=42)
-X_train_2, y_train_2 = smote.fit_resample(X_train, y_train)
-
-xgb = XGBClassifier()
+xgb = XGBClassifier(random_state = 42)
 random_search = RandomizedSearchCV(estimator=xgb, param_distributions=param_grid,
                                    n_iter=100, cv=5, verbose=1, n_jobs=-1, random_state=42)
-random_search.fit(X_train_2, y_train_2)
+random_search.fit(X_train, y_train)
 
-train_score = np.round(random_search.score(X_train_2, y_train_2), 3)
+train_score = np.round(random_search.score(X_train, y_train), 3)
 test_score = np.round(random_search.score(X_test, y_test), 3)
 print(f'Train Score: {train_score}\nTest Score: {test_score}')
 
 best_clf = random_search.best_estimator_
 importances = best_clf.feature_importances_
-feature_names = X_train_2.columns
+feature_names = X_train.columns
 importance_df = pd.DataFrame({'Feature': feature_names,
                               'Importance': importances}).sort_values(by='Importance',
                                ascending=False).reset_index(drop = True)
@@ -689,23 +680,18 @@ param_dist = {
     'l2_leaf_reg': randint(1, 10)
 }
 
-X_train, X_test, y_train, y_test = train_test_split(df_encoded.drop(columns = 'purchase_flag'), df_encoded['purchase_flag'], test_size=0.2, random_state=42)
-
-smote = SMOTE(random_state=42)
-X_train_2, y_train_2 = smote.fit_resample(X_train, y_train)
-
-model = CatBoostClassifier(silent=True)
+model = CatBoostClassifier(silent=True, random_state = 42)
 random_search = RandomizedSearchCV(model, param_distributions=param_dist, 
                                    n_iter=10, cv=3, random_state=42, n_jobs=-1)
-random_search.fit(X_train_2, y_train_2)
+random_search.fit(X_train, y_train)
 
-train_score = np.round(random_search.score(X_train_2, y_train_2), 3)
+train_score = np.round(random_search.score(X_train, y_train), 3)
 test_score = np.round(random_search.score(X_test, y_test), 3)
 print(f'Train Score: {train_score}\nTest Score: {test_score}')
 
 best_clf = random_search.best_estimator_
 importances = best_clf.feature_importances_
-feature_names = X_train_2.columns
+feature_names = X_train.columns
 importance_df = pd.DataFrame({
     'Feature': feature_names,
     'Importance': importances
@@ -725,17 +711,12 @@ param_grid = {
     'p': [1, 2]  # p=1 is Manhattan distance, p=2 is Euclidean distance
 }
 
-X_train, X_test, y_train, y_test = train_test_split(df_encoded.drop(columns = 'purchase_flag'), df_encoded['purchase_flag'], test_size=0.2, random_state=42)
-
-smote = SMOTE(random_state=42)
-X_train_2, y_train_2 = smote.fit_resample(X_train, y_train)
-
 knn = KNeighborsClassifier()
 random_search = RandomizedSearchCV(knn, param_distributions=param_grid,
                                    n_iter=1, cv=5, random_state=42, n_jobs=-1)
-random_search.fit(X_train_2, y_train_2)
+random_search.fit(X_train, y_train)
 
-train_score = np.round(random_search.score(X_train_2, y_train_2), 3)
+train_score = np.round(random_search.score(X_train, y_train), 3)
 test_score = np.round(random_search.score(X_test, y_test), 3)
 print(f'Train Score: {train_score}\nTest Score: {test_score}')
 
@@ -755,11 +736,6 @@ param_dist = {
     'max_features': [None, 'sqrt', 'log2']
 }
 
-X_train, X_test, y_train, y_test = train_test_split(df_encoded.drop(columns = 'purchase_flag'), df_encoded['purchase_flag'], test_size=0.2, random_state=42)
-
-smote = SMOTE(random_state=42)
-X_train_2, y_train_2 = smote.fit_resample(X_train, y_train)
-
 model = DecisionTreeClassifier(random_state=42)
 
 random_search = RandomizedSearchCV(
@@ -771,17 +747,17 @@ random_search = RandomizedSearchCV(
     random_state=42
 )
 
-random_search.fit(X_train_2, y_train_2)
+random_search.fit(X_train, y_train)
 
 # print("Best Parameters:", random_search.best_params_)
 
-train_score = np.round(random_search.score(X_train_2, y_train_2), 3)
+train_score = np.round(random_search.score(X_train, y_train), 3)
 test_score = np.round(random_search.score(X_test, y_test), 3)
 print(f'Train Score: {train_score}\nTest Score: {test_score}')
 
 best_clf = random_search.best_estimator_
 importances = best_clf.feature_importances_
-feature_names = X_train_2.columns
+feature_names = X_train.columns
 importance_df = pd.DataFrame({
     'Feature': feature_names,
     'Importance': importances
