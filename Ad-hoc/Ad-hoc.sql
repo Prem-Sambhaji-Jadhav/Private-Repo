@@ -1,52 +1,33 @@
 -- Databricks notebook source
-WITH sales AS (
-    SELECT
-        region_name,
-        INT(CONCAT(YEAR(business_day), LPAD(MONTH(business_day), 2, '0'))) AS year_month,
-        material_id,
-        SUM(amount) AS sales
-    FROM gold.transaction.uae_pos_transactions AS t1
-    JOIN gold.store.store_master AS t2 ON t1.store_id = t2.store_id
-    JOIN gold.material.material_master AS t3 ON t1.product_id = t3.material_id
-    WHERE
-        business_day BETWEEN "2023-09-01" AND "2024-08-31"
-        AND department_class_id = 1
-        AND tayeb_flag = 0
-        AND transaction_type IN ("SALE", "SELL_MEDIA")
-        AND amount > 0
-        AND quantity > 0
-    GROUP BY 1, 2, 3
-),
 
-gp AS (
-    SELECT
-        CASE WHEN region = "AUH" THEN "ABU DHABI"
-            WHEN region = "ALN" THEN "AL AIN"
-            WHEN region = "DXB" THEN "DUBAI"
-            WHEN region = "SHJ" THEN "SHARJAH"
-            END AS region_name,
-        year_month,
-        material_id,
-        gp_wth_chargeback
-    FROM gold.business.gross_profit
-    WHERE country = 'AE'
-    AND year_month BETWEEN 202309 AND 202408
-),
 
-combined AS (
-    SELECT
-        *,
-        COALESCE(sales*gp_wth_chargeback/100, 0) AS gp_abs
-    FROM sales AS t1
-    LEFT JOIN gp AS t2
-        ON t1.region_name = t2.region_name
-        AND t1.year_month = t2.year_month
-        AND t1.material_id = t2.material_id
-)
+-- COMMAND ----------
 
-SELECT
-    ROUND(SUM(gp_abs)/SUM(sales), 4) AS gp_margin
-FROM combined
+
+
+-- COMMAND ----------
+
+
+
+-- COMMAND ----------
+
+
+
+-- COMMAND ----------
+
+
+
+-- COMMAND ----------
+
+
+
+-- COMMAND ----------
+
+
+
+-- COMMAND ----------
+
+
 
 -- COMMAND ----------
 
@@ -67,148 +48,110 @@ FROM combined
 -- COMMAND ----------
 
 -- MAGIC %md
--- MAGIC #Test Check
+-- MAGIC #Export Data
 
 -- COMMAND ----------
 
-SELECT
-    segment,
-    COUNT(DISTINCT t1.customer_id) AS customers,
-    ROUND(SUM(amount)) AS sales,
-    COUNT(DISTINCT transaction_id) AS orders,
-    ROUND(orders/customers,2) AS avg_freq,
-    ROUND(sales/orders,2) AS atv
-FROM gold.pos_transactions AS t1
-JOIN analytics.customer_segments AS t2 ON t1.customer_id = t2.customer_id
-JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
-WHERE
-    business_day BETWEEN "2023-05-01" AND "2024-04-30"
-    AND transaction_type IN ("SALE", "SELL_MEDIA")
-    AND key = 'rfm'
-    AND channel = 'pos'
-    AND t2.country = 'uae'
-    AND month_year = 202404
-    AND department_id BETWEEN 1 AND 13
-GROUP BY segment
+-- %python
+-- import requests
+-- from google.oauth2 import service_account
+-- from googleapiclient.discovery import build
+-- from googleapiclient.http import MediaIoBaseUpload
+-- from io import BytesIO
 
--- COMMAND ----------
+-- # master_df_exp
+-- # model_results_exp
 
-WITH cte AS (
-  SELECT
-      segment,
-      QUARTER(business_day) AS quarter_info,
-      ROUND(SUM(amount)) AS sales
-  FROM gold.pos_transactions AS t1
-  JOIN analytics.customer_segments AS t2 ON t1.customer_id = t2.customer_id
-  WHERE YEAR(business_day) = 2023
-  AND transaction_type IN ("SALE", "SELL_MEDIA")
-  AND key = 'rfm'
-  AND channel = 'pos'
-  AND t2.country = 'uae'
-  AND month_year = 202312
-  GROUP BY segment, quarter_info
-)
+-- # OUTPUT FILE NAME
+-- OUTPUT_FILE_NAME = 'ao_pulses_attr.csv'
+-- # Assigning the source DataFrame to be exported
+-- source_df = df
+-- # Share the file with personal email
+-- personal_email = 'prem@loyalytics.in'
 
-SELECT
-    segment,
-    MAX(CASE WHEN quarter_info = 1 THEN sales END) AS Q1,
-    MAX(CASE WHEN quarter_info = 2 THEN sales END) AS Q2,
-    MAX(CASE WHEN quarter_info = 3 THEN sales END) AS Q3,
-    MAX(CASE WHEN quarter_info = 4 THEN sales END) AS Q4
-FROM cte
-GROUP BY segment
+-- # ----------------------------------
+-- # ----------------------------------
 
--- COMMAND ----------
+-- # URL to the service account credentials file on Google Drive
+-- CREDS_FILE_ID = '136mbHGvmasRscEblZJVOK9cXnEU94h3F'
+-- credentials_url = f'https://drive.google.com/uc?export=download&id={CREDS_FILE_ID}'
 
-WITH cte AS (
-  SELECT
-      segment,
-      gender,
-      COUNT(DISTINCT t1.customer_id) AS customers
-  FROM gold.pos_transactions AS t1
-  JOIN analytics.customer_segments AS t2 ON t1.customer_id = t2.customer_id
-  JOIN gold.customer_profile AS t3 ON t1.customer_id = t3.account_key
-  WHERE YEAR(business_day) = 2023
-  AND transaction_type IN ("SALE", "SELL_MEDIA")
-  AND key = 'rfm'
-  AND channel = 'pos'
-  AND t2.country = 'uae'
-  AND month_year = 202312
-  GROUP BY segment, gender
-)
+-- # Download the credentials file
+-- response = requests.get(credentials_url)
+-- if response.status_code == 200:
+--     with open('credentials.json', 'wb') as f:
+--         f.write(response.content)
+-- else:
+--     print(f"Failed to download credentials file. Status code: {response.status_code}")
 
-SELECT
-    segment,
-    MAX(CASE WHEN gender = "MALE" THEN customers END) AS males,
-    MAX(CASE WHEN gender = "FEMALE" THEN customers END) AS females
-FROM cte
-GROUP BY segment
+-- # Authenticate using the downloaded service account credentials
+-- SERVICE_ACCOUNT_FILE = 'credentials.json'
+-- SCOPES = ['https://www.googleapis.com/auth/drive.file']
+-- credentials = service_account.Credentials.from_service_account_file(
+--     SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 
--- COMMAND ----------
+-- # Build the Drive API client
+-- service = build('drive', 'v3', credentials=credentials)
 
-SELECT
-    segment,
-    ROUND(COUNT(DISTINCT transaction_id) / COUNT(DISTINCT t1.customer_id),2) AS avg_transactions
-FROM gold.pos_transactions AS t1
-JOIN analytics.customer_segments AS t2 ON t1.customer_id = t2.customer_id
-JOIN gold.material_master AS t3 ON t1.product_id = t3.material_id
-WHERE
-    YEAR(business_day) = 2023
-    AND transaction_type IN ("SALE", "SELL_MEDIA")
-    AND key = 'rfm'
-    AND channel = 'pos'
-    AND t2.country = 'uae'
-    AND month_year = 202312
-    AND department_id BETWEEN 1 AND 13
-GROUP BY segment
 
--- COMMAND ----------
+-- # Convert DataFrame to CSV and store it in a BytesIO object
+-- csv_buffer = BytesIO()
+-- source_df.to_csv(csv_buffer, index=False)
+-- csv_buffer.seek(0)
 
--- MAGIC %md
--- MAGIC #Material Attributes Table
+-- # File metadata
+-- file_metadata = {
+--     'name': OUTPUT_FILE_NAME,
+--     'mimeType': 'application/vnd.google-apps.spreadsheet'
+-- }
 
--- COMMAND ----------
+-- # Media file upload using BytesIO object
+-- media = MediaIoBaseUpload(csv_buffer, mimetype='text/csv', resumable=True)
 
-SELECT
-    t1.material_id,
-    material_name,
-    material_description,
-    ean,
-    conversion_numerator,
-    content,
-    content_unit,
-    volume
-FROM gold.material_master AS t1
-JOIN gold.material_attributes AS t2 ON t1.material_id = t2.material_id
-WHERE material_group_name = "COCONUT OIL"
+-- # Upload the file to Google Drive
+-- file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
 
--- COMMAND ----------
+-- print(f"File uploaded successfully. File ID: {file.get('id')}")
 
-SELECT t1.*
-FROM gold.material_attributes AS t1
-JOIN gold.material_master AS t2 ON t1.material_id = t2.material_id
-WHERE t2.category_name = "CONFECTIONERY"
 
--- COMMAND ----------
+-- # Get and print file metadata
+-- file_id = file.get('id')
+-- file_metadata = service.files().get(fileId=file_id, fields='id, name, mimeType, parents, owners').execute()
+-- print(f"File name: {file_metadata['name']}")
+-- # print(f"MIME type: {file_metadata['mimeType']}")
+-- # print(f"Parent folder: {file_metadata.get('parents', ['Root'])}")
+-- # print(f"Owner: {file_metadata['owners'][0]['emailAddress']}")
 
-SELECT DISTINCT manufacturer_brand
-FROM gold.material_attributes
+-- # Function to share the file
+-- def share_file(service, file_id, email):
+--     permission = {
+--         'type': 'user',
+--         'role': 'writer',
+--         'emailAddress': email
+--     }
+--     try:
+--         service.permissions().create(fileId=file_id, body=permission).execute()
+--         print(f"File shared successfully with {email}")
+--     except Exception as e:
+--         print(f"Error sharing file: {str(e)}")
 
--- COMMAND ----------
 
-SELECT DISTINCT product_heirarchy_desc
-FROM gold.material_attributes
+-- share_file(service, file_id, email=personal_email)
 
--- COMMAND ----------
+-- # List the 3 most recent files in the Drive
+-- results = service.files().list(
+--     pageSize=3, 
+--     orderBy="modifiedTime desc", 
+--     fields="files(id, name, modifiedTime)"
+-- ).execute()
+-- items = results.get('files', [])
 
-SELECT COUNT(DISTINCT ean), COUNT(ean)
-FROM gold.material_attributes
-
--- COMMAND ----------
-
-SELECT DISTINCT material_id, material_description, ean, main_ean, ean_category, alt_unit, conversion_numerator, base_unit
-FROM gold.material_attributes
-WHERE material_id IN (334678, 1294454)
+-- if not items:
+--     print('No files found.')
+-- else:
+--     print('3 most recent files:')
+--     for item in items:
+--         print(f"{item['name']} (ID: {item['id']}, Modified: {item['modifiedTime']})")
 
 -- COMMAND ----------
 
@@ -292,6 +235,126 @@ WHERE
     AND quantity > 0
 GROUP BY 1, 2
 ORDER BY 3
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC #AO Summary
+
+-- COMMAND ----------
+
+
+WITH sales_data AS (
+SELECT
+    t3.region_name,
+    INT(CONCAT(YEAR(business_day), LPAD(MONTH(business_day), 2, '0'))) AS year_month,
+    t2.category_name,
+    t2.material_group_name,
+    t2.material_id,
+    SUM(t1.amount) AS sales
+FROM gold.transaction.uae_pos_transactions AS t1
+JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
+WHERE
+    t1.business_day BETWEEN "2023-09-01" AND "2024-08-31"
+    AND (CONCAT(t2.category_name, t2.material_group_name) IN ("ICE CREAM & DESSERTSFRUIT JUICES", "PULSES & SPICES & HERBSPULSES", "BISCUITS & CAKESRICE & OAT CAKE", "CANNED MEATSOTHER CANNED MEAT", "SAUCES & PICKLESVINEGAR", "ICE CREAM & DESSERTSFRUITS", "PULSES & SPICES & HERBSSPICES", "ICE CREAM & DESSERTSFROZEN YOGHURT", "ICE CREAM & DESSERTSICE CREAM IMPULSE", "SAUCES & PICKLESPICKLES", "ICE CREAM & DESSERTSCAKES & GATEAUX", "PRESERVATIVES & SPREADSPEANUT BUTTER", "ICE CREAM & DESSERTSSORBETS", "PASTA & NOODLEPASTA", "COOKING OILS & GHEECOCONUT OIL", "PAPER GOODSTRAVEL TISSUE &WIPES", "CANNED MEATSCANNED CORNED BEEF", "PAPER GOODSKITCHEN ROLLS", "PRESERVATIVES & SPREADSJAMS", "CANNED MEATSCANNED LUNCHEON MEAT", "BISCUITS & CAKESSAVOURY", "PAPER GOODSTOILET ROLLS", "PASTA & NOODLECUP NOODLE", "BISCUITS & CAKESCOOKIES", "PAPER GOODSFACIAL TISSUES", "CANNED MEATSCANNED SAUSAGES", "BISCUITS & CAKESCREAM FILLED BISCUIT", "BISCUITS & CAKESMAMOUL", "PRESERVATIVES & SPREADSHONEY", "COOKING OILS & GHEEOLIVE OIL", "BISCUITS & CAKESCHOCOLATE COATED", "BISCUITS & CAKESWAFER BISCUITS", "BISCUITS & CAKESPLAIN BISCUITS", "ICE CREAM & DESSERTSICE CREAM TAKE HOME", "COOKING OILS & GHEEVEGETABLE OIL", "BISCUITS & CAKESKIDS BISCUITS", "COOKING OILS & GHEESUNFLOWER OIL", "BISCUITS & CAKESRUSKS", "BISCUITS & CAKESCAKES", "BISCUITS & CAKESFIBER BISCUITS", "ICE CREAM & DESSERTSICECREAM IMPULSEPACK", "PASTA & NOODLEINSTANT NOODLE", "CONFECTIONERYCHOCOLATE BAGS", "PRESERVATIVES & SPREADSCHOCO SPREAD", "BISCUITS & CAKESSHARING PACKS")
+    OR t2.category_name = "WATER")
+    AND t3.tayeb_flag = 0
+    AND t1.transaction_type IN ("SALE", "SELL_MEDIA")
+    AND amount > 0
+    AND quantity > 0
+GROUP BY 1, 2, 3, 4, 5
+),
+
+gp_data AS (
+    SELECT
+        CASE WHEN region = "AUH" THEN "ABU DHABI"
+            WHEN region = "ALN" THEN "AL AIN"
+            WHEN region = "DXB" THEN "DUBAI"
+            WHEN region = "SHJ" THEN "SHARJAH"
+            END AS region_name,
+        year_month,
+        material_id,
+        gp_wth_chargeback
+    FROM gold.business.gross_profit
+    WHERE
+        country = 'AE'
+        AND year_month BETWEEN 202309 AND 202408
+),
+
+combined AS (
+    SELECT
+        t1.*,
+        COALESCE(t1.sales * t2.gp_wth_chargeback / 100, 0) AS gp_abs
+    FROM sales_data AS t1
+    LEFT JOIN gp_data AS t2
+        ON t1.region_name = t2.region_name
+        AND t1.year_month = t2.year_month
+        AND t1.material_id = t2.material_id
+),
+
+non_water AS (
+    SELECT
+        category_name,
+        material_group_name,
+        ROUND(SUM(sales)) AS total_sales,
+        ROUND(SUM(gp_abs)) AS total_gp_abs,
+        ROUND(total_gp_abs / total_sales * 100, 2) AS gp_margin
+    FROM combined
+    WHERE category_name != "WATER"
+    GROUP BY 1, 2
+),
+
+water AS (
+    SELECT
+        category_name,
+        "OVERALL" AS material_group_name,
+        ROUND(SUM(sales)) AS total_sales,
+        ROUND(SUM(gp_abs)) AS total_gp_abs,
+        ROUND(total_gp_abs / total_sales * 100, 2) AS gp_margin
+    FROM combined
+    WHERE category_name = "WATER"
+    GROUP BY 1
+),
+
+all_categories AS (
+    SELECT * FROM non_water
+    UNION
+    SELECT * FROM water
+)
+
+SELECT *
+FROM all_categories
+ORDER BY gp_margin DESC
+
+-- COMMAND ----------
+
+WITH cte AS (
+    SELECT
+        CASE WHEN t1.business_day <= "2024-04-28" THEN "Pre-delist" ELSE "Post Delist" END AS period_type,
+        t1.business_day,
+        SUM(t1.amount) AS sales
+    FROM gold.transaction.uae_pos_transactions AS t1
+    JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+    JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
+    WHERE
+        (t1.business_day BETWEEN "2024-02-01" AND "2024-04-28"
+        OR t1.business_day BETWEEN "2024-06-15" AND "2024-08-08")
+        AND t2.category_name = "COOKING OILS & GHEE"
+        AND t2.material_group_name = "COCONUT OIL"
+        AND t3.tayeb_flag = 0
+        AND t1.transaction_type IN ("SALE", "SELL_MEDIA")
+        AND t1.amount > 0
+        AND t1.quantity > 0
+    GROUP BY 1, 2
+    ORDER BY 2
+)
+
+SELECT
+    ROUND(SUM(CASE WHEN period_type = "Pre-delist" THEN sales END) / COUNT(CASE WHEN period_type = "Pre-delist" THEN business_day END)) AS pre_avg_daily_sales,
+    ROUND(SUM(CASE WHEN period_type = "Post Delist" THEN sales END) / COUNT(CASE WHEN period_type = "Post Delist" THEN business_day END)) AS post_avg_daily_sales,
+    ROUND((post_avg_daily_sales - pre_avg_daily_sales)/pre_avg_daily_sales, 4) AS daily_rate_of_sales_growth
+FROM cte
 
 -- COMMAND ----------
 
@@ -403,10 +466,6 @@ SELECT
     ROUND(SUM(gp_abs)/SUM(sales), 4) AS gp_margin
 FROM combined
 GROUP BY 1
-
--- COMMAND ----------
-
-
 
 -- COMMAND ----------
 
