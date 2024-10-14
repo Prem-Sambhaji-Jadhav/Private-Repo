@@ -24,9 +24,9 @@ categories = ['WATER']
 categories_recommendation_dates = ['2024-02-12']
 catg_analysis_period_start_dates = ['2023-01-01']
 
-material_groups = ['PASTA', 'INSTANT NOODLE', 'CUP NOODLE', 'COCONUT OIL']
-material_groups_recommendation_date = ['2024-04-26', '2024-04-26', '2024-04-26', '2024-05-24']
-mg_analysis_period_start_dates = ['2023-03-01', '2023-03-01', '2023-03-01', '2023-05-01']
+material_groups = ['PASTA', 'INSTANT NOODLE', 'CUP NOODLE', 'COCONUT OIL', 'OLIVE OIL']
+material_groups_recommendation_date = ['2024-04-26', '2024-04-26', '2024-04-26', '2024-05-24', '2024-06-14']
+mg_analysis_period_start_dates = ['2023-03-01', '2023-03-01', '2023-03-01', '2023-05-01', '2023-06-01']
 
 # COMMAND ----------
 
@@ -254,6 +254,32 @@ coconut_oil_df = coconut_oil_df[coconut_oil_df['delisted_date'] != 'NA'].sort_va
 # COMMAND ----------
 
 # MAGIC %md
+# MAGIC ###Olive Oil
+
+# COMMAND ----------
+
+region_names = []
+for n in range(4):
+    lst1 = [52, 64, 44, 49]
+    lst2 = ["ABU DHABI", "AL AIN", "DUBAI", "SHARJAH"]
+    for i in range(lst1[n]):
+        region_names.append(lst2[n])
+
+material_ids = [201914, 456171, 595388, 639819, 639832, 645240, 683103, 971035, 1470390, 1546942, 1913069, 1954277, 2040992, 144938, 144939, 194757, 471895, 494028, 510571, 584334, 596389, 599445, 633205, 892014, 893091, 919597, 1175344, 1210381, 1463021, 2073765, 2175891, 514806, 1734238, 346178, 202413, 712764, 641995, 346177, 514808, 185019, 1470164, 1021175, 789698, 885538, 382583, 1025008, 514807, 408106, 967049, 2989, 368848, 1550723, 144938, 144939, 201914, 442697, 471895, 494028, 510571, 595388, 599445, 639818, 639832, 683103, 893091, 971035, 1470390, 1546942, 1954277, 2061295, 185017, 456171, 514806, 596389, 614320, 641995, 967049, 1021175, 1025008, 1734238, 2073537, 2073765, 892014, 194757, 1175344, 408106, 633205, 970425, 454589, 19432, 368849, 581266, 564388, 1703527, 971051, 1836920, 964020, 382583, 201919, 985978, 639819, 1071320, 1342411, 772026, 506048, 776021, 1564388, 1667239, 1780411, 919597, 865380, 1079956, 1446180, 1564389, 537376, 1806885, 19432, 144938, 577507, 595388, 599445, 639818, 639819, 645240, 683103, 702709, 901274, 1470390, 1550723, 1933032, 1954277, 2014256, 144939, 202413, 514806, 514807, 1210381, 1463021, 2061295, 2073537, 2204390, 1734238, 346179, 2189234, 581268, 346178, 1175344, 633205, 1470164, 1021175, 202415, 2185427, 641995, 789698, 510571, 581266, 1811188, 1741245, 885538, 919597, 19435, 144939, 456171, 510571, 514806, 514807, 577507, 584334, 599445, 639818, 639819, 645240, 683103, 892014, 919597, 1463021, 1470390, 1546942, 1550723, 1703525, 1811188, 1933132, 1954277, 2014256, 2015148, 2022934, 19432, 346178, 595388, 1210381, 2073537, 2189234, 633205, 346179, 471895, 202413, 1175344, 2061295, 789698, 346177, 581268, 641995, 1470164, 505578, 1844367, 581266, 885538, 187671, 201914]
+
+delisted_dates = ["NA", "26/06/2024", "NA", "26/06/2024", "26/06/2024", "26/06/2024", "26/06/2024", "NA", "NA", "26/06/2024", "26/06/2024", "26/06/2024", "26/06/2024", "26/06/2024", "26/06/2024", "26/06/2024", "26/06/2024", "26/06/2024", "26/06/2024", "26/06/2024", "26/06/2024", "26/06/2024", "26/06/2024", "26/06/2024", "26/06/2024", "26/06/2024", "26/06/2024", "26/06/2024", "26/06/2024", "26/06/2024", "26/06/2024", "26/06/2024", "NA", "NA", "26/06/2024", "26/06/2024", "26/06/2024", "NA", "NA", "26/06/2024", "26/06/2024", "NA", "26/06/2024", "NA", "26/06/2024", "NA", "NA", "NA", "NA", "26/06/2024", "NA", "26/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "NA", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "NA", "NA", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "NA", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "NA", "NA", "29/06/2024", "29/06/2024", "NA", "29/06/2024", "NA", "NA", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "NA", "29/06/2024", "29/06/2024", "NA", "NA", "NA", "NA", "29/06/2024", "NA", "29/06/2024", "29/06/2024", "NA", "NA", "29/06/2024", "29/06/2024", "29/06/2024", "NA", "NA", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "NA", "NA", "NA", "29/06/2024", "NA", "NA", "29/06/2024", "NA", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "NA", "29/06/2024", "29/06/2024", "NA", "29/06/2024", "29/06/2024", "NA", "29/06/2024", "29/06/2024", "NA", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "29/06/2024", "NA", "29/06/2024"]
+
+confirmed_by = ["NA", "Afsal Rahmathali", "NA", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "NA", "NA", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "NA", "NA", "Afsal Rahmathali", "Afsal Rahmathali", "Afsal Rahmathali", "NA", "NA", "Afsal Rahmathali", "Afsal Rahmathali", "NA", "Afsal Rahmathali", "NA", "Afsal Rahmathali", "NA", "NA", "NA", "NA", "Afsal Rahmathali", "NA", "Afsal Rahmathali", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "NA", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Rafeek Panikkaveettil Hameed", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "NA", "NA", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "NA", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "NA", "NA", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "NA", "Nishad Kodakkancheri", "NA", "NA", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "NA", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "NA", "NA", "NA", "NA", "Nishad Kodakkancheri", "NA", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "NA", "NA", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "NA", "NA", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "NA", "NA", "NA", "Nishad Kodakkancheri", "NA", "NA", "Nishad Kodakkancheri", "NA", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "NA", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "NA", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "NA", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "NA", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "Nishad Kodakkancheri", "NA", "Nishad Kodakkancheri"]
+
+olive_oil_df = pd.DataFrame({'region_name': region_names,
+                         'material_id': material_ids,
+                         'delisted_date': delisted_dates,
+                         'confirmed_by': confirmed_by})
+olive_oil_df = olive_oil_df[olive_oil_df['delisted_date'] != 'NA'].sort_values(by = 'material_id', ascending = True).reset_index(drop=True)
+
+# COMMAND ----------
+
+# MAGIC %md
 # MAGIC ##Reco Dates & Delisted Dates
 
 # COMMAND ----------
@@ -316,6 +342,11 @@ for mg_catg in all_mg_catg:
         delisted_aln = coconut_oil_df[coconut_oil_df['region_name'] == 'AL AIN'].sort_values(by = 'material_id', ascending = True).reset_index(drop = True)
         delisted_dxb = coconut_oil_df[coconut_oil_df['region_name'] == 'DUBAI'].sort_values(by = 'material_id', ascending = True).reset_index(drop = True)
         delisted_shj = coconut_oil_df[coconut_oil_df['region_name'] == 'SHARJAH'].sort_values(by = 'material_id', ascending = True).reset_index(drop = True)
+    elif mg_catg == 'olive_oil':
+        delisted_auh = olive_oil_df[olive_oil_df['region_name'] == 'ABU DHABI'].sort_values(by = 'material_id', ascending = True).reset_index(drop = True)
+        delisted_aln = olive_oil_df[olive_oil_df['region_name'] == 'AL AIN'].sort_values(by = 'material_id', ascending = True).reset_index(drop = True)
+        delisted_dxb = olive_oil_df[olive_oil_df['region_name'] == 'DUBAI'].sort_values(by = 'material_id', ascending = True).reset_index(drop = True)
+        delisted_shj = olive_oil_df[olive_oil_df['region_name'] == 'SHARJAH'].sort_values(by = 'material_id', ascending = True).reset_index(drop = True)
 
     # delisted_auh['region_name'] = 'ABU DHABI'
     # delisted_aln['region_name'] = 'AL AIN'
@@ -486,12 +517,12 @@ df = pd.merge(df, new_skus, on = ['region_name', 'material_id'], how = 'left')
 # COMMAND ----------
 
 # spark_df = spark.createDataFrame(reco_buckets_uae)
-# spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("dev.sandbox.pj_assortment_dashboard_reco")
+# spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("dev.sandbox.pj_ao_dashboard_reco")
 
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC SELECT * FROM dev.sandbox.pj_assortment_dashboard_reco
+# MAGIC SELECT * FROM dev.sandbox.pj_ao_dashboard_reco
 
 # COMMAND ----------
 
@@ -500,7 +531,7 @@ df = pd.merge(df, new_skus, on = ['region_name', 'material_id'], how = 'left')
 
 # COMMAND ----------
 
-reco_buckets_uae = spark.sql("SELECT * FROM dev.sandbox.pj_assortment_dashboard_reco").toPandas()
+reco_buckets_uae = spark.sql("SELECT * FROM dev.sandbox.pj_ao_dashboard_reco").toPandas()
 
 # COMMAND ----------
 
@@ -555,21 +586,31 @@ reco_from_delist_perc_aln = round(temp_aln[(temp_aln['delisted_date'] != 'NA') &
 reco_from_delist_perc_dxb = round(temp_dxb[(temp_dxb['delisted_date'] != 'NA') & (temp_dxb['recommendation'] == 'Delist')]['material_id'].nunique() / temp_dxb[temp_dxb['delisted_date'] != 'NA']['material_id'].nunique() * 100)
 reco_from_delist_perc_shj = round(temp_shj[(temp_shj['delisted_date'] != 'NA') & (temp_shj['recommendation'] == 'Delist')]['material_id'].nunique() / temp_shj[temp_shj['delisted_date'] != 'NA']['material_id'].nunique() * 100)
 
-print(f"----------{i}----------")
+print("----------OVERALL----------")
 print(f"% Delisted From Reco\nAbu Dhabi: {delist_from_reco_perc_auh}%\nAl Ain: {delist_from_reco_perc_aln}%\nDubai: {delist_from_reco_perc_dxb}%\nSharjah: {delist_from_reco_perc_shj}%")
 print(f"\nReco From Delisted\nAbu Dhabi: {reco_from_delist_perc_auh}%\nAl Ain: {reco_from_delist_perc_aln}%\nDubai: {reco_from_delist_perc_dxb}%\nSharjah: {reco_from_delist_perc_shj}%\n")
 
 # COMMAND ----------
 
-pre_start = "2023-12-01"
-pre_end = "2024-02-27"
-post_start = "2024-06-01"
-post_end = "2024-08-08"
-
-pre_months = 3
-post_months = 2.266
+dates_dct = {'WATER': {'pre_start': '2023-10-01', 'pre_end': '2023-12-30', 'post_start': '2024-04-01',
+                       'post_end': '2024-06-06', 'pre_months': 3, 'post_months': 2.2},
+             'PASTA': {'pre_start': '2024-02-19', 'pre_end': '2024-05-17', 'post_start': '2024-06-08',
+                       'post_end': '2024-08-08', 'pre_months': 3, 'post_months': 2},
+             'INSTANT NOODLE': {'pre_start': '2024-02-01', 'pre_end': '2024-04-28', 'post_start': '2024-06-01',
+                       'post_end': '2024-08-08', 'pre_months': 3, 'post_months': 2.266},
+             'CUP NOODLE': {'pre_start': '2023-12-01', 'pre_end': '2024-02-27', 'post_start': '2024-06-01',
+                       'post_end': '2024-08-08', 'pre_months': 3, 'post_months': 2.266},
+             'COCONUT OIL': {'pre_start': '2024-02-01', 'pre_end': '2024-04-28', 'post_start': '2024-06-15',
+                       'post_end': '2024-08-08', 'pre_months': 3, 'post_months': 1.766}}
 
 for i in var_mg:
+    pre_start = dates_dct[i]['pre_start']
+    pre_end = dates_dct[i]['pre_end']
+    post_start = dates_dct[i]['post_start']
+    post_end = dates_dct[i]['post_end']
+    pre_months = dates_dct[i]['pre_months']
+    post_months = dates_dct[i]['post_months']
+
     temp = df[df['material_group_name'] == i]
 
     temp_pre_uae = temp[(temp['business_day'] >= pre_start) & (temp['business_day'] <= pre_end)].reset_index(drop = True)
@@ -677,10 +718,17 @@ for i in var_mg:
     gp_margin_delta_reco_shj = round((gp_margin_post_reco_shj - gp_margin_pre_reco_shj)*100, 2)
 
     print(f"----------{i}----------")
-    print(f"Average Monthly Sales Growth\nUAE: {avg_month_sales_growth_uae}%\nAbu Dhabi: {avg_month_sales_growth_auh}%\nAl Ain: {avg_month_sales_growth_aln}%\nDubai: {avg_month_sales_growth_dxb}%\nSharjah: {avg_month_sales_growth_shj}%")
+    print(f"Pre-delist Sales\nUAE: {temp_pre_uae['sales'].sum().round()}\nAbu Dhabi: {temp_pre_auh['sales'].sum().round()}\nAl Ain: {temp_pre_aln['sales'].sum().round()}\nDubai: {temp_pre_dxb['sales'].sum().round()}\nSharjah: {temp_pre_shj['sales'].sum().round()}")
+    print(f"\nPost Delist Sales\nUAE: {temp_post_uae['sales'].sum().round()}\nAbu Dhabi: {temp_post_auh['sales'].sum().round()}\nAl Ain: {temp_post_aln['sales'].sum().round()}\nDubai: {temp_post_dxb['sales'].sum().round()}\nSharjah: {temp_post_shj['sales'].sum().round()}")
+    print(f"\nAverage Monthly Sales Growth\nUAE: {avg_month_sales_growth_uae}%\nAbu Dhabi: {avg_month_sales_growth_auh}%\nAl Ain: {avg_month_sales_growth_aln}%\nDubai: {avg_month_sales_growth_dxb}%\nSharjah: {avg_month_sales_growth_shj}%")
     print(f"\nAverage Monthly GP Growth\nUAE: {avg_month_gp_growth_uae}%\nAbu Dhabi: {avg_month_gp_growth_auh}%\nAl Ain: {avg_month_gp_growth_aln}%\nDubai: {avg_month_gp_growth_dxb}%\nSharjah: {avg_month_gp_growth_shj}%")
-    print(f"\nGP Margin Delta (Actual Delistings)\nUAE: {gp_margin_delta_actual_uae}%\nAbu Dhabi: {gp_margin_delta_actual_auh}%\nAl Ain: {gp_margin_delta_actual_aln}%\nDubai: {gp_margin_delta_actual_dxb}%\nSharjah: {gp_margin_delta_actual_shj}%")
+    print(f"\nGP Margin Delta (Actual Delistings)\nUAE: {gp_margin_delta_actual_uae}%\nAbu Dhabi: {gp_margin_delta_actual_auh}%\nAl Ain: {gp_margin_delta_actual_aln}%\nDubai: {gp_margin_delta_actual_dxb}%\nSharjah: {gp_margin_delta_actual_shj}%\n")
     print(f"\nGP Margin Delta (Delist Reco)\nUAE: {gp_margin_delta_reco_uae}%\nAbu Dhabi: {gp_margin_delta_reco_auh}%\nAl Ain: {gp_margin_delta_reco_aln}%\nDubai: {gp_margin_delta_reco_dxb}%\nSharjah: {gp_margin_delta_reco_shj}%\n")
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ###RCA
 
 # COMMAND ----------
 
@@ -1272,8 +1320,8 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC SELECT * FROM dev.sandbox.pj_assortment_dashboard_region_view LIMIT 5
+# %sql
+# SELECT * FROM dev.sandbox.pj_assortment_dashboard_region_view LIMIT 5
 
 # COMMAND ----------
 
