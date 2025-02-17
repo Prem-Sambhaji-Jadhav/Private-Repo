@@ -11,184 +11,356 @@
 
 -- COMMAND ----------
 
-
-
--- COMMAND ----------
-
-
-
--- COMMAND ----------
-
-
-
--- COMMAND ----------
-
-
-
--- COMMAND ----------
-
-
-
--- COMMAND ----------
-
-
-
--- COMMAND ----------
-
-
-
--- COMMAND ----------
-
-
-
--- COMMAND ----------
-
-
-
--- COMMAND ----------
-
 -- MAGIC %md
--- MAGIC #Export Data
+-- MAGIC #PO Master Sandbox Creation
 
 -- COMMAND ----------
 
--- %python
--- import requests
--- from google.oauth2 import service_account
--- from googleapiclient.discovery import build
--- from googleapiclient.http import MediaIoBaseUpload
--- from io import BytesIO
+-- %sql
+-- CREATE OR REPLACE TABLE dev.sandbox.pj_hhc_final_elasticities AS (
+--     WITH all_mgs AS (
+--         SELECT
+--             material_group_name,
+--             CASE WHEN LEFT(demand_group, 7) = "hhc_apc"
+--                     THEN CONCAT("hhc_all_purpose_cleaner_", RIGHT(demand_group, 4))
+--                 WHEN LEFT(demand_group, 7) = "hhc_wup"
+--                     THEN CONCAT("hhc_washing_up_", RIGHT(demand_group, 4))
+--                 WHEN LEFT(demand_group, 7) = "hhc_dis"
+--                     THEN CONCAT("hhc_disinfectants_", RIGHT(demand_group, 4))
+--                 ELSE "none" END AS demand_group,
+--             CASE WHEN RIGHT(demand_group, 4) = "dg_1" THEN "DG-1"
+--                 WHEN RIGHT(demand_group, 4) = "dg_2" THEN "DG-2"
+--                 WHEN RIGHT(demand_group, 4) = "dg_3" THEN "DG-3"
+--                 WHEN RIGHT(demand_group, 4) = "dg_4" THEN "DG-4"
+--                 ELSE "none" END AS mg_demand_group,
+--             region_name,
+--             material_id,
+--             CASE WHEN elasticity_criteria = "accepted set" THEN "accepted_set"
+--                 WHEN elasticity_criteria = "imputed: case-1" THEN "imputed: case 1"
+--                 WHEN elasticity_criteria = "imputed: case-2" THEN "imputed: case 2"
+--                 WHEN elasticity_criteria = "imputed: case-3" THEN "imputed: case 3"
+--                 ELSE "none" END AS elasticity_criteria,
+--             ROUND(price_elasticity_top_3_avg, 2) AS price_elasticity,
+--             ROUND(promo_elasticity_top_3_avg, 2) AS promo_elasticity
+--         FROM dev.sandbox.pj_po_final_elasticities_promo_hhc_master
 
--- # master_df_exp
--- # model_results_exp
+--         UNION
 
--- # OUTPUT FILE NAME
--- OUTPUT_FILE_NAME = 'ao_pulses_attr.csv'
--- # Assigning the source DataFrame to be exported
--- source_df = df
--- # Share the file with personal email
--- personal_email = 'prem@loyalytics.in'
+--         SELECT * FROM analytics.pricing.hhc_final_elasticities
+--     )
 
--- # ----------------------------------
--- # ----------------------------------
-
--- # URL to the service account credentials file on Google Drive
--- CREDS_FILE_ID = '136mbHGvmasRscEblZJVOK9cXnEU94h3F'
--- credentials_url = f'https://drive.google.com/uc?export=download&id={CREDS_FILE_ID}'
-
--- # Download the credentials file
--- response = requests.get(credentials_url)
--- if response.status_code == 200:
---     with open('credentials.json', 'wb') as f:
---         f.write(response.content)
--- else:
---     print(f"Failed to download credentials file. Status code: {response.status_code}")
-
--- # Authenticate using the downloaded service account credentials
--- SERVICE_ACCOUNT_FILE = 'credentials.json'
--- SCOPES = ['https://www.googleapis.com/auth/drive.file']
--- credentials = service_account.Credentials.from_service_account_file(
---     SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-
--- # Build the Drive API client
--- service = build('drive', 'v3', credentials=credentials)
-
-
--- # Convert DataFrame to CSV and store it in a BytesIO object
--- csv_buffer = BytesIO()
--- source_df.to_csv(csv_buffer, index=False)
--- csv_buffer.seek(0)
-
--- # File metadata
--- file_metadata = {
---     'name': OUTPUT_FILE_NAME,
---     'mimeType': 'application/vnd.google-apps.spreadsheet'
--- }
-
--- # Media file upload using BytesIO object
--- media = MediaIoBaseUpload(csv_buffer, mimetype='text/csv', resumable=True)
-
--- # Upload the file to Google Drive
--- file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
-
--- print(f"File uploaded successfully. File ID: {file.get('id')}")
-
-
--- # Get and print file metadata
--- file_id = file.get('id')
--- file_metadata = service.files().get(fileId=file_id, fields='id, name, mimeType, parents, owners').execute()
--- print(f"File name: {file_metadata['name']}")
--- # print(f"MIME type: {file_metadata['mimeType']}")
--- # print(f"Parent folder: {file_metadata.get('parents', ['Root'])}")
--- # print(f"Owner: {file_metadata['owners'][0]['emailAddress']}")
-
--- # Function to share the file
--- def share_file(service, file_id, email):
---     permission = {
---         'type': 'user',
---         'role': 'writer',
---         'emailAddress': email
---     }
---     try:
---         service.permissions().create(fileId=file_id, body=permission).execute()
---         print(f"File shared successfully with {email}")
---     except Exception as e:
---         print(f"Error sharing file: {str(e)}")
-
-
--- share_file(service, file_id, email=personal_email)
-
--- # List the 3 most recent files in the Drive
--- results = service.files().list(
---     pageSize=3, 
---     orderBy="modifiedTime desc", 
---     fields="files(id, name, modifiedTime)"
--- ).execute()
--- items = results.get('files', [])
-
--- if not items:
---     print('No files found.')
--- else:
---     print('3 most recent files:')
---     for item in items:
---         print(f"{item['name']} (ID: {item['id']}, Modified: {item['modifiedTime']})")
+--     SELECT *
+--     FROM all_mgs
+--     ORDER BY material_group_name, demand_group, region_name, elasticity_criteria, material_id
+-- )
 
 -- COMMAND ----------
 
--- MAGIC %md
--- MAGIC #YoY and Top Brands - AO
+-- CREATE OR REPLACE TABLE dev.sandbox.pj_hhc_imputation_metrics AS (
+--     WITH all_mgs AS (
+--         SELECT
+--             *,
+--             CASE WHEN LEFT(demand_group, 7) = "hhc_apc" THEN "ALL PURPOSE CLEANER"
+--                 WHEN LEFT(demand_group, 7) = "hhc_wup" THEN "WASHING UP"
+--                 WHEN LEFT(demand_group, 7) = "hhc_dis" THEN "DISINFECTANTS"
+--                 ELSE "none" END AS material_group_name,
+--             CASE WHEN RIGHT(demand_group, 4) = "dg_1" THEN "DG-1"
+--                 WHEN RIGHT(demand_group, 4) = "dg_2" THEN "DG-2"
+--                 WHEN RIGHT(demand_group, 4) = "dg_3" THEN "DG-3"
+--                 WHEN RIGHT(demand_group, 4) = "dg_4" THEN "DG-4"
+--                 ELSE "none" END AS mg_demand_group
+--         FROM dev.sandbox.pj_po_imputed_metrics_promo_master_hhc
+
+--         UNION
+
+--         SELECT * FROM analytics.pricing.hhc_imputation_metrics
+--     )
+
+--     SELECT *
+--     FROM all_mgs
+--     ORDER BY material_group_name, demand_group, region_name, material_id, reference_material_id, metric
+-- )
 
 -- COMMAND ----------
 
-SELECT
-    CASE WHEN business_day < "2023-03-01" THEN "PY" ELSE "CY" END AS Year,
-    ROUND(SUM(amount),0) AS Sales,
-    ROUND(SUM(quantity),0) AS Volume
-FROM gold.pos_transactions AS t1
-JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
-WHERE business_day BETWEEN '2022-03-01' AND '2024-02-29'
-AND category_name = 'PASTA & NOODLE'
-AND material_group_name = 'INSTANT NOODLE'
-AND amount > 0
-AND quantity > 0
-GROUP BY Year
+-- %py
+-- df = spark.sql("SELECT * FROM dev.sandbox.pj_hhc_imputation_metrics").toPandas()
+-- df.to_csv("/Workspace/Users/prem@loyalytics.in/hhc_imputation_metrics.csv", index = False)
 
 -- COMMAND ----------
 
-SELECT
-    brand,
-    ROUND(SUM(amount),0) AS sales,
-    SUM(ROUND(SUM(amount),0)) OVER () AS total_sales,
-    (sales/total_sales) AS sales_contri
-FROM gold.pos_transactions AS t1
-JOIN gold.material_master AS t2 ON t1.product_id = t2.material_id
-WHERE business_day BETWEEN '2023-03-01' AND '2024-02-29'
-AND category_name = 'PASTA & NOODLE'
-AND material_group_name = 'INSTANT NOODLE'
-AND amount > 0
-AND quantity > 0
-GROUP BY brand
-ORDER BY sales_contri DESC
+-- %py
+-- query = """
+-- SELECT
+--     DISTINCT t1.material_id,
+--     t2.material_name,
+--     t2.brand,
+--     t2.material_group_name
+-- FROM dev.sandbox.pj_hhc_final_elasticities AS t1
+-- JOIN gold.material.material_master AS t2 ON t1.material_id = t2.material_id
+-- """
+-- df = spark.sql(query).toPandas()
+-- df.to_csv("/Workspace/Users/prem@loyalytics.in/hhc_material_lookup.csv", index = False)
+
+-- COMMAND ----------
+
+-- %py
+-- query = """
+-- SELECT
+--     t1.material_group_name,
+--     t1.demand_group,
+--     t1.region_name,
+--     t1.material_id,
+--     t1.week_number,
+--     t1.quantity_actual,
+--     t1.quantity_pred,
+--     t1.model_set,
+--     t3.avg_unit_price,
+--     GREATEST(LEAST((1 - t3.avg_unit_price / (t3.avg_unit_price + (t3.discount_amount / t3.quantity))), 1), 0) AS discount_perc_adj
+-- FROM analytics.pricing.hhc_all_model_test_preds AS t1
+-- JOIN analytics.pricing.hhc_all_model_results_best_model AS t2
+--     ON t1.material_id = t2.material_id
+--     AND t1.region_name = t2.region_name
+--     AND t1.model = t2.best_model
+-- JOIN analytics.pricing.hhc_mds_master AS t3
+--     ON t1.material_id = t3.material_id
+--     AND t1.region_name = t3.region_name
+--     AND t1.week_number = t3.week_number
+-- WHERE
+--     t1.material_group_name IN ("BLEACH", "TOILET CLEANERS", "INSECTICIDES")
+--     AND t2.model = t2.best_model
+-- ORDER BY 1, 2, 3, 4, 5
+-- """
+-- df = spark.sql(query).toPandas()
+-- df.to_csv("/Workspace/Users/prem@loyalytics.in/hhc_weekly_sales.csv", index = False)
+
+-- COMMAND ----------
+
+-- MAGIC %py
+-- MAGIC from sklearn.metrics.pairwise import cosine_similarity
+-- MAGIC import pandas as pd
+-- MAGIC
+-- MAGIC file_name = 'hhc_cluster_sku_info_final_master.csv'
+-- MAGIC file_path = f'/Workspace/Repos/piyush@loyalytics.in/lulu_notebooks/temp_data_files/{file_name}'
+-- MAGIC df_sku_cluster_info = pd.read_csv(file_path)
+-- MAGIC spark.createDataFrame(df_sku_cluster_info).createOrReplaceTempView("sku_cluster_view")
+-- MAGIC
+-- MAGIC query = f"""
+-- MAGIC WITH attributes AS (
+-- MAGIC     SELECT
+-- MAGIC         t1.region_name,
+-- MAGIC         CAST(t1.material_id AS INT) AS material_id,
+-- MAGIC         t1.price_elasticity,
+-- MAGIC         t1.promo_elasticity,
+-- MAGIC         t2.content,
+-- MAGIC         t2.brand,
+-- MAGIC         t2.pack_type,
+-- MAGIC         t2.regular_pack_flag,
+-- MAGIC         t2.strength,
+-- MAGIC         t2.target_surface,
+-- MAGIC         t2.environment,
+-- MAGIC         t2.form,
+-- MAGIC         CASE WHEN t1.r2 >= 0.6 AND t1.price_elasticity < 0 THEN 1 ELSE 0 END AS acceptable_model_flag,
+-- MAGIC         CASE WHEN t1.r2 >= 0.6 AND t1.price_elasticity < 0 AND t1.promo_elasticity > 0 THEN 1 ELSE 0 END AS acceptable_model_flag_promo
+-- MAGIC     FROM analytics.pricing.hhc_all_model_results_best_model AS t1
+-- MAGIC     JOIN sku_cluster_view AS t2 ON t1.material_id = t2.material_id
+-- MAGIC     WHERE
+-- MAGIC         t1.demand_group = 'hhc_bath_room_cleaners_dg_1'
+-- MAGIC         AND t1.model = t1.best_model
+-- MAGIC         AND t2.weight_scheme = 'w1'
+-- MAGIC         AND t1.region_name = 'ABU DHABI'
+-- MAGIC ),
+-- MAGIC
+-- MAGIC sales AS (
+-- MAGIC     SELECT
+-- MAGIC         region_name,
+-- MAGIC         CAST(material_id AS INT) AS material_id,
+-- MAGIC         week_number,
+-- MAGIC         quantity,
+-- MAGIC         (avg_unit_price * quantity) AS sales
+-- MAGIC     FROM analytics.pricing.hhc_mds_master
+-- MAGIC     WHERE
+-- MAGIC         material_group_name = 'BATH ROOM CLEANERS'
+-- MAGIC         AND demand_group = 'DG-1'
+-- MAGIC ),
+-- MAGIC
+-- MAGIC unit_price AS (
+-- MAGIC     SELECT
+-- MAGIC         region_name,
+-- MAGIC         material_id,
+-- MAGIC         ROUND(SUM(sales)/ SUM(quantity), 2) AS avg_unit_price
+-- MAGIC     FROM sales
+-- MAGIC     GROUP BY 1, 2
+-- MAGIC )
+-- MAGIC
+-- MAGIC SELECT
+-- MAGIC     t1.*,
+-- MAGIC     t2.avg_unit_price
+-- MAGIC FROM attributes AS t1
+-- MAGIC JOIN unit_price AS t2
+-- MAGIC     ON t1.region_name = t2.region_name
+-- MAGIC     AND t1.material_id = t2.material_id
+-- MAGIC ORDER BY t1.region_name, t1.acceptable_model_flag, t1.material_id
+-- MAGIC """
+-- MAGIC attributes_df = spark.sql(query).toPandas()
+-- MAGIC
+-- MAGIC query = f"""
+-- MAGIC SELECT
+-- MAGIC     t1.region_name,
+-- MAGIC     CAST(t1.material_id AS INT) AS material_id,
+-- MAGIC     t1.week_number,
+-- MAGIC     t1.quantity,
+-- MAGIC     CASE WHEN t2.r2 >= 0.6 AND t2.price_elasticity < 0 THEN 1 ELSE 0 END AS acceptable_model_flag,
+-- MAGIC     CASE WHEN t2.r2 >= 0.6 AND t2.price_elasticity < 0 AND t2.promo_elasticity > 0 THEN 1 ELSE 0 END AS acceptable_model_flag_promo
+-- MAGIC FROM analytics.pricing.hhc_mds_master AS t1
+-- MAGIC JOIN analytics.pricing.hhc_all_model_results_best_model AS t2
+-- MAGIC     ON t1.region_name = t2.region_name
+-- MAGIC     AND t1.material_id = t2.material_id
+-- MAGIC WHERE t2.model = t2.best_model
+-- MAGIC AND t1.demand_group = 'hhc_bath_room_cleaners_dg_1'
+-- MAGIC AND t1.region_name = 'ABU DHABI'
+-- MAGIC ORDER BY 1, 2, 3
+-- MAGIC """
+-- MAGIC qty_df = spark.sql(query).toPandas()
+
+-- COMMAND ----------
+
+-- MAGIC %py
+-- MAGIC from scipy.spatial.distance import cdist
+-- MAGIC
+-- MAGIC def content_price_dist(attributes_df, region, acceptable_flag = 'acceptable_model_flag'):
+-- MAGIC     # Create ordinal values of content column
+-- MAGIC
+-- MAGIC     df_region = attributes_df[attributes_df['region_name'] == region].reset_index(drop = True)
+-- MAGIC     df_region.drop(columns = 'region_name', inplace = True)
+-- MAGIC
+-- MAGIC     def create_ordinal(df, column_name):
+-- MAGIC         # Get distinct values and assign ordinal values
+-- MAGIC         unique_vals = df[column_name].unique()
+-- MAGIC         ordinal_mapping = {val: idx + 1 for idx, val in enumerate(sorted(unique_vals))}
+-- MAGIC         
+-- MAGIC         # Set ordinal values in the df
+-- MAGIC         df[column_name + '_ordinal'] = df[column_name].map(ordinal_mapping)
+-- MAGIC
+-- MAGIC         return df
+-- MAGIC
+-- MAGIC     df_region = create_ordinal(df_region, 'content')
+-- MAGIC
+-- MAGIC
+-- MAGIC     # Create ordinal values of price column
+-- MAGIC     query = f"""
+-- MAGIC     SELECT
+-- MAGIC         CAST(material_id AS INT) AS material_id,
+-- MAGIC         material_group_name
+-- MAGIC     FROM analytics.pricing.hhc_cluster_sku_info_remapped
+-- MAGIC     WHERE
+-- MAGIC         material_group_name = 'BATH ROOM CLEANERS'
+-- MAGIC         AND cluster_idx = '1'
+-- MAGIC         AND weight_scheme = 'w1'
+-- MAGIC     """
+-- MAGIC     df_sku_attrs_base = spark.sql(query).toPandas()
+-- MAGIC     
+-- MAGIC     df_region['avg_unit_price_int'] = round(df_region['avg_unit_price'])
+-- MAGIC     df_sku_attrs_base = df_sku_attrs_base.merge(df_region[['material_id', 'avg_unit_price_int']], on='material_id', how='left')
+-- MAGIC
+-- MAGIC     def create_ordinal_category(group):
+-- MAGIC         col = 'avg_unit_price_int'
+-- MAGIC         unique_values = group[col].nunique()
+-- MAGIC         if unique_values == 1:
+-- MAGIC             group[f'{col}_ordinal'] = 1
+-- MAGIC         else:
+-- MAGIC             try:
+-- MAGIC                 group[f'{col}_ordinal'] = pd.qcut(group[col], q=min(unique_values, 4), labels=False, duplicates='drop') + 1
+-- MAGIC             except ValueError:
+-- MAGIC                 group[f'{col}_ordinal'] = group[col].rank(method='dense', ascending=True).astype(int)
+-- MAGIC                 group[f'{col}_ordinal'] = pd.cut(group[f'{col}_ordinal'], bins=min(4, unique_values), labels=False) + 1
+-- MAGIC         return group
+-- MAGIC     
+-- MAGIC     df_sku_attrs_base_trans = df_sku_attrs_base.groupby('material_group_name', group_keys=True).apply(create_ordinal_category)
+-- MAGIC     df_sku_attrs_base_trans = df_sku_attrs_base_trans.reset_index(drop=True)
+-- MAGIC     
+-- MAGIC     df_region = df_region.merge(df_sku_attrs_base_trans[['material_id', 'avg_unit_price_int_ordinal']], on='material_id', how='left')
+-- MAGIC
+-- MAGIC     # Calculate euclidean distance
+-- MAGIC     def euclidean_distance(df, feature_column):
+-- MAGIC         df_0 = df[df[acceptable_flag] == 0].set_index('material_id')
+-- MAGIC         df_1 = df[df[acceptable_flag] == 1].set_index('material_id')
+-- MAGIC         
+-- MAGIC         distances = cdist(df_0[[feature_column]], df_1[[feature_column]], metric='euclidean')
+-- MAGIC         
+-- MAGIC         distance_df = pd.DataFrame(distances, index=df_0.index, columns=df_1.index)
+-- MAGIC         
+-- MAGIC         return distance_df
+-- MAGIC
+-- MAGIC     content_distance_df = euclidean_distance(df_region, 'content_ordinal')
+-- MAGIC     price_distance_df = euclidean_distance(df_region, 'avg_unit_price_int_ordinal')
+-- MAGIC
+-- MAGIC     # Calculate weighted average of content and price distance
+-- MAGIC     weight_content = 0.2
+-- MAGIC     weight_price = 0.8
+-- MAGIC     content_price_df = (content_distance_df * weight_content + price_distance_df * weight_price) / 2
+-- MAGIC
+-- MAGIC     return df_region, content_price_df
+-- MAGIC
+-- MAGIC content_price_df = content_price_dist(attributes_df, 'ABU DHABI', acceptable_flag = 'acceptable_model_flag')
+
+-- COMMAND ----------
+
+-- MAGIC %py
+-- MAGIC pd.set_option('display.max_columns', None)
+-- MAGIC content_price_df
+
+-- COMMAND ----------
+
+-- MAGIC %py
+-- MAGIC def cosine_sim(df_region, categorical_cols, acceptable_flag = 'acceptable_model_flag'):
+-- MAGIC     # Calculate the cosine similarity of the categorical attributes
+-- MAGIC
+-- MAGIC     catg_df = df_region[['material_id', acceptable_flag] + categorical_cols]
+-- MAGIC
+-- MAGIC     # Drop columns having only 1 distinct value
+-- MAGIC     catg_df = catg_df.loc[:, (catg_df != catg_df.iloc[0]).any()]
+-- MAGIC     
+-- MAGIC     common_cols = list(set(categorical_cols) & set(catg_df.columns))
+-- MAGIC
+-- MAGIC     # If acceptable_model_flag gets dropped, then re-include it
+-- MAGIC     if acceptable_flag not in catg_df.columns:
+-- MAGIC         catg_df = catg_df.merge(df_region[['material_id', acceptable_flag]], on = 'material_id', how = 'left')
+-- MAGIC
+-- MAGIC     # Dummification of attribute columns
+-- MAGIC     catg_df_encoded = pd.get_dummies(catg_df, columns=common_cols)
+-- MAGIC
+-- MAGIC     catg_df_encoded_0 = catg_df_encoded[catg_df_encoded[acceptable_flag] == 0]
+-- MAGIC     catg_df_encoded_1 = catg_df_encoded[catg_df_encoded[acceptable_flag] == 1]
+-- MAGIC
+-- MAGIC     X_0 = catg_df_encoded_0.drop(columns = ['material_id', acceptable_flag])
+-- MAGIC     X_1 = catg_df_encoded_1.drop(columns = ['material_id', acceptable_flag])
+-- MAGIC
+-- MAGIC     # Compute the cosine similarity between each row of df1 and each row of df2
+-- MAGIC     df1_array = X_0.values
+-- MAGIC     df2_array = X_1.values
+-- MAGIC     cosine_sim_matrix = cosine_similarity(df1_array, df2_array)
+-- MAGIC     cosine_sim_df = pd.DataFrame(cosine_sim_matrix, index=catg_df_encoded_0['material_id'], columns=catg_df_encoded_1['material_id'])
+-- MAGIC
+-- MAGIC     # Subtract the cosine similarity values from 1 so that we can convert it into a distance metric
+-- MAGIC     cosine_dist_df = cosine_sim_df.copy()
+-- MAGIC     cosine_dist_df.iloc[:, :] = 1 - cosine_dist_df.iloc[:, :]
+-- MAGIC
+-- MAGIC     # Normalize the values
+-- MAGIC     # cosine_dist_df_norm = normalize_dataframe(cosine_dist_df)
+-- MAGIC
+-- MAGIC     return cosine_dist_df
+-- MAGIC
+-- MAGIC categorical_cols = ['brand', 'pack_type', 'regular_pack_flag', 'strength', 'target_surface', 'environment', 'form']
+-- MAGIC cosine_dist_df = cosine_sim(df, categorical_cols)
+-- MAGIC cosine_dist_df
+
+-- COMMAND ----------
+
+SELECT *
+FROM analytics.pricing.hhc_imputation_metrics
+WHERE value IS NULL
+ORDER BY metric
 
 -- COMMAND ----------
 
@@ -224,11 +396,9 @@ FROM gold.transaction.uae_pos_transactions AS t1
 JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
 JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
 WHERE
-    business_day BETWEEN "2023-09-01" AND "2024-08-29"
-    AND (
-        category_name IN ("ICE CREAM & DESSERTS", "PAPER GOODS", "CANNED MEATS", "BISCUITS & CAKES")
-        OR material_group_name IN ("PULSES", "SPICES", "CHOCOLATE BAGS", "PICKLES", "JAMS", "HONEY", "CHOCO SPREAD", "PEANUT BUTTER", "VINEGAR")
-        )
+    business_day BETWEEN "2024-01-01" AND "2024-12-29"
+    AND (CONCAT(t2.category_name, t2.material_group_name) IN ("ICE CREAM & DESSERTSFRUIT JUICES", "PULSES & SPICES & HERBSPULSES", "BISCUITS & CAKESRICE & OAT CAKE", "CANNED MEATSOTHER CANNED MEAT", "SAUCES & PICKLESVINEGAR", "ICE CREAM & DESSERTSFRUITS", "PULSES & SPICES & HERBSSPICES", "ICE CREAM & DESSERTSFROZEN YOGHURT", "ICE CREAM & DESSERTSICE CREAM IMPULSE", "SAUCES & PICKLESPICKLES", "ICE CREAM & DESSERTSCAKES & GATEAUX", "PRESERVATIVES & SPREADSPEANUT BUTTER", "ICE CREAM & DESSERTSSORBETS", "PASTA & NOODLEPASTA", "COOKING OILS & GHEECOCONUT OIL", "PAPER GOODSTRAVEL TISSUE &WIPES", "CANNED MEATSCANNED CORNED BEEF", "PAPER GOODSKITCHEN ROLLS", "PRESERVATIVES & SPREADSJAMS", "CANNED MEATSCANNED LUNCHEON MEAT", "BISCUITS & CAKESSAVOURY", "PAPER GOODSTOILET ROLLS", "PASTA & NOODLECUP NOODLE", "BISCUITS & CAKESCOOKIES", "PAPER GOODSFACIAL TISSUES", "CANNED MEATSCANNED SAUSAGES", "BISCUITS & CAKESCREAM FILLED BISCUIT", "BISCUITS & CAKESMAMOUL", "PRESERVATIVES & SPREADSHONEY", "COOKING OILS & GHEEOLIVE OIL", "BISCUITS & CAKESCHOCOLATE COATED", "BISCUITS & CAKESWAFER BISCUITS", "BISCUITS & CAKESPLAIN BISCUITS", "ICE CREAM & DESSERTSICE CREAM TAKE HOME", "COOKING OILS & GHEEVEGETABLE OIL", "BISCUITS & CAKESKIDS BISCUITS", "COOKING OILS & GHEESUNFLOWER OIL", "BISCUITS & CAKESRUSKS", "BISCUITS & CAKESCAKES", "BISCUITS & CAKESFIBER BISCUITS", "ICE CREAM & DESSERTSICECREAM IMPULSEPACK", "PASTA & NOODLEINSTANT NOODLE", "CONFECTIONERYCHOCOLATE BAGS", "PRESERVATIVES & SPREADSCHOCO SPREAD", "BISCUITS & CAKESSHARING PACKS")
+    OR t2.category_name = "WATER")
     AND transaction_type IN ("SALE", "SELL_MEDIA")
     AND tayeb_flag = 0
     AND amount > 0
