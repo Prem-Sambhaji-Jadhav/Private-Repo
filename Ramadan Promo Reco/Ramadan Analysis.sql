@@ -8,7 +8,6 @@
 --   SELECT CASE WHEN business_day BETWEEN "2023-03-08" AND "2023-04-21" THEN "Ramadan"
 --               ELSE "Not Ramadan"
 --           END AS period_type,
-          
 --           segment,
 --           ROUND(SUM(amount),0) AS total_sales,
 --           COUNT(DISTINCT mobile) AS total_customers

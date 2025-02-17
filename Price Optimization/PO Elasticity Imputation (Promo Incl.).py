@@ -4,6 +4,46 @@
 
 # COMMAND ----------
 
+query_region_set_promo_elas = """
+select
+  material_group_name,
+  mg_demand_group,
+  collect_set(region_name) as region_set_promo_elas
+from
+  dev.analytics.pg_hhc_master_sku_summary
+where
+  g_r2_g_pe_g_pre > 0
+group by
+  material_group_name,
+  mg_demand_group
+order by
+  material_group_name,
+  mg_demand_group
+
+"""
+pdf_query_region_set_promo_elas = spark.sql(query_region_set_promo_elas).toPandas()
+
+pdf_query_region_set_promo_elas.head()
+
+# COMMAND ----------
+
+def get_valid_region_set(df_valid_regions, mg_name, mg_demand_group):
+
+    region_set = df_valid_regions[(df_valid_regions.material_group_name==mg_name) & (df_valid_regions.mg_demand_group==mg_demand_group)].region_set_promo_elas.values[0]
+
+    region_list = list(region_set)
+
+    return region_list
+
+
+mg_name, mg_demand_group = 'BATH ROOM CLEANERS', 'DG-1'
+
+valid_regions = get_valid_region_set(pdf_query_region_set_promo_elas, mg_name, mg_demand_group)
+
+print(valid_regions)
+
+# COMMAND ----------
+
 material_group_name = 'DISINFECTANTS'
 mg_name_abbr = 'dis'
 cluster_idx = 2
@@ -95,7 +135,7 @@ def merge_data(content_price_df_norm, corr_dist_norm, cosine_dist_df_norm, df_re
     ).reset_index()
 
     final_df = pd.merge(merged_df_filtered, merged_df_top_3, how='left', on='material_id')
-
+    
     # Add the region name, demand group, and case number to identify SKU rejection case
     final_df.insert(0, 'region_name', region)
     final_df.insert(0, 'demand_group', demand_group)
@@ -166,7 +206,7 @@ def cosine_sim(df_region, categorical_cols, acceptable_flag = 'acceptable_model_
     cosine_dist_df = cosine_sim_df.copy()
     cosine_dist_df.iloc[:, :] = 1 - cosine_dist_df.iloc[:, :]
 
-    # Normalize the values
+    # Normalize the distance values
     cosine_dist_df_norm = normalize_dataframe(cosine_dist_df)
 
     return cosine_dist_df_norm
@@ -249,6 +289,8 @@ def content_price_dist(attributes_df, region, acceptable_flag = 'acceptable_mode
     weight_content = 0.2
     weight_price = 0.8
     content_price_df = (content_distance_df * weight_content + price_distance_df * weight_price) / 2
+
+    # Normalize the distance values
     content_price_df_norm = normalize_dataframe(content_price_df)
 
     return df_region, content_price_df_norm
@@ -630,11 +672,3 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable(f
 #     UNION
 #     SELECT "DISINFECTANTS" AS material_group_name, * FROM dev.sandbox.pj_po_final_elasticities_promo_hhc_dis
 # )
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
-

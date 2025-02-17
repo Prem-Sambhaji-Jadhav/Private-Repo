@@ -1,68 +1,13 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC #Actual vs Predicted Results
-
-# COMMAND ----------
-
-# query = """
-# SELECT
-#     t1.demand_group,
-#     t1.region_name,
-#     t1.material_id,
-#     t1.week_number,
-#     t1.quantity_actual,
-#     t1.quantity_pred
-# FROM dev.sandbox.pj_po_actual_pred_data_promo_hhc_apc_master AS t1
-# JOIN dev.sandbox.pj_po_model_results_promo_hhc_apc_master_best_model AS t2
-#     ON t1.demand_group = t2.demand_group
-#     AND t1.region_name = t2.region_name
-#     AND t1.material_id = t2.material_id
-# WHERE
-#     t1.model = t2.best_model
-#     AND t2.model = t2.best_model
-# ORDER BY 1, 2, 3, 4
-# """
-
-# df = spark.sql(query).toPandas()
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC #MDS Master Sandbox
-
-# COMMAND ----------
-
-# %sql
-# CREATE OR REPLACE TABLE dev.sandbox.pj_poc_mds_final_hhc_master AS (
-#     SELECT "ALL PURPOSE CLEANER" AS material_group_name, "hhc_apc_dg_1" AS demand_group, region_name, material_id, week_number, quantity, avg_unit_price
-#     FROM dev.sandbox.pj_poc_mds_final_hhc_apc_dg1
-#     UNION
-#     SELECT "ALL PURPOSE CLEANER" AS material_group_name, "hhc_apc_dg_2" AS demand_group, region_name, material_id, week_number, quantity, avg_unit_price
-#     FROM dev.sandbox.pj_poc_mds_final_hhc_apc_dg2
-#     UNION
-#     SELECT "ALL PURPOSE CLEANER" AS material_group_name, "hhc_apc_dg_3" AS demand_group, region_name, material_id, week_number, quantity, avg_unit_price
-#     FROM dev.sandbox.pj_poc_mds_final_hhc_apc_dg3
-#     UNION
-#     SELECT "ALL PURPOSE CLEANER" AS material_group_name, "hhc_apc_dg_4" AS demand_group, region_name, material_id, week_number, quantity, avg_unit_price
-#     FROM dev.sandbox.pj_poc_mds_final_hhc_apc_dg4
-#     UNION
-#     SELECT "WASHING UP" AS material_group_name, "hhc_wup_dg_1" AS demand_group, region_name, material_id, week_number, quantity, avg_unit_price
-#     FROM dev.sandbox.pj_poc_mds_final_hhc_wup_dg1
-#     UNION
-#     SELECT "WASHING UP" AS material_group_name, "hhc_wup_dg_2" AS demand_group, region_name, material_id, week_number, quantity, avg_unit_price
-#     FROM dev.sandbox.pj_poc_mds_final_hhc_wup_dg2
-#     UNION
-#     SELECT "DISINFECTANTS" AS material_group_name, "hhc_dis_dg_1" AS demand_group, region_name, material_id, week_number, quantity, avg_unit_price
-#     FROM dev.sandbox.pj_poc_mds_final_hhc_dis_dg1
-#     UNION
-#     SELECT "DISINFECTANTS" AS material_group_name, "hhc_dis_dg_2" AS demand_group, region_name, material_id, week_number, quantity, avg_unit_price
-#     FROM dev.sandbox.pj_poc_mds_final_hhc_dis_dg2
-# )
-
-# COMMAND ----------
-
-# MAGIC %md
 # MAGIC #Scatter Plots
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select *
+# MAGIC from dev.sandbox.pj_po_final_elasticities_promo_hhc_master
+# MAGIC limit 5
 
 # COMMAND ----------
 

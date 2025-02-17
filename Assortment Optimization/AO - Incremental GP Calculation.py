@@ -114,8 +114,8 @@ GROUP BY 1, 2, 3
 ORDER BY 1, 2
 """
 
-df_all = spark.sql(query).toPandas()
-df_all.display()
+df_all_water = spark.sql(query).toPandas()
+df_all_water.display()
 
 # COMMAND ----------
 
@@ -229,8 +229,8 @@ GROUP BY 1, 2, 3
 ORDER BY 1, 2
 """
 
-df_delists = spark.sql(query).toPandas()
-df_delists.display()
+df_delists_water = spark.sql(query).toPandas()
+df_delists_water.display()
 
 # COMMAND ----------
 
@@ -239,23 +239,23 @@ pre_delist_end = 202312
 post_delist_start = 202404
 post_delist_end = 202406
 
-pre_sales = int(df_all[(df_all['year_month'] >= pre_delist_start) & (df_all['year_month'] <= pre_delist_end)]['sales_adj'].sum())
+pre_sales = int(df_all_water[(df_all_water['year_month'] >= pre_delist_start) & (df_all_water['year_month'] <= pre_delist_end)]['sales_adj'].sum())
 
-post_sales = int(df_all[(df_all['year_month'] >= post_delist_start) & (df_all['year_month'] <= post_delist_end)]['sales_adj'].sum())
+post_sales = int(df_all_water[(df_all_water['year_month'] >= post_delist_start) & (df_all_water['year_month'] <= post_delist_end)]['sales_adj'].sum())
 
-post_delists_exp_sales = int(df_delists[(df_delists['year_month'] >= pre_delist_start) & (df_delists['year_month'] <= pre_delist_end)]['sales_adj'].sum())
+post_delists_exp_sales = int(df_delists_water[(df_delists_water['year_month'] >= pre_delist_start) & (df_delists_water['year_month'] <= pre_delist_end)]['sales_adj'].sum())
 
-pre_gp = int(df_all[(df_all['year_month'] >= pre_delist_start) & (df_all['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
+pre_gp = int(df_all_water[(df_all_water['year_month'] >= pre_delist_start) & (df_all_water['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
 
-post_gp = int(df_all[(df_all['year_month'] >= post_delist_start) & (df_all['year_month'] <= post_delist_end)]['gp_abs_adj'].sum())
+post_gp = int(df_all_water[(df_all_water['year_month'] >= post_delist_start) & (df_all_water['year_month'] <= post_delist_end)]['gp_abs_adj'].sum())
 
-post_delists_exp_gp = int(df_delists[(df_delists['year_month'] >= pre_delist_start) & (df_delists['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
+post_delists_exp_gp = int(df_delists_water[(df_delists_water['year_month'] >= pre_delist_start) & (df_delists_water['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
 
 incremental_sales = post_sales - post_delists_exp_sales - pre_sales
 incremental_gp = post_gp - post_delists_exp_gp - pre_gp
 
-pre_sales_actual = int(df_all[(df_all['year_month'] >= pre_delist_start) & (df_all['year_month'] <= pre_delist_end)]['sales'].sum())
-post_sales_actual = int(df_all[(df_all['year_month'] >= post_delist_start) & (df_all['year_month'] <= post_delist_end)]['sales'].sum())
+pre_sales_actual = int(df_all_water[(df_all_water['year_month'] >= pre_delist_start) & (df_all_water['year_month'] <= pre_delist_end)]['sales'].sum())
+post_sales_actual = int(df_all_water[(df_all_water['year_month'] >= post_delist_start) & (df_all_water['year_month'] <= post_delist_end)]['sales'].sum())
 
 print(f"Pre-delist Actual Sales: {pre_sales_actual}")
 print(f"Post delist Actual Sales: {post_sales_actual}\n")
@@ -387,8 +387,8 @@ GROUP BY 1, 2, 3
 ORDER BY 1, 2
 """
 
-df_all = spark.sql(query).toPandas()
-df_all.display()
+df_all_pasta = spark.sql(query).toPandas()
+df_all_pasta.display()
 
 # COMMAND ----------
 
@@ -503,8 +503,8 @@ GROUP BY 1, 2, 3
 ORDER BY 1, 2
 """
 
-df_delists = spark.sql(query).toPandas()
-df_delists.display()
+df_delists_pasta = spark.sql(query).toPandas()
+df_delists_pasta.display()
 
 # COMMAND ----------
 
@@ -513,20 +513,20 @@ pre_delist_end = 202404
 post_delist_start = 202406
 post_delist_end = 202408
 
-pre_sales = int(df_all[(df_all['year_month'] >= pre_delist_start) & (df_all['year_month'] <= pre_delist_end)]['sales_adj'].sum())
+pre_sales = int(df_all_pasta[(df_all_pasta['year_month'] >= pre_delist_start) & (df_all_pasta['year_month'] <= pre_delist_end)]['sales_adj'].sum())
 
-post_sales = int(df_all[(df_all['year_month'] >= post_delist_start) & (df_all['year_month'] <= post_delist_end)]['sales_adj'].sum())
+post_sales = int(df_all_pasta[(df_all_pasta['year_month'] >= post_delist_start) & (df_all_pasta['year_month'] <= post_delist_end)]['sales_adj'].sum())
 
-post_delists_exp_sales = int(df_delists[(df_delists['year_month'] >= pre_delist_start) & (df_delists['year_month'] <= pre_delist_end)]['sales_adj'].sum())
+post_delists_exp_sales = int(df_delists_pasta[(df_delists_pasta['year_month'] >= pre_delist_start) & (df_delists_pasta['year_month'] <= pre_delist_end)]['sales_adj'].sum())
 
-pre_gp = int(df_all[(df_all['year_month'] >= pre_delist_start) & (df_all['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
+pre_gp = int(df_all_pasta[(df_all_pasta['year_month'] >= pre_delist_start) & (df_all_pasta['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
 
-post_gp = int(df_all[(df_all['year_month'] >= post_delist_start) & (df_all['year_month'] <= post_delist_end)]['gp_abs_adj'].sum())
+post_gp = int(df_all_pasta[(df_all_pasta['year_month'] >= post_delist_start) & (df_all_pasta['year_month'] <= post_delist_end)]['gp_abs_adj'].sum())
 
-post_delists_exp_gp = int(df_delists[(df_delists['year_month'] >= pre_delist_start) & (df_delists['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
+post_delists_exp_gp = int(df_delists_pasta[(df_delists_pasta['year_month'] >= pre_delist_start) & (df_delists_pasta['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
 
-pre_sales_actual = int(df_all[(df_all['year_month'] >= pre_delist_start) & (df_all['year_month'] <= pre_delist_end)]['sales'].sum())
-post_sales_actual = int(df_all[(df_all['year_month'] >= post_delist_start) & (df_all['year_month'] <= post_delist_end)]['sales'].sum())
+pre_sales_actual = int(df_all_pasta[(df_all_pasta['year_month'] >= pre_delist_start) & (df_all_pasta['year_month'] <= pre_delist_end)]['sales'].sum())
+post_sales_actual = int(df_all_pasta[(df_all_pasta['year_month'] >= post_delist_start) & (df_all_pasta['year_month'] <= post_delist_end)]['sales'].sum())
 
 print(f"Pre-delist Actual Sales: {pre_sales_actual}")
 print(f"Post delist Actual Sales: {post_sales_actual}\n")
@@ -539,8 +539,8 @@ print(f"Post delist sales: {post_sales}")
 print(f"Post delist profit: {post_gp}")
 print(f"Post delist expected sales for delisted items: {post_delists_exp_sales}")
 print(f"Post delist expected profit for delisted items: {post_delists_exp_gp}")
-print(f"Incremental sales generated for Water: {incremental_sales}")
-print(f"Incremental GP generated for Water: {incremental_gp}")
+print(f"Incremental sales generated for Pasta: {incremental_sales}")
+print(f"Incremental GP generated for Pasta: {incremental_gp}")
 
 # COMMAND ----------
 
@@ -660,8 +660,8 @@ GROUP BY 1, 2, 3
 ORDER BY 1, 2
 """
 
-df_all = spark.sql(query).toPandas()
-df_all.display()
+df_all_instant = spark.sql(query).toPandas()
+df_all_instant.display()
 
 # COMMAND ----------
 
@@ -776,8 +776,8 @@ GROUP BY 1, 2, 3
 ORDER BY 1, 2
 """
 
-df_delists = spark.sql(query).toPandas()
-df_delists.display()
+df_delists_instant = spark.sql(query).toPandas()
+df_delists_instant.display()
 
 # COMMAND ----------
 
@@ -786,22 +786,22 @@ pre_delist_end = 202404
 post_delist_start = 202406
 post_delist_end = 202408
 
-pre_sales = int(df_all[(df_all['year_month'] >= pre_delist_start) & (df_all['year_month'] <= pre_delist_end)]['sales_adj'].sum())
+pre_sales = int(df_all_instant[(df_all_instant['year_month'] >= pre_delist_start) & (df_all_instant['year_month'] <= pre_delist_end)]['sales_adj'].sum())
 
-post_sales = int(df_all[(df_all['year_month'] >= post_delist_start) & (df_all['year_month'] <= post_delist_end)]['sales_adj'].sum())
+post_sales = int(df_all_instant[(df_all_instant['year_month'] >= post_delist_start) & (df_all_instant['year_month'] <= post_delist_end)]['sales_adj'].sum())
 
-post_delists_exp_sales = int(df_delists[(df_delists['year_month'] >= pre_delist_start) & (df_delists['year_month'] <= pre_delist_end)]['sales_adj'].sum())
+post_delists_exp_sales = int(df_delists_instant[(df_delists_instant['year_month'] >= pre_delist_start) & (df_delists_instant['year_month'] <= pre_delist_end)]['sales_adj'].sum())
 
-pre_gp = int(df_all[(df_all['year_month'] >= pre_delist_start) & (df_all['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
+pre_gp = int(df_all_instant[(df_all_instant['year_month'] >= pre_delist_start) & (df_all_instant['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
 
-post_gp = int(df_all[(df_all['year_month'] >= post_delist_start) & (df_all['year_month'] <= post_delist_end)]['gp_abs_adj'].sum())
+post_gp = int(df_all_instant[(df_all_instant['year_month'] >= post_delist_start) & (df_all_instant['year_month'] <= post_delist_end)]['gp_abs_adj'].sum())
 
-post_delists_exp_gp = int(df_delists[(df_delists['year_month'] >= pre_delist_start) & (df_delists['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
+post_delists_exp_gp = int(df_delists_instant[(df_delists_instant['year_month'] >= pre_delist_start) & (df_delists_instant['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
 
-post_delists_exp_gp = int(df_delists[(df_delists['year_month'] >= pre_delist_start) & (df_delists['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
+post_delists_exp_gp = int(df_delists_instant[(df_delists_instant['year_month'] >= pre_delist_start) & (df_delists_instant['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
 
-pre_sales_actual = int(df_all[(df_all['year_month'] >= pre_delist_start) & (df_all['year_month'] <= pre_delist_end)]['sales'].sum())
-post_sales_actual = int(df_all[(df_all['year_month'] >= post_delist_start) & (df_all['year_month'] <= post_delist_end)]['sales'].sum())
+pre_sales_actual = int(df_all_instant[(df_all_instant['year_month'] >= pre_delist_start) & (df_all_instant['year_month'] <= pre_delist_end)]['sales'].sum())
+post_sales_actual = int(df_all_instant[(df_all_instant['year_month'] >= post_delist_start) & (df_all_instant['year_month'] <= post_delist_end)]['sales'].sum())
 
 print(f"Pre-delist Actual Sales: {pre_sales_actual}")
 print(f"Post delist Actual Sales: {post_sales_actual}\n")
@@ -814,8 +814,8 @@ print(f"Post delist sales: {post_sales}")
 print(f"Post delist profit: {post_gp}")
 print(f"Post delist expected sales for delisted items: {post_delists_exp_sales}")
 print(f"Post delist expected profit for delisted items: {post_delists_exp_gp}")
-print(f"Incremental sales generated for Water: {incremental_sales}")
-print(f"Incremental GP generated for Water: {incremental_gp}")
+print(f"Incremental sales generated for Instant Noodle: {incremental_sales}")
+print(f"Incremental GP generated for Instant Noodle: {incremental_gp}")
 
 # COMMAND ----------
 
@@ -935,8 +935,8 @@ GROUP BY 1, 2, 3
 ORDER BY 1, 2
 """
 
-df_all = spark.sql(query).toPandas()
-df_all.display()
+df_all_cup = spark.sql(query).toPandas()
+df_all_cup.display()
 
 # COMMAND ----------
 
@@ -1051,8 +1051,8 @@ GROUP BY 1, 2, 3
 ORDER BY 1, 2
 """
 
-df_delists = spark.sql(query).toPandas()
-df_delists.display()
+df_delists_cup = spark.sql(query).toPandas()
+df_delists_cup.display()
 
 # COMMAND ----------
 
@@ -1061,20 +1061,20 @@ pre_delist_end = 202402
 post_delist_start = 202406
 post_delist_end = 202408
 
-pre_sales = int(df_all[(df_all['year_month'] >= pre_delist_start) & (df_all['year_month'] <= pre_delist_end)]['sales_adj'].sum())
+pre_sales = int(df_all_cup[(df_all_cup['year_month'] >= pre_delist_start) & (df_all_cup['year_month'] <= pre_delist_end)]['sales_adj'].sum())
 
-post_sales = int(df_all[(df_all['year_month'] >= post_delist_start) & (df_all['year_month'] <= post_delist_end)]['sales_adj'].sum())
+post_sales = int(df_all_cup[(df_all_cup['year_month'] >= post_delist_start) & (df_all_cup['year_month'] <= post_delist_end)]['sales_adj'].sum())
 
-post_delists_exp_sales = int(df_delists[(df_delists['year_month'] >= pre_delist_start) & (df_delists['year_month'] <= pre_delist_end)]['sales_adj'].sum())
+post_delists_exp_sales = int(df_delists_cup[(df_delists_cup['year_month'] >= pre_delist_start) & (df_delists_cup['year_month'] <= pre_delist_end)]['sales_adj'].sum())
 
-pre_gp = int(df_all[(df_all['year_month'] >= pre_delist_start) & (df_all['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
+pre_gp = int(df_all_cup[(df_all_cup['year_month'] >= pre_delist_start) & (df_all_cup['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
 
-post_gp = int(df_all[(df_all['year_month'] >= post_delist_start) & (df_all['year_month'] <= post_delist_end)]['gp_abs_adj'].sum())
+post_gp = int(df_all_cup[(df_all_cup['year_month'] >= post_delist_start) & (df_all_cup['year_month'] <= post_delist_end)]['gp_abs_adj'].sum())
 
-post_delists_exp_gp = int(df_delists[(df_delists['year_month'] >= pre_delist_start) & (df_delists['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
+post_delists_exp_gp = int(df_delists_cup[(df_delists_cup['year_month'] >= pre_delist_start) & (df_delists_cup['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
 
-pre_sales_actual = int(df_all[(df_all['year_month'] >= pre_delist_start) & (df_all['year_month'] <= pre_delist_end)]['sales'].sum())
-post_sales_actual = int(df_all[(df_all['year_month'] >= post_delist_start) & (df_all['year_month'] <= post_delist_end)]['sales'].sum())
+pre_sales_actual = int(df_all_cup[(df_all_cup['year_month'] >= pre_delist_start) & (df_all_cup['year_month'] <= pre_delist_end)]['sales'].sum())
+post_sales_actual = int(df_all_cup[(df_all_cup['year_month'] >= post_delist_start) & (df_all_cup['year_month'] <= post_delist_end)]['sales'].sum())
 
 print(f"Pre-delist Actual Sales: {pre_sales_actual}")
 print(f"Post delist Actual Sales: {post_sales_actual}\n")
@@ -1087,8 +1087,8 @@ print(f"Post delist sales: {post_sales}")
 print(f"Post delist profit: {post_gp}")
 print(f"Post delist expected sales for delisted items: {post_delists_exp_sales}")
 print(f"Post delist expected profit for delisted items: {post_delists_exp_gp}")
-print(f"Incremental sales generated for Water: {incremental_sales}")
-print(f"Incremental GP generated for Water: {incremental_gp}")
+print(f"Incremental sales generated for Cup Noodle: {incremental_sales}")
+print(f"Incremental GP generated for Cup Noodle: {incremental_gp}")
 
 # COMMAND ----------
 
@@ -1208,8 +1208,8 @@ GROUP BY 1, 2, 3
 ORDER BY 1, 2
 """
 
-df_all = spark.sql(query).toPandas()
-df_all.display()
+df_all_coconut = spark.sql(query).toPandas()
+df_all_coconut.display()
 
 # COMMAND ----------
 
@@ -1324,8 +1324,8 @@ GROUP BY 1, 2, 3
 ORDER BY 1, 2
 """
 
-df_delists = spark.sql(query).toPandas()
-df_delists.display()
+df_delists_coconut = spark.sql(query).toPandas()
+df_delists_coconut.display()
 
 # COMMAND ----------
 
@@ -1334,20 +1334,20 @@ pre_delist_end = 202404
 post_delist_start = 202407
 post_delist_end = 202409
 
-pre_sales = int(df_all[(df_all['year_month'] >= pre_delist_start) & (df_all['year_month'] <= pre_delist_end)]['sales_adj'].sum())
+pre_sales = int(df_all_coconut[(df_all_coconut['year_month'] >= pre_delist_start) & (df_all_coconut['year_month'] <= pre_delist_end)]['sales_adj'].sum())
 
-post_sales = int(df_all[(df_all['year_month'] >= post_delist_start) & (df_all['year_month'] <= post_delist_end)]['sales_adj'].sum())
+post_sales = int(df_all_coconut[(df_all_coconut['year_month'] >= post_delist_start) & (df_all_coconut['year_month'] <= post_delist_end)]['sales_adj'].sum())
 
-post_delists_exp_sales = int(df_delists[(df_delists['year_month'] >= pre_delist_start) & (df_delists['year_month'] <= pre_delist_end)]['sales_adj'].sum())
+post_delists_exp_sales = int(df_delists_coconut[(df_delists_coconut['year_month'] >= pre_delist_start) & (df_delists_coconut['year_month'] <= pre_delist_end)]['sales_adj'].sum())
 
-pre_gp = int(df_all[(df_all['year_month'] >= pre_delist_start) & (df_all['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
+pre_gp = int(df_all_coconut[(df_all_coconut['year_month'] >= pre_delist_start) & (df_all_coconut['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
 
-post_gp = int(df_all[(df_all['year_month'] >= post_delist_start) & (df_all['year_month'] <= post_delist_end)]['gp_abs_adj'].sum())
+post_gp = int(df_all_coconut[(df_all_coconut['year_month'] >= post_delist_start) & (df_all_coconut['year_month'] <= post_delist_end)]['gp_abs_adj'].sum())
 
-post_delists_exp_gp = int(df_delists[(df_delists['year_month'] >= pre_delist_start) & (df_delists['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
+post_delists_exp_gp = int(df_delists_coconut[(df_delists_coconut['year_month'] >= pre_delist_start) & (df_delists_coconut['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
 
-pre_sales_actual = int(df_all[(df_all['year_month'] >= pre_delist_start) & (df_all['year_month'] <= pre_delist_end)]['sales'].sum())
-post_sales_actual = int(df_all[(df_all['year_month'] >= post_delist_start) & (df_all['year_month'] <= post_delist_end)]['sales'].sum())
+pre_sales_actual = int(df_all_coconut[(df_all_coconut['year_month'] >= pre_delist_start) & (df_all_coconut['year_month'] <= pre_delist_end)]['sales'].sum())
+post_sales_actual = int(df_all_coconut[(df_all_coconut['year_month'] >= post_delist_start) & (df_all_coconut['year_month'] <= post_delist_end)]['sales'].sum())
 
 print(f"Pre-delist Actual Sales: {pre_sales_actual}")
 print(f"Post delist Actual Sales: {post_sales_actual}\n")
@@ -1360,17 +1360,1096 @@ print(f"Post delist sales: {post_sales}")
 print(f"Post delist profit: {post_gp}")
 print(f"Post delist expected sales for delisted items: {post_delists_exp_sales}")
 print(f"Post delist expected profit for delisted items: {post_delists_exp_gp}")
-print(f"Incremental sales generated for Water: {incremental_sales}")
-print(f"Incremental GP generated for Water: {incremental_gp}")
+print(f"Incremental sales generated for Coconut Oil: {incremental_sales}")
+print(f"Incremental GP generated for Coconut Oil: {incremental_gp}")
 
 # COMMAND ----------
 
-
-
-# COMMAND ----------
-
-
+# MAGIC %md
+# MAGIC #Olive Oil
 
 # COMMAND ----------
 
+# Seasonality Adjusted Sales
 
+query = """
+WITH sku_sales AS (
+    SELECT
+        material_id,
+        region_name,
+        MONTH(business_day) AS month,
+        YEAR(business_day) AS year,
+        ROUND(SUM(t1.amount)) AS sales
+    FROM gold.transaction.uae_pos_transactions AS t1
+    JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+    JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
+    WHERE
+        t2.category_name = "COOKING OILS & GHEE"
+        AND t2.material_group_name = "OLIVE OIL"
+        AND t3.tayeb_flag = 0
+        AND t1.amount > 0
+        AND t1.quantity > 0
+    GROUP BY 1, 2, 3, 4
+),
+
+monthly_sales AS (
+    SELECT
+        month,
+        year,
+        SUM(sales) AS monthly_sales
+    FROM sku_sales
+    GROUP BY 1, 2
+),
+
+pivoted_sales AS (
+    SELECT
+        month,
+        MAX(CASE WHEN year = 2022 THEN monthly_sales ELSE 0 END) AS 2022_sales,
+        MAX(CASE WHEN year = 2023 THEN monthly_sales ELSE 0 END) AS 2023_sales,
+        MAX(CASE WHEN year = 2024 THEN monthly_sales ELSE 0 END) AS 2024_sales,
+        ROUND((2022_sales + 2023_sales + 2024_sales) / NULLIF((CASE WHEN 2022_sales > 0 THEN 1 ELSE 0 END + CASE WHEN 2023_sales > 0 THEN 1 ELSE 0 END + CASE WHEN 2024_sales > 0 THEN 1 ELSE 0 END), 0)) AS avg_sales,
+        SUM(MAX(CASE WHEN year = 2022 THEN monthly_sales ELSE 0 END) + MAX(CASE WHEN year = 2023 THEN monthly_sales ELSE 0 END) + MAX(CASE WHEN year = 2024 THEN monthly_sales ELSE 0 END)) OVER () AS total_three_year_sales
+    FROM monthly_sales
+    GROUP BY month
+),
+
+total_months AS (
+    SELECT
+        COUNT(CASE WHEN 2022_sales > 0 THEN 1 END) + COUNT(CASE WHEN 2023_sales > 0 THEN 1 END) + COUNT(CASE WHEN 2024_sales > 0 THEN 1 END) AS months
+    FROM pivoted_sales
+),
+
+seasonality AS (
+    SELECT
+        month,
+        2022_sales,
+        2023_sales,
+        2024_sales,
+        avg_sales,
+        total_three_year_sales,
+        ROUND(total_three_year_sales/months) AS avg_three_year_sales,
+        ROUND(avg_sales / avg_three_year_sales, 2) AS seasonality_index
+    FROM pivoted_sales, total_months
+),
+
+gp_data AS (
+    SELECT
+        CASE WHEN region = "AUH" THEN "ABU DHABI"
+            WHEN region = "ALN" THEN "AL AIN"
+            WHEN region = "DXB" THEN "DUBAI"
+            WHEN region = "SHJ" THEN "SHARJAH" END AS region_name,
+        CAST(RIGHT(year_month, 2) AS INT) AS month,
+        material_id,
+        gp_wth_chargeback
+    FROM gold.business.gross_profit
+    WHERE
+        country = 'AE'
+        AND year_month >= 202310
+),
+
+region_sales AS (
+    SELECT
+        t1.material_id,
+        t1.region_name,
+        t1.month,
+        t1.sales,
+        t2.seasonality_index,
+        ROUND(t1.sales / t2.seasonality_index) AS sales_adj,
+        t3.gp_wth_chargeback,
+        ROUND(sales_adj * t3.gp_wth_chargeback / 100) AS gp_abs_adj
+    FROM sku_sales AS t1
+    JOIN seasonality AS t2 ON t1.month = t2.month
+    LEFT JOIN gp_data AS t3
+        ON t1.region_name = t3.region_name
+        AND t1.month = t3.month
+        AND t1.material_id = t3.material_id
+    WHERE
+        (t1.year = 2023 AND t1.month >= 10)
+        OR t1.year = 2024
+)
+
+SELECT
+    material_id,
+    INT(CASE WHEN month >= 10 THEN CONCAT("2023", month) ELSE CONCAT("2024", LPAD(month, 2, 0)) END) AS year_month,
+    seasonality_index,
+    SUM(sales) AS sales,
+    SUM(sales_adj) AS sales_adj,
+    SUM(gp_abs_adj) AS gp_abs_adj
+FROM region_sales
+GROUP BY 1, 2, 3
+ORDER BY 1, 2
+"""
+
+df_all_olive = spark.sql(query).toPandas()
+df_all_olive.display()
+
+# COMMAND ----------
+
+# Seasonality Adjusted Sales (delisted items)
+
+query = """
+WITH sku_sales AS (
+    SELECT
+        material_id,
+        region_name,
+        MONTH(business_day) AS month,
+        YEAR(business_day) AS year,
+        ROUND(SUM(t1.amount)) AS sales
+    FROM gold.transaction.uae_pos_transactions AS t1
+    JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+    JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
+    WHERE
+        t2.category_name = "COOKING OILS & GHEE"
+        AND t2.material_group_name = "OLIVE OIL"
+        AND t3.tayeb_flag = 0
+        AND t1.amount > 0
+        AND t1.quantity > 0
+    GROUP BY 1, 2, 3, 4
+),
+
+monthly_sales AS (
+    SELECT
+        month,
+        year,
+        SUM(sales) AS monthly_sales
+    FROM sku_sales
+    GROUP BY 1, 2
+),
+
+pivoted_sales AS (
+    SELECT
+        month,
+        MAX(CASE WHEN year = 2022 THEN monthly_sales ELSE 0 END) AS 2022_sales,
+        MAX(CASE WHEN year = 2023 THEN monthly_sales ELSE 0 END) AS 2023_sales,
+        MAX(CASE WHEN year = 2024 THEN monthly_sales ELSE 0 END) AS 2024_sales,
+        ROUND((2022_sales + 2023_sales + 2024_sales) / NULLIF((CASE WHEN 2022_sales > 0 THEN 1 ELSE 0 END + CASE WHEN 2023_sales > 0 THEN 1 ELSE 0 END + CASE WHEN 2024_sales > 0 THEN 1 ELSE 0 END), 0)) AS avg_sales,
+        SUM(MAX(CASE WHEN year = 2022 THEN monthly_sales ELSE 0 END) + MAX(CASE WHEN year = 2023 THEN monthly_sales ELSE 0 END) + MAX(CASE WHEN year = 2024 THEN monthly_sales ELSE 0 END)) OVER () AS total_three_year_sales
+    FROM monthly_sales
+    GROUP BY month
+),
+
+total_months AS (
+    SELECT
+        COUNT(CASE WHEN 2022_sales > 0 THEN 1 END) + COUNT(CASE WHEN 2023_sales > 0 THEN 1 END) + COUNT(CASE WHEN 2024_sales > 0 THEN 1 END) AS months
+    FROM pivoted_sales
+),
+
+seasonality AS (
+    SELECT
+        month,
+        2022_sales,
+        2023_sales,
+        2024_sales,
+        avg_sales,
+        total_three_year_sales,
+        ROUND(total_three_year_sales/months) AS avg_three_year_sales,
+        ROUND(avg_sales / avg_three_year_sales, 2) AS seasonality_index
+    FROM pivoted_sales, total_months
+),
+
+gp_data AS (
+    SELECT
+        CASE WHEN region = "AUH" THEN "ABU DHABI"
+            WHEN region = "ALN" THEN "AL AIN"
+            WHEN region = "DXB" THEN "DUBAI"
+            WHEN region = "SHJ" THEN "SHARJAH" END AS region_name,
+        CAST(RIGHT(year_month, 2) AS INT) AS month,
+        material_id,
+        gp_wth_chargeback
+    FROM gold.business.gross_profit
+    WHERE
+        country = 'AE'
+        AND year_month >= 202310
+),
+
+region_sales AS (
+    SELECT
+        t1.material_id,
+        t1.region_name,
+        t1.month,
+        t1.sales,
+        t2.seasonality_index,
+        ROUND(t1.sales / t2.seasonality_index) AS sales_adj,
+        t3.gp_wth_chargeback,
+        ROUND(sales_adj * t3.gp_wth_chargeback / 100) AS gp_abs_adj
+    FROM sku_sales AS t1
+    JOIN seasonality AS t2 ON t1.month = t2.month
+    LEFT JOIN gp_data AS t3
+        ON t1.region_name = t3.region_name
+        AND t1.month = t3.month
+        AND t1.material_id = t3.material_id
+    WHERE
+        ((t1.year = 2023 AND t1.month >= 10)
+        OR (t1.year = 2024 AND t1.month <= 5))
+        AND CONCAT(t1.region_name, t1.material_id) IN ("ABU DHABI456171", "ABU DHABI639819", "ABU DHABI639832", "ABU DHABI645240", "ABU DHABI683103", "ABU DHABI1546942", "ABU DHABI1913069", "ABU DHABI1954277", "ABU DHABI2040992", "ABU DHABI144938", "ABU DHABI144939", "ABU DHABI194757", "ABU DHABI471895", "ABU DHABI494028", "ABU DHABI510571", "ABU DHABI584334", "ABU DHABI596389", "ABU DHABI599445", "ABU DHABI633205", "ABU DHABI892014", "ABU DHABI893091", "ABU DHABI919597", "ABU DHABI1175344", "ABU DHABI1210381", "ABU DHABI1463021", "ABU DHABI2073765", "ABU DHABI2175891", "ABU DHABI514806", "ABU DHABI202413", "ABU DHABI712764", "ABU DHABI641995", "ABU DHABI185019", "ABU DHABI1470164", "ABU DHABI789698", "ABU DHABI382583", "ABU DHABI2989", "ABU DHABI1550723", "AL AIN144938", "AL AIN144939", "AL AIN201914", "AL AIN442697", "AL AIN471895", "AL AIN494028", "AL AIN510571", "AL AIN595388", "AL AIN599445", "AL AIN639818", "AL AIN639832", "AL AIN683103", "AL AIN893091", "AL AIN971035", "AL AIN1470390", "AL AIN1546942", "AL AIN1954277", "AL AIN2061295", "AL AIN185017", "AL AIN456171", "AL AIN514806", "AL AIN596389", "AL AIN614320", "AL AIN641995", "AL AIN967049", "AL AIN1021175", "AL AIN1025008", "AL AIN1734238", "AL AIN2073537", "AL AIN2073765", "AL AIN892014", "AL AIN194757", "AL AIN1175344", "AL AIN408106", "AL AIN633205", "AL AIN970425", "AL AIN454589", "AL AIN19432", "AL AIN368849", "AL AIN564388", "AL AIN1703527", "AL AIN971051", "AL AIN1836920", "AL AIN964020", "AL AIN382583", "AL AIN201919", "AL AIN985978", "AL AIN639819", "AL AIN1071320", "AL AIN1342411", "AL AIN772026", "AL AIN506048", "AL AIN776021", "AL AIN1564388", "AL AIN1667239", "AL AIN1780411", "AL AIN919597", "AL AIN865380", "AL AIN1079956", "AL AIN1446180", "AL AIN1564389", "AL AIN537376", "AL AIN1806885", "DUBAI19432", "DUBAI144938", "DUBAI577507", "DUBAI639818", "DUBAI639819", "DUBAI645240", "DUBAI683103", "DUBAI702709", "DUBAI901274", "DUBAI1470390", "DUBAI1933032", "DUBAI1954277", "DUBAI2014256", "DUBAI144939", "DUBAI202413", "DUBAI514806", "DUBAI514807", "DUBAI1210381", "DUBAI2073537", "DUBAI2204390", "DUBAI346179", "DUBAI346178", "DUBAI1175344", "DUBAI633205", "DUBAI1470164", "DUBAI1021175", "DUBAI202415", "DUBAI641995", "DUBAI789698", "DUBAI885538", "SHARJAH19435", "SHARJAH144939", "SHARJAH514806", "SHARJAH514807", "SHARJAH577507", "SHARJAH639818", "SHARJAH639819", "SHARJAH645240", "SHARJAH683103", "SHARJAH1470390", "SHARJAH1703525", "SHARJAH1933132", "SHARJAH1954277", "SHARJAH2014256", "SHARJAH2015148", "SHARJAH2022934", "SHARJAH19432", "SHARJAH346178", "SHARJAH1210381", "SHARJAH2073537", "SHARJAH633205", "SHARJAH346179", "SHARJAH202413", "SHARJAH1175344", "SHARJAH789698", "SHARJAH346177", "SHARJAH581268", "SHARJAH641995", "SHARJAH1470164", "SHARJAH505578", "SHARJAH1844367", "SHARJAH581266", "SHARJAH885538", "SHARJAH201914")
+)
+
+SELECT
+    material_id,
+    INT(CASE WHEN month >= 10 THEN CONCAT("2023", month) ELSE CONCAT("2024", LPAD(month, 2, 0)) END) AS year_month,
+    seasonality_index,
+    SUM(sales) AS sales,
+    SUM(sales_adj) AS sales_adj,
+    SUM(gp_abs_adj) AS gp_abs_adj
+FROM region_sales
+GROUP BY 1, 2, 3
+ORDER BY 1, 2
+"""
+
+df_delists_olive = spark.sql(query).toPandas()
+df_delists_olive.display()
+
+# COMMAND ----------
+
+pre_delist_start = 202404
+pre_delist_end = 202406
+post_delist_start = 202407
+post_delist_end = 202409
+
+pre_sales = int(df_all_olive[(df_all_olive['year_month'] >= pre_delist_start) & (df_all_olive['year_month'] <= pre_delist_end)]['sales_adj'].sum())
+
+post_sales = int(df_all_olive[(df_all_olive['year_month'] >= post_delist_start) & (df_all_olive['year_month'] <= post_delist_end)]['sales_adj'].sum())
+
+post_delists_exp_sales = int(df_delists_olive[(df_delists_olive['year_month'] >= pre_delist_start) & (df_delists_olive['year_month'] <= pre_delist_end)]['sales_adj'].sum())
+
+pre_gp = int(df_all_olive[(df_all_olive['year_month'] >= pre_delist_start) & (df_all_olive['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
+
+post_gp = int(df_all_olive[(df_all_olive['year_month'] >= post_delist_start) & (df_all_olive['year_month'] <= post_delist_end)]['gp_abs_adj'].sum())
+
+post_delists_exp_gp = int(df_delists_olive[(df_delists_olive['year_month'] >= pre_delist_start) & (df_delists_olive['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
+
+pre_sales_actual = int(df_all_olive[(df_all_olive['year_month'] >= pre_delist_start) & (df_all_olive['year_month'] <= pre_delist_end)]['sales'].sum())
+post_sales_actual = int(df_all_olive[(df_all_olive['year_month'] >= post_delist_start) & (df_all_olive['year_month'] <= post_delist_end)]['sales'].sum())
+
+print(f"Pre-delist Actual Sales: {pre_sales_actual}")
+print(f"Post delist Actual Sales: {post_sales_actual}\n")
+
+incremental_sales = post_sales - post_delists_exp_sales - pre_sales
+incremental_gp = post_gp - post_delists_exp_gp - pre_gp
+print(f"Pre-delist sales: {pre_sales}")
+print(f"Pre-delist profit: {pre_gp}")
+print(f"Post delist sales: {post_sales}")
+print(f"Post delist profit: {post_gp}")
+print(f"Post delist expected sales for delisted items: {post_delists_exp_sales}")
+print(f"Post delist expected profit for delisted items: {post_delists_exp_gp}")
+print(f"Incremental sales generated for Olive Oil: {incremental_sales}")
+print(f"Incremental GP generated for Olive Oil: {incremental_gp}")
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC #Sunflower Oil
+
+# COMMAND ----------
+
+# Seasonality Adjusted Sales
+
+query = """
+WITH sku_sales AS (
+    SELECT
+        material_id,
+        region_name,
+        MONTH(business_day) AS month,
+        YEAR(business_day) AS year,
+        ROUND(SUM(t1.amount)) AS sales
+    FROM gold.transaction.uae_pos_transactions AS t1
+    JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+    JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
+    WHERE
+        t2.category_name = "COOKING OILS & GHEE"
+        AND t2.material_group_name = "SUNFLOWER OIL"
+        AND t3.tayeb_flag = 0
+        AND t1.amount > 0
+        AND t1.quantity > 0
+    GROUP BY 1, 2, 3, 4
+),
+
+monthly_sales AS (
+    SELECT
+        month,
+        year,
+        SUM(sales) AS monthly_sales
+    FROM sku_sales
+    GROUP BY 1, 2
+),
+
+pivoted_sales AS (
+    SELECT
+        month,
+        MAX(CASE WHEN year = 2022 THEN monthly_sales ELSE 0 END) AS 2022_sales,
+        MAX(CASE WHEN year = 2023 THEN monthly_sales ELSE 0 END) AS 2023_sales,
+        MAX(CASE WHEN year = 2024 THEN monthly_sales ELSE 0 END) AS 2024_sales,
+        ROUND((2022_sales + 2023_sales + 2024_sales) / NULLIF((CASE WHEN 2022_sales > 0 THEN 1 ELSE 0 END + CASE WHEN 2023_sales > 0 THEN 1 ELSE 0 END + CASE WHEN 2024_sales > 0 THEN 1 ELSE 0 END), 0)) AS avg_sales,
+        SUM(MAX(CASE WHEN year = 2022 THEN monthly_sales ELSE 0 END) + MAX(CASE WHEN year = 2023 THEN monthly_sales ELSE 0 END) + MAX(CASE WHEN year = 2024 THEN monthly_sales ELSE 0 END)) OVER () AS total_three_year_sales
+    FROM monthly_sales
+    GROUP BY month
+),
+
+total_months AS (
+    SELECT
+        COUNT(CASE WHEN 2022_sales > 0 THEN 1 END) + COUNT(CASE WHEN 2023_sales > 0 THEN 1 END) + COUNT(CASE WHEN 2024_sales > 0 THEN 1 END) AS months
+    FROM pivoted_sales
+),
+
+seasonality AS (
+    SELECT
+        month,
+        2022_sales,
+        2023_sales,
+        2024_sales,
+        avg_sales,
+        total_three_year_sales,
+        ROUND(total_three_year_sales/months) AS avg_three_year_sales,
+        ROUND(avg_sales / avg_three_year_sales, 2) AS seasonality_index
+    FROM pivoted_sales, total_months
+),
+
+gp_data AS (
+    SELECT
+        CASE WHEN region = "AUH" THEN "ABU DHABI"
+            WHEN region = "ALN" THEN "AL AIN"
+            WHEN region = "DXB" THEN "DUBAI"
+            WHEN region = "SHJ" THEN "SHARJAH" END AS region_name,
+        CAST(RIGHT(year_month, 2) AS INT) AS month,
+        material_id,
+        gp_wth_chargeback
+    FROM gold.business.gross_profit
+    WHERE
+        country = 'AE'
+        AND year_month >= 202310
+),
+
+region_sales AS (
+    SELECT
+        t1.material_id,
+        t1.region_name,
+        t1.month,
+        t1.sales,
+        t2.seasonality_index,
+        ROUND(t1.sales / t2.seasonality_index) AS sales_adj,
+        t3.gp_wth_chargeback,
+        ROUND(sales_adj * t3.gp_wth_chargeback / 100) AS gp_abs_adj
+    FROM sku_sales AS t1
+    JOIN seasonality AS t2 ON t1.month = t2.month
+    LEFT JOIN gp_data AS t3
+        ON t1.region_name = t3.region_name
+        AND t1.month = t3.month
+        AND t1.material_id = t3.material_id
+    WHERE
+        (t1.year = 2023 AND t1.month >= 10)
+        OR t1.year = 2024
+)
+
+SELECT
+    material_id,
+    INT(CASE WHEN month >= 10 THEN CONCAT("2023", month) ELSE CONCAT("2024", LPAD(month, 2, 0)) END) AS year_month,
+    seasonality_index,
+    SUM(sales) AS sales,
+    SUM(sales_adj) AS sales_adj,
+    SUM(gp_abs_adj) AS gp_abs_adj
+FROM region_sales
+GROUP BY 1, 2, 3
+ORDER BY 1, 2
+"""
+
+df_all_sunflower = spark.sql(query).toPandas()
+df_all_sunflower.display()
+
+# COMMAND ----------
+
+# Seasonality Adjusted Sales (delisted items)
+
+query = """
+WITH sku_sales AS (
+    SELECT
+        material_id,
+        region_name,
+        MONTH(business_day) AS month,
+        YEAR(business_day) AS year,
+        ROUND(SUM(t1.amount)) AS sales
+    FROM gold.transaction.uae_pos_transactions AS t1
+    JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+    JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
+    WHERE
+        t2.category_name = "COOKING OILS & GHEE"
+        AND t2.material_group_name = "SUNFLOWER OIL"
+        AND t3.tayeb_flag = 0
+        AND t1.amount > 0
+        AND t1.quantity > 0
+    GROUP BY 1, 2, 3, 4
+),
+
+monthly_sales AS (
+    SELECT
+        month,
+        year,
+        SUM(sales) AS monthly_sales
+    FROM sku_sales
+    GROUP BY 1, 2
+),
+
+pivoted_sales AS (
+    SELECT
+        month,
+        MAX(CASE WHEN year = 2022 THEN monthly_sales ELSE 0 END) AS 2022_sales,
+        MAX(CASE WHEN year = 2023 THEN monthly_sales ELSE 0 END) AS 2023_sales,
+        MAX(CASE WHEN year = 2024 THEN monthly_sales ELSE 0 END) AS 2024_sales,
+        ROUND((2022_sales + 2023_sales + 2024_sales) / NULLIF((CASE WHEN 2022_sales > 0 THEN 1 ELSE 0 END + CASE WHEN 2023_sales > 0 THEN 1 ELSE 0 END + CASE WHEN 2024_sales > 0 THEN 1 ELSE 0 END), 0)) AS avg_sales,
+        SUM(MAX(CASE WHEN year = 2022 THEN monthly_sales ELSE 0 END) + MAX(CASE WHEN year = 2023 THEN monthly_sales ELSE 0 END) + MAX(CASE WHEN year = 2024 THEN monthly_sales ELSE 0 END)) OVER () AS total_three_year_sales
+    FROM monthly_sales
+    GROUP BY month
+),
+
+total_months AS (
+    SELECT
+        COUNT(CASE WHEN 2022_sales > 0 THEN 1 END) + COUNT(CASE WHEN 2023_sales > 0 THEN 1 END) + COUNT(CASE WHEN 2024_sales > 0 THEN 1 END) AS months
+    FROM pivoted_sales
+),
+
+seasonality AS (
+    SELECT
+        month,
+        2022_sales,
+        2023_sales,
+        2024_sales,
+        avg_sales,
+        total_three_year_sales,
+        ROUND(total_three_year_sales/months) AS avg_three_year_sales,
+        ROUND(avg_sales / avg_three_year_sales, 2) AS seasonality_index
+    FROM pivoted_sales, total_months
+),
+
+gp_data AS (
+    SELECT
+        CASE WHEN region = "AUH" THEN "ABU DHABI"
+            WHEN region = "ALN" THEN "AL AIN"
+            WHEN region = "DXB" THEN "DUBAI"
+            WHEN region = "SHJ" THEN "SHARJAH" END AS region_name,
+        CAST(RIGHT(year_month, 2) AS INT) AS month,
+        material_id,
+        gp_wth_chargeback
+    FROM gold.business.gross_profit
+    WHERE
+        country = 'AE'
+        AND year_month >= 202310
+),
+
+region_sales AS (
+    SELECT
+        t1.material_id,
+        t1.region_name,
+        t1.month,
+        t1.sales,
+        t2.seasonality_index,
+        ROUND(t1.sales / t2.seasonality_index) AS sales_adj,
+        t3.gp_wth_chargeback,
+        ROUND(sales_adj * t3.gp_wth_chargeback / 100) AS gp_abs_adj
+    FROM sku_sales AS t1
+    JOIN seasonality AS t2 ON t1.month = t2.month
+    LEFT JOIN gp_data AS t3
+        ON t1.region_name = t3.region_name
+        AND t1.month = t3.month
+        AND t1.material_id = t3.material_id
+    WHERE
+        ((t1.year = 2023 AND t1.month >= 10)
+        OR (t1.year = 2024 AND t1.month <= 5))
+        AND CONCAT(t1.region_name, t1.material_id) IN ("ABU DHABI63183", "ABU DHABI487972", "ABU DHABI505646", "ABU DHABI1942198", "ABU DHABI1940884", "ABU DHABI1942212", "ABU DHABI1942723", "ABU DHABI1497962", "ABU DHABI623822", "ABU DHABI3103", "ABU DHABI2005858", "ABU DHABI3106", "ABU DHABI623823", "ABU DHABI63178", "ABU DHABI1813691", "AL AIN1604550", "AL AIN1645464", "AL AIN1728076", "AL AIN1827231", "AL AIN1940884", "AL AIN1942198", "AL AIN63183", "AL AIN1497962", "AL AIN1730685", "AL AIN1942212", "AL AIN623822", "AL AIN1857570", "AL AIN1942723", "AL AIN1714000", "AL AIN498347", "AL AIN3098", "DUBAI412000", "DUBAI1157539", "DUBAI1588627", "DUBAI1944146", "DUBAI1394347", "DUBAI1419753", "DUBAI186438", "DUBAI1942724", "DUBAI623823", "DUBAI3096", "DUBAI3106", "DUBAI1816752", "DUBAI1671740", "SHARJAH412000", "SHARJAH1157539", "SHARJAH1394347", "SHARJAH1942724", "SHARJAH1588627", "SHARJAH1685388", "SHARJAH623823", "SHARJAH3103")
+)
+
+SELECT
+    material_id,
+    INT(CASE WHEN month >= 10 THEN CONCAT("2023", month) ELSE CONCAT("2024", LPAD(month, 2, 0)) END) AS year_month,
+    seasonality_index,
+    SUM(sales) AS sales,
+    SUM(sales_adj) AS sales_adj,
+    SUM(gp_abs_adj) AS gp_abs_adj
+FROM region_sales
+GROUP BY 1, 2, 3
+ORDER BY 1, 2
+"""
+
+df_delists_sunflower = spark.sql(query).toPandas()
+df_delists_sunflower.display()
+
+# COMMAND ----------
+
+pre_delist_start = 202403
+pre_delist_end = 202405
+post_delist_start = 202407
+post_delist_end = 202409
+
+pre_sales = int(df_all_sunflower[(df_all_sunflower['year_month'] >= pre_delist_start) & (df_all_sunflower['year_month'] <= pre_delist_end)]['sales_adj'].sum())
+
+post_sales = int(df_all_sunflower[(df_all_sunflower['year_month'] >= post_delist_start) & (df_all_sunflower['year_month'] <= post_delist_end)]['sales_adj'].sum())
+
+post_delists_exp_sales = int(df_delists_sunflower[(df_delists_sunflower['year_month'] >= pre_delist_start) & (df_delists_sunflower['year_month'] <= pre_delist_end)]['sales_adj'].sum())
+
+pre_gp = int(df_all_sunflower[(df_all_sunflower['year_month'] >= pre_delist_start) & (df_all_sunflower['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
+
+post_gp = int(df_all_sunflower[(df_all_sunflower['year_month'] >= post_delist_start) & (df_all_sunflower['year_month'] <= post_delist_end)]['gp_abs_adj'].sum())
+
+post_delists_exp_gp = int(df_delists_sunflower[(df_delists_sunflower['year_month'] >= pre_delist_start) & (df_delists_sunflower['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
+
+pre_sales_actual = int(df_all_sunflower[(df_all_sunflower['year_month'] >= pre_delist_start) & (df_all_sunflower['year_month'] <= pre_delist_end)]['sales'].sum())
+post_sales_actual = int(df_all_sunflower[(df_all_sunflower['year_month'] >= post_delist_start) & (df_all_sunflower['year_month'] <= post_delist_end)]['sales'].sum())
+
+print(f"Pre-delist Actual Sales: {pre_sales_actual}")
+print(f"Post delist Actual Sales: {post_sales_actual}\n")
+
+incremental_sales = post_sales - post_delists_exp_sales - pre_sales
+incremental_gp = post_gp - post_delists_exp_gp - pre_gp
+print(f"Pre-delist sales: {pre_sales}")
+print(f"Pre-delist profit: {pre_gp}")
+print(f"Post delist sales: {post_sales}")
+print(f"Post delist profit: {post_gp}")
+print(f"Post delist expected sales for delisted items: {post_delists_exp_sales}")
+print(f"Post delist expected profit for delisted items: {post_delists_exp_gp}")
+print(f"Incremental sales generated for Sunflower Oil: {incremental_sales}")
+print(f"Incremental GP generated for Sunflower Oil: {incremental_gp}")
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC #Vegetable Oil
+
+# COMMAND ----------
+
+# Seasonality Adjusted Sales
+
+query = """
+WITH sku_sales AS (
+    SELECT
+        material_id,
+        region_name,
+        MONTH(business_day) AS month,
+        YEAR(business_day) AS year,
+        ROUND(SUM(t1.amount)) AS sales
+    FROM gold.transaction.uae_pos_transactions AS t1
+    JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+    JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
+    WHERE
+        t2.category_name = "COOKING OILS & GHEE"
+        AND t2.material_group_name = "VEGETABLE OIL"
+        AND t3.tayeb_flag = 0
+        AND t1.amount > 0
+        AND t1.quantity > 0
+    GROUP BY 1, 2, 3, 4
+),
+
+monthly_sales AS (
+    SELECT
+        month,
+        year,
+        SUM(sales) AS monthly_sales
+    FROM sku_sales
+    GROUP BY 1, 2
+),
+
+pivoted_sales AS (
+    SELECT
+        month,
+        MAX(CASE WHEN year = 2022 THEN monthly_sales ELSE 0 END) AS 2022_sales,
+        MAX(CASE WHEN year = 2023 THEN monthly_sales ELSE 0 END) AS 2023_sales,
+        MAX(CASE WHEN year = 2024 THEN monthly_sales ELSE 0 END) AS 2024_sales,
+        ROUND((2022_sales + 2023_sales + 2024_sales) / NULLIF((CASE WHEN 2022_sales > 0 THEN 1 ELSE 0 END + CASE WHEN 2023_sales > 0 THEN 1 ELSE 0 END + CASE WHEN 2024_sales > 0 THEN 1 ELSE 0 END), 0)) AS avg_sales,
+        SUM(MAX(CASE WHEN year = 2022 THEN monthly_sales ELSE 0 END) + MAX(CASE WHEN year = 2023 THEN monthly_sales ELSE 0 END) + MAX(CASE WHEN year = 2024 THEN monthly_sales ELSE 0 END)) OVER () AS total_three_year_sales
+    FROM monthly_sales
+    GROUP BY month
+),
+
+total_months AS (
+    SELECT
+        COUNT(CASE WHEN 2022_sales > 0 THEN 1 END) + COUNT(CASE WHEN 2023_sales > 0 THEN 1 END) + COUNT(CASE WHEN 2024_sales > 0 THEN 1 END) AS months
+    FROM pivoted_sales
+),
+
+seasonality AS (
+    SELECT
+        month,
+        2022_sales,
+        2023_sales,
+        2024_sales,
+        avg_sales,
+        total_three_year_sales,
+        ROUND(total_three_year_sales/months) AS avg_three_year_sales,
+        ROUND(avg_sales / avg_three_year_sales, 2) AS seasonality_index
+    FROM pivoted_sales, total_months
+),
+
+gp_data AS (
+    SELECT
+        CASE WHEN region = "AUH" THEN "ABU DHABI"
+            WHEN region = "ALN" THEN "AL AIN"
+            WHEN region = "DXB" THEN "DUBAI"
+            WHEN region = "SHJ" THEN "SHARJAH" END AS region_name,
+        CAST(RIGHT(year_month, 2) AS INT) AS month,
+        material_id,
+        gp_wth_chargeback
+    FROM gold.business.gross_profit
+    WHERE
+        country = 'AE'
+        AND year_month >= 202310
+),
+
+region_sales AS (
+    SELECT
+        t1.material_id,
+        t1.region_name,
+        t1.month,
+        t1.sales,
+        t2.seasonality_index,
+        ROUND(t1.sales / t2.seasonality_index) AS sales_adj,
+        t3.gp_wth_chargeback,
+        ROUND(sales_adj * t3.gp_wth_chargeback / 100) AS gp_abs_adj
+    FROM sku_sales AS t1
+    JOIN seasonality AS t2 ON t1.month = t2.month
+    LEFT JOIN gp_data AS t3
+        ON t1.region_name = t3.region_name
+        AND t1.month = t3.month
+        AND t1.material_id = t3.material_id
+    WHERE
+        (t1.year = 2023 AND t1.month >= 10)
+        OR t1.year = 2024
+)
+
+SELECT
+    material_id,
+    INT(CASE WHEN month >= 10 THEN CONCAT("2023", month) ELSE CONCAT("2024", LPAD(month, 2, 0)) END) AS year_month,
+    seasonality_index,
+    SUM(sales) AS sales,
+    SUM(sales_adj) AS sales_adj,
+    SUM(gp_abs_adj) AS gp_abs_adj
+FROM region_sales
+GROUP BY 1, 2, 3
+ORDER BY 1, 2
+"""
+
+df_all_vegetable = spark.sql(query).toPandas()
+df_all_vegetable.display()
+
+# COMMAND ----------
+
+# Seasonality Adjusted Sales (delisted items)
+
+query = """
+WITH sku_sales AS (
+    SELECT
+        material_id,
+        region_name,
+        MONTH(business_day) AS month,
+        YEAR(business_day) AS year,
+        ROUND(SUM(t1.amount)) AS sales
+    FROM gold.transaction.uae_pos_transactions AS t1
+    JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+    JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
+    WHERE
+        t2.category_name = "COOKING OILS & GHEE"
+        AND t2.material_group_name = "VEGETABLE OIL"
+        AND t3.tayeb_flag = 0
+        AND t1.amount > 0
+        AND t1.quantity > 0
+    GROUP BY 1, 2, 3, 4
+),
+
+monthly_sales AS (
+    SELECT
+        month,
+        year,
+        SUM(sales) AS monthly_sales
+    FROM sku_sales
+    GROUP BY 1, 2
+),
+
+pivoted_sales AS (
+    SELECT
+        month,
+        MAX(CASE WHEN year = 2022 THEN monthly_sales ELSE 0 END) AS 2022_sales,
+        MAX(CASE WHEN year = 2023 THEN monthly_sales ELSE 0 END) AS 2023_sales,
+        MAX(CASE WHEN year = 2024 THEN monthly_sales ELSE 0 END) AS 2024_sales,
+        ROUND((2022_sales + 2023_sales + 2024_sales) / NULLIF((CASE WHEN 2022_sales > 0 THEN 1 ELSE 0 END + CASE WHEN 2023_sales > 0 THEN 1 ELSE 0 END + CASE WHEN 2024_sales > 0 THEN 1 ELSE 0 END), 0)) AS avg_sales,
+        SUM(MAX(CASE WHEN year = 2022 THEN monthly_sales ELSE 0 END) + MAX(CASE WHEN year = 2023 THEN monthly_sales ELSE 0 END) + MAX(CASE WHEN year = 2024 THEN monthly_sales ELSE 0 END)) OVER () AS total_three_year_sales
+    FROM monthly_sales
+    GROUP BY month
+),
+
+total_months AS (
+    SELECT
+        COUNT(CASE WHEN 2022_sales > 0 THEN 1 END) + COUNT(CASE WHEN 2023_sales > 0 THEN 1 END) + COUNT(CASE WHEN 2024_sales > 0 THEN 1 END) AS months
+    FROM pivoted_sales
+),
+
+seasonality AS (
+    SELECT
+        month,
+        2022_sales,
+        2023_sales,
+        2024_sales,
+        avg_sales,
+        total_three_year_sales,
+        ROUND(total_three_year_sales/months) AS avg_three_year_sales,
+        ROUND(avg_sales / avg_three_year_sales, 2) AS seasonality_index
+    FROM pivoted_sales, total_months
+),
+
+gp_data AS (
+    SELECT
+        CASE WHEN region = "AUH" THEN "ABU DHABI"
+            WHEN region = "ALN" THEN "AL AIN"
+            WHEN region = "DXB" THEN "DUBAI"
+            WHEN region = "SHJ" THEN "SHARJAH" END AS region_name,
+        CAST(RIGHT(year_month, 2) AS INT) AS month,
+        material_id,
+        gp_wth_chargeback
+    FROM gold.business.gross_profit
+    WHERE
+        country = 'AE'
+        AND year_month >= 202310
+),
+
+region_sales AS (
+    SELECT
+        t1.material_id,
+        t1.region_name,
+        t1.month,
+        t1.sales,
+        t2.seasonality_index,
+        ROUND(t1.sales / t2.seasonality_index) AS sales_adj,
+        t3.gp_wth_chargeback,
+        ROUND(sales_adj * t3.gp_wth_chargeback / 100) AS gp_abs_adj
+    FROM sku_sales AS t1
+    JOIN seasonality AS t2 ON t1.month = t2.month
+    LEFT JOIN gp_data AS t3
+        ON t1.region_name = t3.region_name
+        AND t1.month = t3.month
+        AND t1.material_id = t3.material_id
+    WHERE
+        ((t1.year = 2023 AND t1.month >= 10)
+        OR (t1.year = 2024 AND t1.month <= 5))
+        AND CONCAT(t1.region_name, t1.material_id) IN ("ABU DHABI838380", "AL AIN821631", "AL AIN1948229", "AL AIN838380", "AL AIN1040650", "DUBAI635133", "DUBAI901273", "DUBAI838380", "DUBAI2116769", "SHARJAH530491")
+)
+
+SELECT
+    material_id,
+    INT(CASE WHEN month >= 10 THEN CONCAT("2023", month) ELSE CONCAT("2024", LPAD(month, 2, 0)) END) AS year_month,
+    seasonality_index,
+    SUM(sales) AS sales,
+    SUM(sales_adj) AS sales_adj,
+    SUM(gp_abs_adj) AS gp_abs_adj
+FROM region_sales
+GROUP BY 1, 2, 3
+ORDER BY 1, 2
+"""
+
+df_delists_vegetable = spark.sql(query).toPandas()
+df_delists_vegetable.display()
+
+# COMMAND ----------
+
+pre_delist_start = 202404
+pre_delist_end = 202406
+post_delist_start = 202407
+post_delist_end = 202409
+
+pre_sales = int(df_all_vegetable[(df_all_vegetable['year_month'] >= pre_delist_start) & (df_all_vegetable['year_month'] <= pre_delist_end)]['sales_adj'].sum())
+
+post_sales = int(df_all_vegetable[(df_all_vegetable['year_month'] >= post_delist_start) & (df_all_vegetable['year_month'] <= post_delist_end)]['sales_adj'].sum())
+
+post_delists_exp_sales = int(df_delists_vegetable[(df_delists_vegetable['year_month'] >= pre_delist_start) & (df_delists_vegetable['year_month'] <= pre_delist_end)]['sales_adj'].sum())
+
+pre_gp = int(df_all_vegetable[(df_all_vegetable['year_month'] >= pre_delist_start) & (df_all_vegetable['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
+
+post_gp = int(df_all_vegetable[(df_all_vegetable['year_month'] >= post_delist_start) & (df_all_vegetable['year_month'] <= post_delist_end)]['gp_abs_adj'].sum())
+
+post_delists_exp_gp = int(df_delists_vegetable[(df_delists_vegetable['year_month'] >= pre_delist_start) & (df_delists_vegetable['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
+
+pre_sales_actual = int(df_all_vegetable[(df_all_vegetable['year_month'] >= pre_delist_start) & (df_all_vegetable['year_month'] <= pre_delist_end)]['sales'].sum())
+post_sales_actual = int(df_all_vegetable[(df_all_vegetable['year_month'] >= post_delist_start) & (df_all_vegetable['year_month'] <= post_delist_end)]['sales'].sum())
+
+print(f"Pre-delist Actual Sales: {pre_sales_actual}")
+print(f"Post delist Actual Sales: {post_sales_actual}\n")
+
+incremental_sales = post_sales - post_delists_exp_sales - pre_sales
+incremental_gp = post_gp - post_delists_exp_gp - pre_gp
+print(f"Pre-delist sales: {pre_sales}")
+print(f"Pre-delist profit: {pre_gp}")
+print(f"Post delist sales: {post_sales}")
+print(f"Post delist profit: {post_gp}")
+print(f"Post delist expected sales for delisted items: {post_delists_exp_sales}")
+print(f"Post delist expected profit for delisted items: {post_delists_exp_gp}")
+print(f"Incremental sales generated for Vegetable Oil: {incremental_sales}")
+print(f"Incremental GP generated for Vegetable Oil: {incremental_gp}")
+
+# Incremental sales generated for Vegetable Oil: 111129
+# Incremental GP generated for Vegetable Oil: 8158
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC #Fruit Juices
+
+# COMMAND ----------
+
+# Seasonality Adjusted Sales
+
+query = """
+WITH sku_sales AS (
+    SELECT
+        material_id,
+        region_name,
+        MONTH(business_day) AS month,
+        YEAR(business_day) AS year,
+        ROUND(SUM(t1.amount)) AS sales
+    FROM gold.transaction.uae_pos_transactions AS t1
+    JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+    JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
+    WHERE
+        t2.category_name = "ICE CREAM & DESSERTS"
+        AND t2.material_group_name = "FRUIT JUICES"
+        AND t3.tayeb_flag = 0
+        AND t1.amount > 0
+        AND t1.quantity > 0
+    GROUP BY 1, 2, 3, 4
+),
+
+monthly_sales AS (
+    SELECT
+        month,
+        year,
+        SUM(sales) AS monthly_sales
+    FROM sku_sales
+    GROUP BY 1, 2
+),
+
+pivoted_sales AS (
+    SELECT
+        month,
+        MAX(CASE WHEN year = 2022 THEN monthly_sales ELSE 0 END) AS 2022_sales,
+        MAX(CASE WHEN year = 2023 THEN monthly_sales ELSE 0 END) AS 2023_sales,
+        MAX(CASE WHEN year = 2024 THEN monthly_sales ELSE 0 END) AS 2024_sales,
+        ROUND((2022_sales + 2023_sales + 2024_sales) / NULLIF((CASE WHEN 2022_sales > 0 THEN 1 ELSE 0 END + CASE WHEN 2023_sales > 0 THEN 1 ELSE 0 END + CASE WHEN 2024_sales > 0 THEN 1 ELSE 0 END), 0)) AS avg_sales,
+        SUM(MAX(CASE WHEN year = 2022 THEN monthly_sales ELSE 0 END) + MAX(CASE WHEN year = 2023 THEN monthly_sales ELSE 0 END) + MAX(CASE WHEN year = 2024 THEN monthly_sales ELSE 0 END)) OVER () AS total_three_year_sales
+    FROM monthly_sales
+    GROUP BY month
+),
+
+total_months AS (
+    SELECT
+        COUNT(CASE WHEN 2022_sales > 0 THEN 1 END) + COUNT(CASE WHEN 2023_sales > 0 THEN 1 END) + COUNT(CASE WHEN 2024_sales > 0 THEN 1 END) AS months
+    FROM pivoted_sales
+),
+
+seasonality AS (
+    SELECT
+        month,
+        2022_sales,
+        2023_sales,
+        2024_sales,
+        avg_sales,
+        total_three_year_sales,
+        ROUND(total_three_year_sales/months) AS avg_three_year_sales,
+        ROUND(avg_sales / avg_three_year_sales, 2) AS seasonality_index
+    FROM pivoted_sales, total_months
+),
+
+gp_data AS (
+    SELECT
+        CASE WHEN region = "AUH" THEN "ABU DHABI"
+            WHEN region = "ALN" THEN "AL AIN"
+            WHEN region = "DXB" THEN "DUBAI"
+            WHEN region = "SHJ" THEN "SHARJAH" END AS region_name,
+        CAST(RIGHT(year_month, 2) AS INT) AS month,
+        material_id,
+        gp_wth_chargeback
+    FROM gold.business.gross_profit
+    WHERE
+        country = 'AE'
+        AND year_month >= 202310
+),
+
+region_sales AS (
+    SELECT
+        t1.material_id,
+        t1.region_name,
+        t1.month,
+        t1.sales,
+        t2.seasonality_index,
+        ROUND(t1.sales / t2.seasonality_index) AS sales_adj,
+        t3.gp_wth_chargeback,
+        ROUND(sales_adj * t3.gp_wth_chargeback / 100) AS gp_abs_adj
+    FROM sku_sales AS t1
+    JOIN seasonality AS t2 ON t1.month = t2.month
+    LEFT JOIN gp_data AS t3
+        ON t1.region_name = t3.region_name
+        AND t1.month = t3.month
+        AND t1.material_id = t3.material_id
+    WHERE
+        (t1.year = 2023 AND t1.month >= 10)
+        OR t1.year = 2024
+)
+
+SELECT
+    material_id,
+    INT(CASE WHEN month >= 10 THEN CONCAT("2023", month) ELSE CONCAT("2024", LPAD(month, 2, 0)) END) AS year_month,
+    seasonality_index,
+    SUM(sales) AS sales,
+    SUM(sales_adj) AS sales_adj,
+    SUM(gp_abs_adj) AS gp_abs_adj
+FROM region_sales
+GROUP BY 1, 2, 3
+ORDER BY 1, 2
+"""
+
+df_all_fruit_juices = spark.sql(query).toPandas()
+df_all_fruit_juices.display()
+
+# COMMAND ----------
+
+# Seasonality Adjusted Sales (delisted items)
+
+query = """
+WITH sku_sales AS (
+    SELECT
+        material_id,
+        region_name,
+        MONTH(business_day) AS month,
+        YEAR(business_day) AS year,
+        ROUND(SUM(t1.amount)) AS sales
+    FROM gold.transaction.uae_pos_transactions AS t1
+    JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+    JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
+    WHERE
+        t2.category_name = "ICE CREAM & DESSERTS"
+        AND t2.material_group_name = "FRUIT JUICES"
+        AND t3.tayeb_flag = 0
+        AND t1.amount > 0
+        AND t1.quantity > 0
+    GROUP BY 1, 2, 3, 4
+),
+
+monthly_sales AS (
+    SELECT
+        month,
+        year,
+        SUM(sales) AS monthly_sales
+    FROM sku_sales
+    GROUP BY 1, 2
+),
+
+pivoted_sales AS (
+    SELECT
+        month,
+        MAX(CASE WHEN year = 2022 THEN monthly_sales ELSE 0 END) AS 2022_sales,
+        MAX(CASE WHEN year = 2023 THEN monthly_sales ELSE 0 END) AS 2023_sales,
+        MAX(CASE WHEN year = 2024 THEN monthly_sales ELSE 0 END) AS 2024_sales,
+        ROUND((2022_sales + 2023_sales + 2024_sales) / NULLIF((CASE WHEN 2022_sales > 0 THEN 1 ELSE 0 END + CASE WHEN 2023_sales > 0 THEN 1 ELSE 0 END + CASE WHEN 2024_sales > 0 THEN 1 ELSE 0 END), 0)) AS avg_sales,
+        SUM(MAX(CASE WHEN year = 2022 THEN monthly_sales ELSE 0 END) + MAX(CASE WHEN year = 2023 THEN monthly_sales ELSE 0 END) + MAX(CASE WHEN year = 2024 THEN monthly_sales ELSE 0 END)) OVER () AS total_three_year_sales
+    FROM monthly_sales
+    GROUP BY month
+),
+
+total_months AS (
+    SELECT
+        COUNT(CASE WHEN 2022_sales > 0 THEN 1 END) + COUNT(CASE WHEN 2023_sales > 0 THEN 1 END) + COUNT(CASE WHEN 2024_sales > 0 THEN 1 END) AS months
+    FROM pivoted_sales
+),
+
+seasonality AS (
+    SELECT
+        month,
+        2022_sales,
+        2023_sales,
+        2024_sales,
+        avg_sales,
+        total_three_year_sales,
+        ROUND(total_three_year_sales/months) AS avg_three_year_sales,
+        ROUND(avg_sales / avg_three_year_sales, 2) AS seasonality_index
+    FROM pivoted_sales, total_months
+),
+
+gp_data AS (
+    SELECT
+        CASE WHEN region = "AUH" THEN "ABU DHABI"
+            WHEN region = "ALN" THEN "AL AIN"
+            WHEN region = "DXB" THEN "DUBAI"
+            WHEN region = "SHJ" THEN "SHARJAH" END AS region_name,
+        CAST(RIGHT(year_month, 2) AS INT) AS month,
+        material_id,
+        gp_wth_chargeback
+    FROM gold.business.gross_profit
+    WHERE
+        country = 'AE'
+        AND year_month >= 202310
+),
+
+region_sales AS (
+    SELECT
+        t1.material_id,
+        t1.region_name,
+        t1.month,
+        t1.sales,
+        t2.seasonality_index,
+        ROUND(t1.sales / t2.seasonality_index) AS sales_adj,
+        t3.gp_wth_chargeback,
+        ROUND(sales_adj * t3.gp_wth_chargeback / 100) AS gp_abs_adj
+    FROM sku_sales AS t1
+    JOIN seasonality AS t2 ON t1.month = t2.month
+    LEFT JOIN gp_data AS t3
+        ON t1.region_name = t3.region_name
+        AND t1.month = t3.month
+        AND t1.material_id = t3.material_id
+    WHERE
+        ((t1.year = 2023 AND t1.month >= 10)
+        OR (t1.year = 2024 AND t1.month <= 5))
+        AND CONCAT(t1.region_name, t1.material_id) IN ("ABU DHABI2001647", "AL AIN2001647", "DUBAI2001647", "SHARJAH2001647")
+)
+
+SELECT
+    material_id,
+    INT(CASE WHEN month >= 10 THEN CONCAT("2023", month) ELSE CONCAT("2024", LPAD(month, 2, 0)) END) AS year_month,
+    seasonality_index,
+    SUM(sales) AS sales,
+    SUM(sales_adj) AS sales_adj,
+    SUM(gp_abs_adj) AS gp_abs_adj
+FROM region_sales
+GROUP BY 1, 2, 3
+ORDER BY 1, 2
+"""
+
+df_delists_fruit_juices = spark.sql(query).toPandas()
+df_delists_fruit_juices.display()
+
+# COMMAND ----------
+
+pre_delist_start = 202404
+pre_delist_end = 202406
+post_delist_start = 202409
+post_delist_end = 202411
+
+pre_sales = int(df_all_fruit_juices[(df_all_fruit_juices['year_month'] >= pre_delist_start) & (df_all_fruit_juices['year_month'] <= pre_delist_end)]['sales_adj'].sum())
+
+post_sales = int(df_all_fruit_juices[(df_all_fruit_juices['year_month'] >= post_delist_start) & (df_all_fruit_juices['year_month'] <= post_delist_end)]['sales_adj'].sum())
+
+post_delists_exp_sales = int(df_delists_fruit_juices[(df_delists_fruit_juices['year_month'] >= pre_delist_start) & (df_delists_fruit_juices['year_month'] <= pre_delist_end)]['sales_adj'].sum())
+
+pre_gp = int(df_all_fruit_juices[(df_all_fruit_juices['year_month'] >= pre_delist_start) & (df_all_fruit_juices['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
+
+post_gp = int(df_all_fruit_juices[(df_all_fruit_juices['year_month'] >= post_delist_start) & (df_all_fruit_juices['year_month'] <= post_delist_end)]['gp_abs_adj'].sum())
+
+post_delists_exp_gp = int(df_delists_fruit_juices[(df_delists_fruit_juices['year_month'] >= pre_delist_start) & (df_delists_fruit_juices['year_month'] <= pre_delist_end)]['gp_abs_adj'].sum())
+
+pre_sales_actual = int(df_all_fruit_juices[(df_all_fruit_juices['year_month'] >= pre_delist_start) & (df_all_fruit_juices['year_month'] <= pre_delist_end)]['sales'].sum())
+post_sales_actual = int(df_all_fruit_juices[(df_all_fruit_juices['year_month'] >= post_delist_start) & (df_all_fruit_juices['year_month'] <= post_delist_end)]['sales'].sum())
+
+print(f"Pre-delist Actual Sales: {pre_sales_actual}")
+print(f"Post delist Actual Sales: {post_sales_actual}\n")
+
+incremental_sales = post_sales - post_delists_exp_sales - pre_sales
+incremental_gp = post_gp - post_delists_exp_gp - pre_gp
+print(f"Pre-delist sales: {pre_sales}")
+print(f"Pre-delist profit: {pre_gp}")
+print(f"Post delist sales: {post_sales}")
+print(f"Post delist profit: {post_gp}")
+print(f"Post delist expected sales for delisted items: {post_delists_exp_sales}")
+print(f"Post delist expected profit for delisted items: {post_delists_exp_gp}")
+print(f"Incremental sales generated for Fruit Juices: {incremental_sales}")
+print(f"Incremental GP generated for Fruit Juices: {incremental_gp}")

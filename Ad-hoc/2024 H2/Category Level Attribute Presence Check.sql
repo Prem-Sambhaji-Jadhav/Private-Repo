@@ -1,4 +1,74 @@
 -- Databricks notebook source
+SELECT
+    t2.category_id,
+    t2.category_name,
+    COUNT(DISTINCT t1.ean) AS ean_count,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.material_description IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS material_description,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.material_description_long IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS material_description_long,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.ean IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS ean,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.main_ean IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS main_ean,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.ean_category IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS ean_category,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.alt_unit IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS alt_unit,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.conversion_numerator IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS conversion_numerator,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.base_unit IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS base_unit,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.pacakaging_material IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS pacakaging_material,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.pacakaging_material_desc IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS pacakaging_material_desc,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.material_group IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS material_group,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.old_material_number IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS old_material_number,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.product_heirarchy IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS product_heirarchy,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.product_heirarchy_desc IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS product_heirarchy_desc,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.manufacturer_brand IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS manufacturer_brand,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.brand IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS brand,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.country_of_origin IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS country_of_origin,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.status IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS status,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.created_on IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS created_on,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.last_change IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS last_change,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.organic IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS organic,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.gluten_free IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS gluten_free,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.vegan IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS vegan,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.sugar_free IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS sugar_free,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.fat_free IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS fat_free,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.low_sugar IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS low_sugar,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.lactose_free IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS lactose_free,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.vegetarian IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS vegetarian,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.source_of_protien IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS source_of_protien,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.heart_healthy_omega_3 IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS heart_healthy_omega_3,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.diary_free IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS diary_free,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.egg_free IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS egg_free,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.no_cholesterol IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS no_cholesterol,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.no_added_sugar IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS no_added_sugar,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.made_from_100_real_fruit IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS made_from_100_real_fruit,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.source_of_vitamin IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS source_of_vitamin,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.peanut_free IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS peanut_free,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.virgin_extra_virgin IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS virgin_extra_virgin,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.content IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS content,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.content_unit IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS content_unit,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.length IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS length,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.width IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS width,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.height IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS height,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.unit_of_dimension IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS unit_of_dimension,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.volume IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS volume,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.volume_unit IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS volume_unit,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.gross_weight IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS gross_weight,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.net_weight IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS net_weight,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.weight_unit IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS weight_unit,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.total_shelf_life IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS total_shelf_life,
+    ROUND(COUNT(DISTINCT CASE WHEN t4.remaining_shelf_life IS NOT NULL THEN t4.ean ELSE 0 END)/ean_count, 4) AS remaining_shelf_life
+FROM gold.transaction.uae_pos_transactions AS t1
+JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
+LEFT JOIN gold.material.material_attributes AS t4 ON t1.ean = t4.ean
+WHERE
+    t1.business_day BETWEEN "2023-08-01" AND "2024-07-31"
+    AND t2.department_class_id IN (1, 2)
+    AND t3.tayeb_flag = 0
+    AND t1.transaction_type IN ("SALE", "SELL_MEDIA")
+    AND t1.quantity > 0
+    AND t1.amount > 0
+GROUP BY 1, 2
+
+-- COMMAND ----------
+
 -- MAGIC %md
 -- MAGIC #Data Completeness Table
 
