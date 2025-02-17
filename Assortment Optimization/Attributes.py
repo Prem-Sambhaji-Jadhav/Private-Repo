@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
 import requests
+import re
 
 # COMMAND ----------
 
@@ -44,20 +45,36 @@ def run(start_date, end_date, category, material_group):
 
 def web_scrape(df):
     material_ids = df['material_id'].astype(str).tolist()
-    dct = {'material_id': material_ids, 'material_name_long': []}
+    dct = {'material_id': material_ids, 'material_name_long': [], 'link': []}
+    for material_id in material_ids:
+        url = f'https://gcc.luluhypermarket.com/en-ae/list/?search_text={material_id}'
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'}
 
-    for i in material_ids:
-        url = f'https://www.luluhypermarket.com/en-ae//p/{i}'
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers = headers)
         bsObj = BeautifulSoup(response.content, 'html.parser')
 
-        try:
-            material_name = bsObj.find('h1', class_='product-name').text.strip()
-        except AttributeError:
+        material_name = bsObj.find('body', class_ = "overflow-x-hidden scheduled")
+
+        main_string = str(material_name)
+        substring = f'\\",\\"sku\\":\\"{material_id}\\"'
+        index = main_string.find(substring)
+
+        if main_string[index] == '>':
             material_name = None
+            link = None
+        else:
+            main_string = main_string[index - 200: index]
+            substring = '"name\\":\\"'
+            index = main_string.find(substring)
+            material_name = main_string[index + len(substring):]
+            material_name = material_name.replace("\\u0026", "&")
+
+            link_material_name = material_name.lower().replace(" & ", "-").replace("%", "")
+            link_material_name = re.sub(r'[^a-zA-Z0-9]', '-', link_material_name)
+            link = f'https://gcc.luluhypermarket.com/en-ae/{link_material_name}/p/{material_id}/'
         
         dct['material_name_long'].append(material_name)
+        dct['link'].append(link)
 
     df2 = pd.DataFrame(dct)
     df2['material_id'] = df2['material_id'].astype('int64')
@@ -75,9 +92,27 @@ def web_scrape(df):
 
 # COMMAND ----------
 
-df = run('2023-10-01', '2024-09-28', 'BISCUITS & CAKES', 'RICE & OAT CAKE')
+df = run('2024-01-01', '2024-12-29', 'BISCUITS & CAKES', 'RICE & OAT CAKE')
 df2 = web_scrape(df)
 df2.display()
+
+# Only in UAE
+
+# COMMAND ----------
+
+df=df[df['material_id']==2331189]
+volume = [350]
+
+type = ['Regular']
+
+type_bin = type.copy()
+volume_bin = volume.copy()
+df['volume'] = volume_bin
+df['units'] = 'G'
+df['item_count'] = 1
+df['type'] = type
+df['type_bin'] = type_bin
+df['volume'] = df['volume'].astype('float64')
 
 # COMMAND ----------
 
@@ -101,6 +136,7 @@ df['units'] = 'G'
 df['item_count'] = 1
 df['type'] = type
 df['type_bin'] = type_bin
+df['volume'] = df['volume'].astype('float64')
 
 # COMMAND ----------
 
@@ -112,7 +148,7 @@ temp.display()
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{table_name})
+spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f"{table_name}")
 
 # COMMAND ----------
 
@@ -121,9 +157,25 @@ spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{ta
 
 # COMMAND ----------
 
-df = run('2023-10-01', '2024-09-28', 'SAUCES & PICKLES', 'VINEGAR')
+df = run('2023-12-01', '2024-11-28', 'SAUCES & PICKLES', 'VINEGAR')
 df2 = web_scrape(df)
 df2.display()
+
+# COMMAND ----------
+
+df=df[df['material_id'].isin([2330825,2330826,2330827])]
+volume = [350,420,800]
+
+type = ['Black','Black','Regular']
+
+type_bin = type.copy()
+
+df['volume'] = volume
+df['units'] = 'ML'
+df['item_count'] = 1
+df['type'] = type
+df['type_bin'] = type_bin
+df['volume'] = df['volume'].astype('float64')
 
 # COMMAND ----------
 
@@ -153,7 +205,7 @@ temp.display()
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{table_name})
+spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f"{table_name}")
 
 # COMMAND ----------
 
@@ -162,7 +214,7 @@ spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{ta
 
 # COMMAND ----------
 
-df = run('2023-10-01', '2024-09-28', 'ICE CREAM & DESSERTS', 'FRUITS')
+df = run('2024-01-01', '2024-12-29', 'ICE CREAM & DESSERTS', 'FRUITS')
 df2 = web_scrape(df)
 df2.display()
 
@@ -183,6 +235,7 @@ df.loc[df['material_id'].isin([779659, 2007234, 2007235, 2007239, 2114249]), 'it
 df.loc[df['material_id'].isin([893214, 1505893]), 'item_count'] = 3
 df['type'] = type
 df['type_bin'] = type_bin
+df['volume'] = df['volume'].astype('float64')
 
 # COMMAND ----------
 
@@ -194,7 +247,7 @@ temp.display()
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{table_name})
+spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f"{table_name}")
 
 # COMMAND ----------
 
@@ -213,7 +266,7 @@ volume = [300, 40, 227, 32, 35, 35, 100, 200, 200, 100, 100, 200, 200, 200, 100,
 
 units = ["G", "G", "G", "G", "G", "G", "ML", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "KG", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "KG", "KG", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "KG", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "ML", "ML", "G", "G", "ML", "ML", "ML", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "KG", "KG", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "KG", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "ML", "ML", "G", "G", "G", "G", "G", "G", "ML", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "KG", "KG", "KG", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "KG", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "ML", "G", "G", "G", "G", "KG", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G"]
 
-type = ["Tamarind Paste", "Cinnamon Powder", "Tamarind Paste", "Nutmeg Powder", "Chilli Powder", "Paprika Powder", "Garlic Granules", "Aniseeds", "Caraway Seeds", "Cardamom Whole", "Cardamom Whole", "Cardamom Powder", "Chilli Crushed", "Chilli Powder", "Chilli Whole", "Chilli Whole", "Cinnamon Powder", "Cinnamon Whole", "Cloves Whole", "Coriander Powder", "Coriander Whole", "Cumin Powder", "Cumin Powder", "Fenugreek Powder", "Garlic Powder", "Ginger Powder", "Mustard Seeds", "Paprika Powder", "Sesame Seeds", "Sumac", "Turmeric Powder", "Zaatar", "Chilli Powder", "Coriander Powder", "Cumin Powder", "Turmeric Powder", "Paprika Powder", "Cinnamon Powder", "Chilli Powder", "Coriander Powder", "Turmeric Powder", "Turmeric Powder", "Ajwain", "Garlic Powder", "Chilli Powder", "Zaatar", "Coriander Powder", "Fennel Seeds", "Pepper Powder", "Ajwain", "Pomegranate", "Arrowroot Powder", "Sesame Seeds", "Chilli Whole", "Chilli Powder", "Sago Seeds", "Mukhwas", "Mukhwas", "Tamarind Whole", "Asafoetida Compounded", "Asafoetida Powder", "Asafoetida Compounded", "Asafoetida Powder", "Garam Masala Whole", "Mustard Powder", "Black Cumin Seeds", "Caraway Seeds", "Sesame Seeds", "Turmeric Whole", "Fennel Powder", "Mash Powder", "Mustard Dal", "Chilli Whole", "Mango Powder", "Ensoon Powder", "Karawia Powder", "Ensoon Seeds", "Camomil", "Lemon Powder", "Tamarind Whole", "Cumin Powder", "Cardamom Whole", "Ginger Powder", "Chilli Powder", "Chilli Powder", "Coriander Powder", "Coriander Powder", "Turmeric Powder", "Turmeric Powder", "Cumin Powder", "Chilli Whole", "Cumin Powder", "Pepper Powder", "Ginger Whole", "Chilli Whole", "Pepper Powder", "Cardamom Whole", "Cloves Whole", "Cloves Whole", "Cinnamon Whole", "Fenugreek Seeds", "Coriander Whole", "Mustard Seeds", "Fennel Seeds", "Sesame Seeds", "Cinnamon Powder", "Ajwain", "Chilli Powder", "Peppercorn", "Nutmeg Whole", "Mukhwas", "Tamarind Whole", "Mukhwas", "Fennel Shahi/Saunf", "Mukhwas", "Lemon Powder", "Mango Powder", "Jaljeera", "Cardamom Powder", "Garlic Powder", "Pepper Powder", "Chilli Crushed", "Cloves Powder", "Turmeric Whole", "Pepper Powder", "Caraway Seeds", "Chilli Crushed", "Ajwain", "Garlic Powder", "Chilli Whole", "Chilli Powder", "Green Chilli", "Chilli Crushed", "Star Seeds", "Coriander Powder", "Tamarind Whole", "Tamarind Whole", "Tamarind Whole", "Mixed Spices", "Tamarind Whole", "Chilli Powder", "Chilli Powder", "Turmeric Powder", "Coriander Powder", "Coriander Powder", "Chilli Powder", "Chilli Powder", "Tamarind Whole", "Turmeric Powder", "Pepper Powder", "Pepper Coarse", "Pepper Powder", "Pepper Powder", "Chicken Seasoning", "Jamaican Jerk Seasoning", "Cajun Seasoning", "Mixed Spices", "Steak Seasoning", "Lamb Seasoning", "Fish Seasoning", "Tamarind Whole", "Tamarind Whole", "Chilli Crushed", "Chilli Powder", "Turmeric Powder", "Cardamom Powder", "Ginger Powder", "Cinnamon Whole", "Sumac", "BBQ Spices", "Cloves Powder", "Ginger Powder", "Cinnamon Whole", "Cardamom Powder", "Garlic Powder", "Chilli Powder", "Cinnamon Powder", "Coriander Powder", "Cumin Powder", "Turmeric Powder", "Nutmeg Powder", "Zaatar", "Coriander Whole", "Cardamom Whole", "Lemon Powder", "Paprika Powder", "Mustard Seeds", "Asafoetida Powder", "Black Cumin Seeds", "Cardamom Whole", "Mustard Powder", "Assorted Spices", "Kokam", "Chilli Powder", "Cumin Powder", "Turmeric Powder", "Coriander Powder", "Cardamom Whole", "Garlic Powder", "Lime Powder", "Meat Spices", "Chicken Spices", "Cajun Spices", "Coriander Whole", "Chives", "Chilli Crushed", "Garlic Italian Seasoning", "Garlic Salt", "Chilli Powder", "Lasagne Mix", "Parsley", "Sage", "Sesame Seeds", "Oregano", "Coriander Seeds", "Chilli Pepper", "Mustard Seeds", "Cinnamon Whole", "Cloves Whole", "Cardamom Whole", "Cumin Powder", "Thyme", "Fenugreek Powder", "Fennel Seeds", "Garlic Grinder", "Basil", "Nutmeg Whole", "Peppercorn", "Chilli Powder", "Turmeric Powder", "Cajun Seasoning", "Turmeric Powder", "Coriander Powder", "Chilli Powder", "Pasta Spices", "Black Cumin Powder", "Onion Powder", "Black Cumin Seeds", "Onion Powder", "Chilli Powder", "Chilli Powder", "Coriander Powder", "Coriander Powder", "Turmeric Powder", "Shawarma Spice", "Mixed Spices", "Pizza Spices", "Mustard Powder", "Zaatar", "Cardamom Powder", "Chilli Powder", "Coriander Powder", "Kudampuli", "Tamarind Paste", "Aniseeds", "Chilli Whole", "Sumac", "Mixed Spices", "Cardamom Whole", "Cinnamon Sticks", "Cumin Powder", "Mustard Seeds", "Fenugreek Seeds", "Coriander Whole", "Fennel Seeds", "Cardamom Whole", "Peppercorn", "Tamarind Whole", "Tamarind Whole", "Pumpkin Pie Spices", "Habbat Al Hamra", "Mixed Spices", "Black Salt Powder", "Nutmeg Powder", "Sesame Seeds", "Fennel Powder", "Fenugreek Powder", "Garlic Powder", "Aniseeds", "Shepherd's Pie Mix", "Paprika Powder", "Cloves Whole", "Cinnamon Whole", "Italian Seasoning", "Chilli Powder", "Chilli Powder", "Mustard Seeds", "Garlic Powder", "Turmeric Powder", "Lemon Dry", "Coriander Whole", "Coriander Powder", "Chilli Crushed", "Chilli Whole", "Cinnamon Powder", "Fenugreek Seeds", "Garam Masala Powder", "Pepper Powder", "Garam Masala Whole", "Cardamom Whole", "Fennel Seeds", "Cumin Seeds", "Coriander Powder", "Chilli Powder", "Turmeric Powder", "Peppercorn", "Pepper Powder", "Chilli Powder", "Coriander Powder", "Turmeric Powder", "Coriander Powder", "Chilli Powder", "Chilli Powder", "Turmeric Powder", "Pepper Coarse", "Cinnamon Powder", "Chilli Whole", "Cinnamon Whole", "Cumin Powder", "Ginger Powder", "Cloves Whole", "Mixed Spices", "Lemon Powder", "Falafel Spices", "Chilli Flakes", "Steak Spices", "Kabsa Spices", "Mandi Spices", "Cajun Seasoning", "Peppercorn", "Peppercorn", "Celery Seeds", "Peppercorn", "Allspice Berries", "Mace", "Fenugreek Seeds", "Coriander Whole", "Tamarind Whole", "Mango Powder", "Chilli Powder", "Coriander Powder", "Chilli Powder", "Chilli Powder", "Chilli Powder", "Turmeric Powder", "Fennel Powder", "Fenugreek Powder", "Chilli Powder", "Turmeric Powder", "Chilli Powder", "Coriander Powder", "Chilli Powder", "Arabic Spices", "Margarine Spices", "BBQ Spices", "Natural Dye Spices", "Maternal Post Spices", "Biryani Spice", "Fish Spices", "Curry Powder", "Seafood Spices", "Chicken Spices", "Tamarind Seedless", "Tamarind Seedless", "Chilli Whole", "Assorted Spices", "Chilli Powder", "Mustard Powder", "Peppercorn", "Chilli Powder", "Chilli Powder", "Chilli Powder", "Chilli Powder", "Coriander Powder", "Coriander Powder", "Turmeric Powder", "Turmeric Powder", "Mixed Spices", "Aniseeds", "Asafoetida Compounded", "Lemon & Cracked Pepper Seasoning", "Tomato Rice Powder", "Mixed Spices", "Coriander Powder", "Coriander Powder", "Tamarind Whole", "Chilli Powder", "Coriander Powder", "Turmeric Powder", "Cumin Powder", "Pepper Powder", "Ginger Powder", "Pepper Powder", "Mango Powder", "Chilli Crushed", "Peppercorn", "Coriander Whole", "Pepper Powder", "Turmeric Powder", "Cumin Powder", "Garlic Powder", "Peppercorn", "Cinnamon Whole", "Tamarind Paste", "Cinnamon Whole", "Turmeric Powder", "Chilli Whole", "Chilli Powder", "Chilli Crushed", "Turmeric Powder", "Mustard Seeds", "Fenugreek Seeds", "Peppercorn", "Coriander Whole", "Cloves Whole", "Chilli Whole", "Pepper Powder", "Chilli Powder", "Coriander Powder", "Cumin Powder", "Chilli Powder", "Cardamom Whole", "Mixed Spices", "Chilli Powder", "Paprika Smoked", "Paprika Smoked", "Tamarind Paste", "Mustard Seeds", "Mandi Spices", "Shawarma Spice", "Shish Tawook Spices", "Salad Spices", "AlQoosi Spices", "Sumac", "Tamarind Whole", "Tamarind Whole", "Sumac", "Mixed Herbs", "Cinnamon Powder", "Turmeric Powder", "Garlic Granules", "Asafoetida Powder", "Cheddar Cheese Spices", "Peppercorn", "Peppercorns", "Garlic Crushed", "Cumin Powder", "Garlic Flakes", "Pepper Powder", "Chilli Crushed", "Ginger Powder", "Turmeric Powder", "Cinnamon Powder", "Asafoetida Powder", "Black Seeds", "Tamarind Whole", "Tamarind Paste", "Tamarind Sauce", "Coriander Powder", "Chilli Powder", "Turmeric Powder", "Chilli Crushed", "Salad Spices", "Shawarma Spice", "Pepper Powder", "Tamarind Whole", "Tamarind Whole", "Coriander Powder", "Fenugreek Seeds", "Kabab Spice", "Kebbeh Spice", "Shawarma Spice", "Cumin Powder", "Cardamom Whole", "Peppercorn", "Fenugreek Seeds", "Cloves Whole", "Coriander Powder", "Chilli Powder", "Tamarind Whole", "Peppercorn", "Peppercorn", "Paprika Smoked", "Tamarind Whole", "Tamarind Whole", "Kudampuli", "Tamarind Seedless", "Shawarma Spices", "Mixed Spices", "Mixed Spices", "BBQ Spices", "Thyme", "Basil", "Rosemary", "Chicken Seasoning", "Majboos Spices", "Cinnamon Powder", "Nutmeg Powder", "Chicken Spices", "Chicken Spices", "Mustard Seeds", "Cumin Powder", "Ajwain", "Cloves Whole", "Coriander Seeds", "Cumin Powder", "Fennel Seeds", "Sesame Seeds", "BBQ Spices", "Onion Powder", "Paprika Powder", "Chilli Powder", "Asafoetida Powder", "Tamarind Paste", "Tamarind Paste", "Aniseeds", "Cumin Powder", "Sesame Seeds", "Nutmeg Powder", "Cloves Powder", "Cinnamon Powder", "Pepper Powder", "Cinnamon Whole", "Paprika Powder", "Cinnamon Whole", "Tamarind Paste", "Sago Seeds", "Sago Seeds", "Chilli Powder", "Chilli Powder", "Cloves Powder", "Black Cumin Seeds", "Paprika Powder", "Zaatar", "Sumac", "Onion Powder", "Paprika Powder", "Mixed Spices", "Mixed Spices", "Dokka Powder", "BBQ Spices", "Seafood Spices", "Chicken Spices", "Meat Spices", "Potato Spices", "Kebda Spices", "Kabsa Spices", "Fenugreek Seeds", "Fennel Seeds", "Coriander Whole", "Cumin Powder", "Turmeric Powder", "Chilli Whole", "Chilli Powder", "Chilli Powder", "Coriander Whole", "Coriander Powder", "Cumin Powder", "Cumin Powder", "Turmeric Powder", "Chilli Whole", "Chilli Powder", "Mixed Spices", "Mixed Spices", "Shawarma Spices", "Pepper Powder", "Coriander Powder", "Turmeric Powder", "Pepper Powder", "Kabsa Spices", "Stew Spice Mix", "Seafood Spices", "BBQ Spices", "Biryani Spices", "Mixed Spices", "Cardamom Powder", "Chilli Powder", "Ginger Powder", "Cumin Powder", "Curry Powder", "Cloves Powder", "Cinnamon Powder", "Tamarind Paste", "Lemon Powder", "Chicken Seasoning", "Garlic Powder", "Ginger Powder", "Paprika Powder", "Mixed Spices", "Sumac", "Zaatar", "Cardamom Whole", "Shawarma Spice", "Paprika Powder", "Garlic Powder", "Onion Powder", "Paprika Powder", "Paprika Powder", "Chilli Flakes", "Nutmeg Powder", "Chilli Powder", "Chilli Powder", "Chilli Powder", "Coriander Powder", "Cumin Powder", "Chilli Powder", "Garam Masala Whole", "Chilli Powder", "Chilli Paste", "Masala Tikki", "Chilli Powder", "Chilli Powder", "Coriander Powder", "Turmeric Powder", "Ginger Powder", "Mango Powder", "Chilli Powder", "Chilli Powder", "Cardamom Whole", "Pepper Powder", "Lemon Dry", "Chilli Powder", "Chilli Powder", "Onion Powder", "Tamarind Paste", "Coriander Powder", "Lime Powder", "Onion Powder", "Chicken Spices", "Prawn Spices", "Truffle Spices", "Truffle Cheese Spices", "Truffle Pesto Spices", "Truffle Porcini Spices", "Tamarind Whole", "Kabsa Spices", "Chilli Powder", "Tamarind Sauce", "Tamarind Sauce", "Turmeric Powder", "Mixed Spices", "Cinnamon Whole", "Chicken BBQ Seasoning", "Pizza Seasoning", "Chips & Potato Seasoning", "Chicken Wings Seasoning", "Roast Veggies Seasoning", "Chilli Powder", "Turmeric Powder", "Coriander Powder", "Turmeric Powder", "Mustard Seeds", "Chicken Broasted Mix", "Chicken Broasted Mix", "Basil", "Chilli Flakes", "Cinnamon Powder", "Garlic Crunchy", "Garlic Powder", "Nutmeg Powder", "Oregano", "Paprika Smoked", "Onion Powder", "Tamarind Seedless", "Fenugreek Seeds", "Chilli Flakes", "BBQ Seasoning", "Chilli Flakes", "BBQ Spices", "Argentinian Grill Spices", "Asafoetida Powder", "Karam Podi", "Karam Podi", "Kandi Podi", "Karam Podi", "Chilli Powder", "Coriander Powder", "Turmeric Powder", "Chilli Powder", "Turmeric Powder", "Cinnamon Powder", "Fenugreek Seeds", "Mustard Seeds", "Mustard Seeds", "Cardamom Whole", "Cardamom Whole", "Cardamom Whole", "Cardamom Whole", "Chilli Flakes", "Paprika Powder", "Paprika Smoked", "Chilli Whole", "Lemon Dry", "Mixed Spices", "Biryani Spices", "Mixed Spices", "Cardamom Whole", "Coriander Powder", "Garlic Powder", "Paprika Smoked", "Onion Powder", "Turmeric Powder", "Pepper Powder", "Cardamom Powder", "Coriander Seeds", "Tamarind Paste", "Piccantissimo", "Arrabbiata Spices", "Asafoetida Powder", "Asafoetida Compounded", "Chilli Powder", "Cloves Whole", "Kudampuli"]
+type = ["Tamarind Paste", "Cinnamon Powder", "Tamarind Paste", "Nutmeg Powder", "Chilli Powder", "Paprika Powder", "Garlic Granules", "Aniseeds", "Caraway Seeds", "Cardamom Whole", "Cardamom Whole", "Cardamom Powder", "Chilli Crushed", "Chilli Powder", "Chilli Whole", "Chilli Whole", "Cinnamon Powder", "Cinnamon Whole", "Cloves Whole", "Coriander Powder", "Coriander Whole", "Cumin Powder", "Cumin Powder", "Fenugreek Powder", "Garlic Powder", "Ginger Powder", "Mustard Seeds", "Paprika Powder", "Sesame Seeds", "Sumac", "Turmeric Powder", "Zaatar", "Chilli Powder", "Coriander Powder", "Cumin Powder", "Turmeric Powder", "Paprika Powder", "Cinnamon Powder", "Chilli Powder", "Coriander Powder", "Turmeric Powder", "Turmeric Powder", "Ajwain", "Garlic Powder", "Chilli Powder", "Zaatar", "Coriander Powder", "Fennel Seeds", "Pepper Powder", "Ajwain", "Pomegranate", "Arrowroot Powder", "Sesame Seeds", "Chilli Whole", "Chilli Powder", "Sago Seeds", "Mukhwas", "Mukhwas", "Tamarind Whole", "Asafoetida Compounded", "Asafoetida Powder", "Asafoetida Compounded", "Asafoetida Powder", "Garam Masala Whole", "Mustard Powder", "Black Cumin Seeds", "Caraway Seeds", "Sesame Seeds", "Turmeric Whole", "Fennel Powder", "Mash Powder", "Mustard Dal", "Chilli Whole", "Mango Powder", "Ensoon Powder", "Karawia Powder", "Ensoon Seeds", "Camomil", "Lemon Powder", "Tamarind Whole", "Cumin Powder", "Cardamom Whole", "Ginger Powder", "Chilli Powder", "Chilli Powder", "Coriander Powder", "Coriander Powder", "Turmeric Powder", "Turmeric Powder", "Cumin Powder", "Chilli Whole", "Cumin Powder", "Pepper Powder", "Ginger Whole", "Chilli Whole", "Pepper Powder", "Cardamom Whole", "Cloves Whole", "Cloves Whole", "Cinnamon Whole", "Fenugreek Seeds", "Coriander Whole", "Mustard Seeds", "Fennel Seeds", "Sesame Seeds", "Cinnamon Powder", "Ajwain", "Chilli Powder", "Peppercorn", "Nutmeg Whole", "Mukhwas", "Tamarind Whole", "Mukhwas", "Fennel Shahi/Saunf", "Mukhwas", "Lemon Powder", "Mango Powder", "Jaljeera", "Cardamom Powder", "Garlic Powder", "Pepper Powder", "Chilli Crushed", "Cloves Powder", "Turmeric Whole", "Pepper Powder", "Caraway Seeds", "Chilli Crushed", "Ajwain", "Garlic Powder", "Chilli Whole", "Chilli Powder", "Green Chilli", "Chilli Crushed", "Star Seeds", "Coriander Powder", "Tamarind Whole", "Tamarind Whole", "Tamarind Whole", "Mixed Spices", "Tamarind Whole", "Chilli Powder", "Chilli Powder", "Turmeric Powder", "Coriander Powder", "Coriander Powder", "Chilli Powder", "Chilli Powder", "Tamarind Whole", "Turmeric Powder", "Pepper Powder", "Pepper Coarse", "Pepper Powder", "Pepper Powder", "Chicken Seasoning", "Jamaican Jerk Seasoning", "Cajun Seasoning", "Mixed Spices", "Steak Seasoning", "Lamb Seasoning", "Fish Seasoning", "Tamarind Whole", "Tamarind Whole", "Chilli Crushed", "Chilli Powder", "Turmeric Powder", "Cardamom Powder", "Ginger Powder", "Cinnamon Whole", "Sumac", "BBQ Spices", "Cloves Powder", "Ginger Powder", "Cinnamon Whole", "Cardamom Powder", "Garlic Powder", "Chilli Powder", "Cinnamon Powder", "Coriander Powder", "Cumin Powder", "Turmeric Powder", "Nutmeg Powder", "Zaatar", "Coriander Whole", "Cardamom Whole", "Lemon Powder", "Paprika Powder", "Mustard Seeds", "Asafoetida Powder", "Black Cumin Seeds", "Cardamom Whole", "Mustard Powder", "Assorted Spices", "Kokam", "Chilli Powder", "Cumin Powder", "Turmeric Powder", "Coriander Powder", "Cardamom Whole", "Garlic Powder", "Lime Powder", "Meat Spices", "Chicken Spices", "Cajun Spices", "Coriander Whole", "Chives", "Chilli Crushed", "Garlic Italian Seasoning", "Garlic Salt", "Chilli Powder", "Lasagne Mix", "Parsley", "Sage", "Sesame Seeds", "Oregano", "Coriander Seeds", "Chilli Pepper", "Mustard Seeds", "Cinnamon Whole", "Cloves Whole", "Cardamom Whole", "Cumin Powder", "Thyme", "Fenugreek Powder", "Fennel Seeds", "Garlic Grinder", "Basil", "Nutmeg Whole", "Peppercorn", "Chilli Powder", "Turmeric Powder", "Cajun Seasoning", "Turmeric Powder", "Coriander Powder", "Chilli Powder", "Pasta Spices", "Black Cumin Powder", "Onion Powder", "Black Cumin Seeds", "Onion Powder", "Chilli Powder", "Chilli Powder", "Coriander Powder", "Coriander Powder", "Turmeric Powder", "Shawarma Spice", "Mixed Spices", "Pizza Spices", "Mustard Powder", "Zaatar", "Cardamom Powder", "Chilli Powder", "Coriander Powder", "Kudampuli", "Tamarind Paste", "Aniseeds", "Chilli Whole", "Sumac", "Mixed Spices", "Cardamom Whole", "Cinnamon Sticks", "Cumin Powder", "Mustard Seeds", "Fenugreek Seeds", "Coriander Whole", "Fennel Seeds", "Cardamom Whole", "Peppercorn", "Tamarind Whole", "Tamarind Whole", "Pumpkin Pie Spices", "Habbat Al Hamra", "Mixed Spices", "Black Salt Powder", "Nutmeg Powder", "Sesame Seeds", "Fennel Powder", "Fenugreek Powder", "Garlic Powder", "Aniseeds", "Shepherd's Pie Mix", "Paprika Powder", "Cloves Whole", "Cinnamon Whole", "Italian Seasoning", "Chilli Powder", "Chilli Powder", "Mustard Seeds", "Garlic Powder", "Turmeric Powder", "Lemon Dry", "Coriander Whole", "Coriander Powder", "Chilli Crushed", "Chilli Whole", "Cinnamon Powder", "Fenugreek Seeds", "Garam Masala Powder", "Pepper Powder", "Garam Masala Whole", "Cardamom Whole", "Fennel Seeds", "Cumin Seeds", "Coriander Powder", "Chilli Powder", "Turmeric Powder", "Peppercorn", "Pepper Powder", "Chilli Powder", "Coriander Powder", "Turmeric Powder", "Coriander Powder", "Chilli Powder", "Chilli Powder", "Turmeric Powder", "Pepper Coarse", "Cinnamon Powder", "Chilli Whole", "Cinnamon Whole", "Cumin Powder", "Ginger Powder", "Cloves Whole", "Mixed Spices", "Lemon Powder", "Falafel Spices", "Chilli Flakes", "Steak Spices", "Kabsa Spices", "Mandi Spices", "Cajun Seasoning", "Peppercorn", "Peppercorn", "Celery Seeds", "Peppercorn", "Allspice Berries", "Mace", "Fenugreek Seeds", "Coriander Whole", "Tamarind Whole", "Mango Powder", "Chilli Powder", "Coriander Powder", "Chilli Powder", "Chilli Powder", "Chilli Powder", "Turmeric Powder", "Fennel Powder", "Fenugreek Powder", "Chilli Powder", "Turmeric Powder", "Chilli Powder", "Coriander Powder", "Chilli Powder", "Arabic Spices", "Margarine Spices", "BBQ Spices", "Natural Dye Spices", "Maternal Post Spices", "Biryani Spices", "Fish Spices", "Curry Powder", "Seafood Spices", "Chicken Spices", "Tamarind Seedless", "Tamarind Seedless", "Chilli Whole", "Assorted Spices", "Chilli Powder", "Mustard Powder", "Peppercorn", "Chilli Powder", "Chilli Powder", "Chilli Powder", "Chilli Powder", "Coriander Powder", "Coriander Powder", "Turmeric Powder", "Turmeric Powder", "Mixed Spices", "Aniseeds", "Asafoetida Compounded", "Lemon & Cracked Pepper Seasoning", "Tomato Rice Powder", "Mixed Spices", "Coriander Powder", "Coriander Powder", "Tamarind Whole", "Chilli Powder", "Coriander Powder", "Turmeric Powder", "Cumin Powder", "Pepper Powder", "Ginger Powder", "Pepper Powder", "Mango Powder", "Chilli Crushed", "Peppercorn", "Coriander Whole", "Pepper Powder", "Turmeric Powder", "Cumin Powder", "Garlic Powder", "Peppercorn", "Cinnamon Whole", "Tamarind Paste", "Cinnamon Whole", "Turmeric Powder", "Chilli Whole", "Chilli Powder", "Chilli Crushed", "Turmeric Powder", "Mustard Seeds", "Fenugreek Seeds", "Peppercorn", "Coriander Whole", "Cloves Whole", "Chilli Whole", "Pepper Powder", "Chilli Powder", "Coriander Powder", "Cumin Powder", "Chilli Powder", "Cardamom Whole", "Mixed Spices", "Chilli Powder", "Paprika Smoked", "Paprika Smoked", "Tamarind Paste", "Mustard Seeds", "Mandi Spices", "Shawarma Spice", "Shish Tawook Spices", "Salad Spices", "AlQoosi Spices", "Sumac", "Tamarind Whole", "Tamarind Whole", "Sumac", "Mixed Herbs", "Cinnamon Powder", "Turmeric Powder", "Garlic Granules", "Asafoetida Powder", "Cheddar Cheese Spices", "Peppercorn", "Peppercorns", "Garlic Crushed", "Cumin Powder", "Garlic Flakes", "Pepper Powder", "Chilli Crushed", "Ginger Powder", "Turmeric Powder", "Cinnamon Powder", "Asafoetida Powder", "Black Seeds", "Tamarind Whole", "Tamarind Paste", "Tamarind Sauce", "Coriander Powder", "Chilli Powder", "Turmeric Powder", "Chilli Crushed", "Salad Spices", "Shawarma Spice", "Pepper Powder", "Tamarind Whole", "Tamarind Whole", "Coriander Powder", "Fenugreek Seeds", "Kabab Spice", "Kebbeh Spice", "Shawarma Spice", "Cumin Powder", "Cardamom Whole", "Peppercorn", "Fenugreek Seeds", "Cloves Whole", "Coriander Powder", "Chilli Powder", "Tamarind Whole", "Peppercorn", "Peppercorn", "Paprika Smoked", "Tamarind Whole", "Tamarind Whole", "Kudampuli", "Tamarind Seedless", "Shawarma Spices", "Mixed Spices", "Mixed Spices", "BBQ Spices", "Thyme", "Basil", "Rosemary", "Chicken Seasoning", "Majboos Spices", "Cinnamon Powder", "Nutmeg Powder", "Chicken Spices", "Chicken Spices", "Mustard Seeds", "Cumin Powder", "Ajwain", "Cloves Whole", "Coriander Seeds", "Cumin Powder", "Fennel Seeds", "Sesame Seeds", "BBQ Spices", "Onion Powder", "Paprika Powder", "Chilli Powder", "Asafoetida Powder", "Tamarind Paste", "Tamarind Paste", "Aniseeds", "Cumin Powder", "Sesame Seeds", "Nutmeg Powder", "Cloves Powder", "Cinnamon Powder", "Pepper Powder", "Cinnamon Whole", "Paprika Powder", "Cinnamon Whole", "Tamarind Paste", "Sago Seeds", "Sago Seeds", "Chilli Powder", "Chilli Powder", "Cloves Powder", "Black Cumin Seeds", "Paprika Powder", "Zaatar", "Sumac", "Onion Powder", "Paprika Powder", "Mixed Spices", "Mixed Spices", "Dokka Powder", "BBQ Spices", "Seafood Spices", "Chicken Spices", "Meat Spices", "Potato Spices", "Kebda Spices", "Kabsa Spices", "Fenugreek Seeds", "Fennel Seeds", "Coriander Whole", "Cumin Powder", "Turmeric Powder", "Chilli Whole", "Chilli Powder", "Chilli Powder", "Coriander Whole", "Coriander Powder", "Cumin Powder", "Cumin Powder", "Turmeric Powder", "Chilli Whole", "Chilli Powder", "Mixed Spices", "Mixed Spices", "Shawarma Spices", "Pepper Powder", "Coriander Powder", "Turmeric Powder", "Pepper Powder", "Kabsa Spices", "Stew Spice Mix", "Seafood Spices", "BBQ Spices", "Biryani Spices", "Mixed Spices", "Cardamom Powder", "Chilli Powder", "Ginger Powder", "Cumin Powder", "Curry Powder", "Cloves Powder", "Cinnamon Powder", "Tamarind Paste", "Lemon Powder", "Chicken Seasoning", "Garlic Powder", "Ginger Powder", "Paprika Powder", "Mixed Spices", "Sumac", "Zaatar", "Cardamom Whole", "Shawarma Spice", "Paprika Powder", "Garlic Powder", "Onion Powder", "Paprika Powder", "Paprika Powder", "Chilli Flakes", "Nutmeg Powder", "Chilli Powder", "Chilli Powder", "Chilli Powder", "Coriander Powder", "Cumin Powder", "Chilli Powder", "Garam Masala Whole", "Chilli Powder", "Chilli Paste", "Masala Tikki", "Chilli Powder", "Chilli Powder", "Coriander Powder", "Turmeric Powder", "Ginger Powder", "Mango Powder", "Chilli Powder", "Chilli Powder", "Cardamom Whole", "Pepper Powder", "Lemon Dry", "Chilli Powder", "Chilli Powder", "Onion Powder", "Tamarind Paste", "Coriander Powder", "Lime Powder", "Onion Powder", "Chicken Spices", "Prawn Spices", "Truffle Spices", "Truffle Cheese Spices", "Truffle Pesto Spices", "Truffle Porcini Spices", "Tamarind Whole", "Kabsa Spices", "Chilli Powder", "Tamarind Sauce", "Tamarind Sauce", "Turmeric Powder", "Mixed Spices", "Cinnamon Whole", "Chicken BBQ Seasoning", "Pizza Seasoning", "Chips & Potato Seasoning", "Chicken Wings Seasoning", "Roast Veggies Seasoning", "Chilli Powder", "Turmeric Powder", "Coriander Powder", "Turmeric Powder", "Mustard Seeds", "Chicken Broasted Mix", "Chicken Broasted Mix", "Basil", "Chilli Flakes", "Cinnamon Powder", "Garlic Crunchy", "Garlic Powder", "Nutmeg Powder", "Oregano", "Paprika Smoked", "Onion Powder", "Tamarind Seedless", "Fenugreek Seeds", "Chilli Flakes", "BBQ Seasoning", "Chilli Flakes", "BBQ Spices", "Argentinian Grill Spices", "Asafoetida Powder", "Karam Podi", "Karam Podi", "Kandi Podi", "Karam Podi", "Chilli Powder", "Coriander Powder", "Turmeric Powder", "Chilli Powder", "Turmeric Powder", "Cinnamon Powder", "Fenugreek Seeds", "Mustard Seeds", "Mustard Seeds", "Cardamom Whole", "Cardamom Whole", "Cardamom Whole", "Cardamom Whole", "Chilli Flakes", "Paprika Powder", "Paprika Smoked", "Chilli Whole", "Lemon Dry", "Mixed Spices", "Biryani Spices", "Mixed Spices", "Cardamom Whole", "Coriander Powder", "Garlic Powder", "Paprika Smoked", "Onion Powder", "Turmeric Powder", "Pepper Powder", "Cardamom Powder", "Coriander Seeds", "Tamarind Paste", "Piccantissimo", "Arrabbiata Spices", "Asafoetida Powder", "Asafoetida Compounded", "Chilli Powder", "Cloves Whole", "Kudampuli"]
 
 type_bin = type.copy()
 
@@ -236,7 +289,7 @@ temp.display()
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{table_name})
+spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f"{table_name}")
 
 # COMMAND ----------
 
@@ -255,7 +308,7 @@ volume = [120, 120, 120, 100, 70, 50, 41.8, 110, 1, 125, 125, 125, 70, 65, 125, 
 
 units = ["ML", "ML", "ML", "ML", "ML", "G", "G", "ML", "L", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "G", "ML", "G", "ML", "ML", "ML", "ML", "KG", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "G", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "G", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "KG", "ML", "ML", "ML", "ML", "G", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "G", "G", "G", "ML", "KG", "ML", "G", "ML", "G", "G", "ML", "ML", "G", "G", "G", "ML", "G", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "G", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "G", "ML", "ML", "ML", "G", "G", "G", "G", "G", "G", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "G", "G", "G", "ML", "ML", "ML", "ML", "ML", "G", "G", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "L", "ML", "ML", "ML", "ML", "G", "ML", "G", "ML", "ML", "ML", "G", "G", "ML", "ML", "ML", "ML", "ML", "G", "G", "G", "G", "G", "G", "G", "G", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "ML", "ML", "ML", "G", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "G", "ML", "ML", "ML", "ML", "ML", "ML", "ML", "ML"]
 
-type = ["Vanilla Tub", "Chocolate Tub", "Strawberry Tub", "Vanilla Almond Stick", "Water Ice", "Vanilla Bar", "Chocolate Bar", "Vanilla & Chocolate Cone", "Vanilla Cookies Tub", "Vanilla Cookies Tub", "Strawberry Tub", "Praline & Cream Tub", "Vanilla Sick", "Pista Kulfi", "Strawberry & Vanilla Cup", "Pista Cone", "Vanilla Cup", "Strawberry Cup", "Mango Cup", "Chocolate Cup", "Peanut Buttter Bar", "Vanilla Cone", "Chocolate Cone", "Vanilla Cone", "Vanilla & Chocolate Cone", "Vanilla Almond Stick", "Vanilla & Chocolate Stick", "Ice Cubes", "Chocolate Tub", "Pista & Cashew Kulfi", "Vanilla Sundae Cup", "Vanilla Sandwich", "Chocolate Cone", "Strawberry Cone", "Praline & Cream Cone", "Chocolate Cone", "Chocolate Cone", "Vanilla Almond Stick", "Vanilla Peanuts Stick", "Vanilla Cashew Stick", "Vanilla Cookies Stick", "Chocolate Tub", "Macadamia Nut Tub", "Vanilla Cup", "Vanilla Cookies Tub", "Strawberry Cheesecake Tub", "Vanilla Almond Stick", "Chocolate Almond Stick", "Butterscotch Cone", "Strawberry Cup", "Strawberry & Chocolate M&M Stick", "Vanilla Macadamia Nut Stick", "Chocolate Cone", "Butterscotch Cashew Tub", "Vanilla Tub", "Vanilla & Chocolate Bar", "Tiramisu Tub", "Vanilla Almond Stick", "Chocolate Brownie Yoghurt", "Chocolate Cookies Dough", "Praline & Cream Cup", "Almond & Pista Kulfi", "Pista Kulfi", "Mango Kulfi", "Vanilla Stick", "Vanilla Almond Stick", "Vanilla White Chocolate Stick", "Orange Lolly", "Vanilla & Chocolate & Hazelnut Stick", "Vanilla & Chocolate Cone", "Milk Chocolate & Peanut Stick", "Chocolate & Hazenut Stick", "Vanilla & Cocoa Cup", "Vanilla & Strawberry Cup", "Vanilla & Chocolate Caramel Sandwich", "Chocolate Stick", "Salted Caramel Tub", "Vanilla & Chocolate Cone", "Pista & Cashew Kulfi", "Chocolate Cupcake", "Vanilla Sandwich", "Vanilla Almond Stick", "Fruit Lolly", "Orange Lolly", "Coconut & Milk Bar", "Vanilla & Caramel Bar", "Chocolate Brownie Stick", "White Chocolate & Almond Stick", "Vanilla Stick", "Fruit Lolly", "Oreo Stick", "Oreo Cone", "Vanilla & Caramel Almond Stick", "Chocolate Almond Stick", "Caramel Strawberry & Honeycomb Stick", "Vanilla Sandwich", "Salted Caramel Stick", "Vanilla Caramel Cone", "Chocolate Stick", "Vanilla Cone", "Vanilla & Chocolate Cone", "Pista Kulfi", "Buco Salad Tub", "Butterscotch Stick", "Fruit Lolly", "Ice Cubes", "Vanilla & Cookie Sandwich", "White Chocolate & Almond Stick", "Vanilla & Caramel Stick", "Vanilla Cone", "Peanut Butter & Chocolate Stick", "Vanilla Oreo Cup", "Chocolate & Blackberry & Black Mulberry Stick", "Mulberry & Blackberry Stick", "Vanilla & Chocolate Cone", "Chocolate Cone", "Watermelon Lolly", "Coconut Cone", "Cotton Candy Cone", "Green Tea Dough", "Strawberry Dough", "Mango Dough", "Vanilla Sandwich", "Ice Cubes", "Peanut Butter Chocolate Stick", "Chocolate Dough", "Mango & Raspberry Stick", "Coffee & Caramel Dough", "Chocolate & Marshmallow Dough", "Chocolate Stick", "Cookies Cone", "Kewda Kulfi", "Elaichi Kulfi", "Kesar Kulfi", "Chocolate Almond Stick", "Peanuts & Caramel Bar", "White Chocolate & Cookies Stick", "Pista Cone", "Vanilla Stick", "Vanilla & Cocoa Stick", "Cocoa Stick", "Cotton Candy Cup", "Mango Cup", "Raspberry Cup", "Vanilla Stick", "Cookies Dough", "Pista & Cashew Tub", "Kulfi", "Vanilla & Chocolate Cone", "Vanilla & Chocolate Cone", "Fruit Cone", "Chocolate Almond Balls", "Bubblegum Lolly", "Fruit Lolly", "Orange Lolly", "Strawberry Cone", "Rose Cone", "Honeycomb & Milk Chocolate Stick", "Milk Chocolate & Caramel Cone", "Mango Lolly", "Raspberry Lolly", "Strawberry Lolly", "Fruit Stick", "Chocolate & Hazelnut Stick", "Chocolate Stick", "Cotton Candy Cup", "Vanilla & Chocolate Tub", "Butterscotch Cup", "Chocolate & Pecan Stick", "Coconut & Mango Stick", "Dark Chocolate & Berry Stick", "Salted Caramel & Macadamia Stick", "Chocolate Bar", "Chocolate Caramel Cone", "Chocolate & Hazelnut Cone", "Oreo Chocolate Sandwich", "Horchata Dough", "Guava Dough", "Vanilla Dough", "Chocolate Cone", "Chocolate Peanut Cone", "Cone", "Mango Stick", "Berry & White Chocolate Stick", "Chocolate Almond Stick", "Vanilla Stick", "Fruit Lolly", "Chocolate Tub", "Fruit Stick", "Lolly", "Fruit Lolly", "Fruit Lolly", "Mango Stick", "Cherry & Grape Popsicle", "Lime & Orange Popsicle", "Strawberry & Lemon Popsicle", "Strawberry & Mango Popsicle", "Fruit Punch & Cotton Candy Popsicle", "Blue Raspberry & Cherry & Lemon Popsicle", "Orange Popsicle", "Orange & Cherry & Grape Popsicle", "Chocolate Popsicle", "Chocolate & Hazelnut Stick", "Coconut Stick", "Chocolate Cup", "White Chocolate Bar & Peanut", "Goat Milk Cup", "Raspberry Cheesecake Cup", "Vanilla & Chocolate Bar", "Strawbery Stick", "Vanilla Stick", "Pastry", "Vanilla Sandwich", "Safron Chocolate Milk Sandwich", "Strawberry Sandwich", "Red Bean Sandwich", "Chocolate Sandwich", "Chocolate Stick", "Coffee Dough", "Ube Dough", "Strawberry Dough", "Passion Fruit Dough", "Fruit Dough", "Green Tea Dough", "Mango Dough", "Strawberry Dough", "Caramel & Popcorn Stick", "Mango & Coconut Stick", "Peanut Butter Stick", "Salted Caramel Stick", "Chocolate & Peanut Bar", "Chocolate Brownie Bar", "Fruit Lolly", "Oreo Sandwich", "Watermelon Popsicle", "Chocolate Stick", "Pista Cone", "Chocolate Stick", "Chocolate & Cookie Stick", "Chocolate & Caramel Cone", "Chocolate & Peanut Butter Stick", "Vanilla & Peanut Butter Cone", "White Chocolate & Hazelnut Cone", "Chocolate Cone", "Chocolate & Caramel Stick", "Fruit Lolly", "Fruit Lolly", "Oreo Stick", "Oreo Stick", "Chocolate & Vanilla Sundae Cup", "Coconut Dough", "Vanilla Dough", "Chocolate Dough", "Pumpkin Spice Dough", "Apple Dough", "Peppermint Dough", "Strawberry Popsicle", "Lolly", "Cherry & Lemon & Cola Stick", "Bubblegum & Popping Candy Coating Lolly", "Raspberry & Lime & Black Currant Lolly", "Cereal & Milk Dough", "Chocolate & Peanut Bar", "Coconut Stick", "Raspberry Popsicle", "Orange Popsicle", "Chocolate Dough", "Strawberry & Blue Raspberry Popsicle", "Fruit Punch & Cotton Candy Popsicle", "Pink Lemonade Stick", "Chocolate Stick", "Chocolate & Almond Stick", "Coconut Stick", "Vanilla Sandwich", "Butterscotch Sandwich", "Almond & Pista & Kesar Kulfi", "Malai Kulfi", "Strawberry Stick", "Vanilla Stick", "Vanilla Barry", "Vanilla & Chocolate & Hazelnut Sandwich", "Chocolate Kuaky", "Vanilla Firky", "Vanilla Vacky", "Vanilla Punky", "Strawberry & Cream Cone", "Strawberry Pushup", "Strawberry Cone", "Mango Tub", "Choco Nuts Tub", "Strawberry Tub", "Vanilla Praline Tub", "Blueberry Tub", "Baklava Tub", "Chocolate & Almond Sandwich", "Blueberry & Vanilla Stick"]
+type = ["Vanilla Tub", "Chocolate Tub", "Strawberry Tub", "Vanilla Almond Stick", "Water Ice", "Vanilla Bar", "Chocolate Bar", "Vanilla & Chocolate Cone", "Vanilla Cookies Tub", "Vanilla Cookies Tub", "Strawberry Tub", "Praline & Cream Tub", "Vanilla Stick", "Pista Kulfi", "Strawberry & Vanilla Cup", "Pista Cone", "Vanilla Cup", "Strawberry Cup", "Mango Cup", "Chocolate Cup", "Peanut Buttter Bar", "Vanilla Cone", "Chocolate Cone", "Vanilla Cone", "Vanilla & Chocolate Cone", "Vanilla Almond Stick", "Vanilla & Chocolate Stick", "Ice Cubes", "Chocolate Tub", "Pista & Cashew Kulfi", "Vanilla Sundae Cup", "Vanilla Sandwich", "Chocolate Cone", "Strawberry Cone", "Praline & Cream Cone", "Chocolate Cone", "Chocolate Cone", "Vanilla Almond Stick", "Vanilla Peanuts Stick", "Vanilla Cashew Stick", "Vanilla Cookies Stick", "Chocolate Tub", "Macadamia Nut Tub", "Vanilla Cup", "Vanilla Cookies Tub", "Strawberry Cheesecake Tub", "Vanilla Almond Stick", "Chocolate Almond Stick", "Butterscotch Cone", "Strawberry Cup", "Strawberry & Chocolate M&M Stick", "Vanilla Macadamia Nut Stick", "Chocolate Cone", "Butterscotch Cashew Tub", "Vanilla Tub", "Vanilla & Chocolate Bar", "Tiramisu Tub", "Vanilla Almond Stick", "Chocolate Brownie Yoghurt", "Chocolate Cookies Dough", "Praline & Cream Cup", "Almond & Pista Kulfi", "Pista Kulfi", "Mango Kulfi", "Vanilla Stick", "Vanilla Almond Stick", "Vanilla White Chocolate Stick", "Orange Popsicle", "Vanilla & Chocolate & Hazelnut Stick", "Vanilla & Chocolate Cone", "Milk Chocolate & Peanut Stick", "Chocolate & Hazelnut Stick", "Vanilla & Cocoa Cup", "Vanilla & Strawberry Cup", "Vanilla & Chocolate Caramel Sandwich", "Chocolate Stick", "Salted Caramel Tub", "Vanilla & Chocolate Cone", "Pista & Cashew Kulfi", "Chocolate Cupcake", "Vanilla Sandwich", "Vanilla Almond Stick", "Fruit Popsicle", "Orange Popsicle", "Coconut & Milk Bar", "Vanilla & Caramel Bar", "Chocolate Brownie Stick", "White Chocolate & Almond Stick", "Vanilla Stick", "Fruit Popsicle", "Oreo Stick", "Oreo Cone", "Vanilla & Caramel Almond Stick", "Chocolate Almond Stick", "Caramel Strawberry & Honeycomb Stick", "Vanilla Sandwich", "Salted Caramel Stick", "Vanilla Caramel Cone", "Chocolate Stick", "Vanilla Cone", "Vanilla & Chocolate Cone", "Pista Kulfi", "Buco Salad Tub", "Butterscotch Stick", "Fruit Popsicle", "Ice Cubes", "Vanilla & Cookie Sandwich", "White Chocolate & Almond Stick", "Vanilla & Caramel Stick", "Vanilla Cone", "Peanut Butter & Chocolate Stick", "Vanilla Oreo Cup", "Chocolate & Blackberry & Black Mulberry Stick", "Mulberry & Blackberry Stick", "Vanilla & Chocolate Cone", "Chocolate Cone", "Watermelon Popsicle", "Coconut Cone", "Cotton Candy Cone", "Green Tea Dough", "Strawberry Dough", "Mango Dough", "Vanilla Sandwich", "Ice Cubes", "Peanut Butter & Chocolate Stick", "Chocolate Dough", "Mango & Raspberry Stick", "Coffee & Caramel Dough", "Chocolate & Marshmallow Dough", "Chocolate Stick", "Cookies Cone", "Kewda Kulfi", "Elaichi Kulfi", "Kesar Kulfi", "Chocolate Almond Stick", "Peanuts & Caramel Bar", "White Chocolate & Cookies Stick", "Pista Cone", "Vanilla Stick", "Vanilla & Cocoa Stick", "Cocoa Stick", "Cotton Candy Cup", "Mango Cup", "Raspberry Cup", "Vanilla Stick", "Cookies Dough", "Pista & Cashew Tub", "Kulfi", "Vanilla & Chocolate Cone", "Vanilla & Chocolate Cone", "Fruit Cone", "Chocolate Almond Balls", "Bubblegum Popsicle", "Fruit Popsicle", "Orange Popsicle", "Strawberry Cone", "Rose Cone", "Honeycomb & Milk Chocolate Stick", "Milk Chocolate & Caramel Cone", "Mango Popsicle", "Raspberry Popsicle", "Strawberry Popsicle", "Fruit Stick", "Chocolate & Hazelnut Stick", "Chocolate Stick", "Cotton Candy Cup", "Vanilla & Chocolate Tub", "Butterscotch Cup", "Chocolate & Pecan Stick", "Coconut & Mango Stick", "Dark Chocolate & Berry Stick", "Salted Caramel & Macadamia Stick", "Chocolate Bar", "Chocolate Caramel Cone", "Chocolate & Hazelnut Cone", "Oreo Chocolate Sandwich", "Horchata Dough", "Guava Dough", "Vanilla Dough", "Chocolate Cone", "Chocolate Peanut Cone", "Cone", "Mango Stick", "Berry & White Chocolate Stick", "Chocolate Almond Stick", "Vanilla Stick", "Fruit Popsicle", "Chocolate Tub", "Fruit Stick", "Popsicle", "Fruit Popsicle", "Fruit Popsicle", "Mango Stick", "Cherry & Grape Popsicle", "Lime & Orange Popsicle", "Strawberry & Lemon Popsicle", "Strawberry & Mango Popsicle", "Fruit Punch & Cotton Candy Popsicle", "Blue Raspberry & Cherry & Lemon Popsicle", "Orange Popsicle", "Orange & Cherry & Grape Popsicle", "Chocolate Popsicle", "Chocolate & Hazelnut Stick", "Coconut Stick", "Chocolate Cup", "White Chocolate Bar & Peanut", "Goat Milk Cup", "Raspberry Cheesecake Cup", "Vanilla & Chocolate Bar", "Strawberry Stick", "Vanilla Stick", "Pastry", "Vanilla Sandwich", "Safron Chocolate Milk Sandwich", "Strawberry Sandwich", "Red Bean Sandwich", "Chocolate Sandwich", "Chocolate Stick", "Coffee Dough", "Ube Dough", "Strawberry Dough", "Passion Fruit Dough", "Fruit Dough", "Green Tea Dough", "Mango Dough", "Strawberry Dough", "Caramel & Popcorn Stick", "Mango & Coconut Stick", "Peanut Butter Stick", "Salted Caramel Stick", "Chocolate & Peanut Bar", "Chocolate Brownie Bar", "Fruit Popsicle", "Oreo Sandwich", "Watermelon Popsicle", "Chocolate Stick", "Pista Cone", "Chocolate Stick", "Chocolate & Cookie Stick", "Chocolate & Caramel Cone", "Chocolate & Peanut Butter Stick", "Vanilla & Peanut Butter Cone", "White Chocolate & Hazelnut Cone", "Chocolate Cone", "Chocolate & Caramel Stick", "Fruit Popsicle", "Fruit Popsicle", "Oreo Stick", "Oreo Stick", "Chocolate & Vanilla Sundae Cup", "Coconut Dough", "Vanilla Dough", "Chocolate Dough", "Pumpkin Spice Dough", "Apple Dough", "Peppermint Dough", "Strawberry Popsicle", "Popsicle", "Cherry & Lemon & Cola Stick", "Bubblegum & Popping Candy Coating Popsicle", "Raspberry & Lime & Black Currant Popsicle", "Cereal & Milk Dough", "Chocolate & Peanut Bar", "Coconut Stick", "Raspberry Popsicle", "Orange Popsicle", "Chocolate Dough", "Strawberry & Blue Raspberry Popsicle", "Fruit Punch & Cotton Candy Popsicle", "Pink Lemonade Stick", "Chocolate Stick", "Chocolate & Almond Stick", "Coconut Stick", "Vanilla Sandwich", "Butterscotch Sandwich", "Almond & Pista & Kesar Kulfi", "Malai Kulfi", "Strawberry Stick", "Vanilla Stick", "Vanilla Barry", "Vanilla & Chocolate & Hazelnut Sandwich", "Chocolate Kuaky", "Vanilla Firky", "Vanilla Vacky", "Vanilla Punky", "Strawberry & Cream Cone", "Strawberry Pushup", "Strawberry Cone", "Mango Tub", "Choco Nuts Tub", "Strawberry Tub", "Vanilla Praline Tub", "Blueberry Tub", "Baklava Tub", "Chocolate & Almond Sandwich", "Blueberry & Vanilla Stick"]
 
 type_bin = type.copy()
 
@@ -272,6 +325,7 @@ df.loc[df['material_id'].isin([2007875]), 'item_count'] = 18
 df.loc[df['material_id'].isin([2007872]), 'item_count'] = 32
 df['type'] = type
 df['type_bin'] = type_bin
+df['volume'] = df['volume'].astype('float64')
 
 # COMMAND ----------
 
@@ -283,7 +337,7 @@ temp.display()
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{table_name})
+spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f"{table_name}")
 
 # COMMAND ----------
 
@@ -312,6 +366,7 @@ df['item_count'] = 1
 df.loc[df['material_id'].isin([233759, 475959, 536969, 656541, 679330, 826762, 991520, 1869279, 2053746, 2059874, 2080675]), 'item_count'] = 2
 df['type'] = type
 df['type_bin'] = type_bin
+df['volume'] = df['volume'].astype('float64')
 
 # COMMAND ----------
 
@@ -323,7 +378,7 @@ temp.display()
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{table_name})
+spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f"{table_name}")
 
 # COMMAND ----------
 
@@ -332,9 +387,14 @@ spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{ta
 
 # COMMAND ----------
 
-df = run('2023-10-01', '2024-09-28', 'ICE CREAM & DESSERTS', 'CAKES & GATEAUX')
+df = run('2024-01-01', '2024-12-29', 'ICE CREAM & DESSERTS', 'CAKES & GATEAUX')
 df2 = web_scrape(df)
 df2.display()
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select distinct material_group_id,category_id,department_id from gold.material.material_master where material_group_name='CAKES & GATEAUX';
 
 # COMMAND ----------
 
@@ -364,7 +424,7 @@ temp.display()
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{table_name})
+spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f"{table_name}")
 
 # COMMAND ----------
 
@@ -393,6 +453,7 @@ df['item_count'] = 1
 df.loc[df['material_id'].isin([628105, 714491, 808665, 897611, 990750, 993658, 2022935, 2068636, 2159330, 2159331]), 'item_count'] = 2
 df['type'] = type
 df['type_bin'] = type_bin
+df['volume'] = df['volume'].astype('float64')
 
 # COMMAND ----------
 
@@ -404,7 +465,7 @@ temp.display()
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{table_name})
+spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f"{table_name}")
 
 # COMMAND ----------
 
@@ -451,7 +512,7 @@ temp.display()
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{table_name})
+spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f"{table_name}")
 
 # COMMAND ----------
 
@@ -493,7 +554,7 @@ temp.display()
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{table_name})
+spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f"{table_name}")
 
 # COMMAND ----------
 
@@ -535,7 +596,7 @@ temp.display()
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{table_name})
+spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f"{table_name}")
 
 # COMMAND ----------
 
@@ -596,7 +657,7 @@ temp.display()
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{table_name})
+spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f"{table_name}")
 
 # COMMAND ----------
 
@@ -611,17 +672,11 @@ df2.display()
 
 # COMMAND ----------
 
-type = []
-
-len(type)
-
-# COMMAND ----------
-
 volume = [420, 420, 420, 420, 420, 454, 454, 454, 454, 454, 454, 454, 28.3, 28.3, 28.3, 28.3, 420, 400, 400, 400, 400, 400, 400, 320, 320, 320, 320, 320, 400, 400, 420, 450, 400, 450, 450, 400, 500, 500, 400, 400, 400, 400, 400, 400, 28.3, 340, 450, 450, 450, 370, 370, 370, 370, 370, 370, 370, 340, 340, 340, 340, 30, 30, 30, 430, 430, 430, 510, 340, 284, 340, 430, 370, 370, 340, 340, 340, 284, 284, 284, 284, 28, 450, 370, 450, 340, 340, 450, 340, 361, 340, 340, 907, 454, 450, 450, 450, 450, 450, 400, 400, 370, 340, 28, 28, 300, 28, 28, 380, 380, 380, 380, 380, 340, 482, 430, 330, 330, 330, 330, 330, 400, 370, 380, 300, 300, 420, 454, 454, 454, 400, 280, 370, 370, 370, 400, 200, 450, 360, 360, 360, 240, 240, 240, 340, 340, 340, 400, 410, 330, 330, 340, 340, 340, 400, 180, 180, 180, 180, 180, 180, 750, 200, 370, 370, 370, 370, 370, 370, 370, 400, 400, 220, 220, 220, 220, 220]
 
 units = ['G'] * 176
 
-type = []
+type = ['Mixed Fruit', 'Strawberry', 'Pineapple', 'Apricot', 'Raspberry', 'Pineapple', 'Mixed Fruit', 'Strawberry', 'Raspberry', 'Orange', 'Apricot', 'Red Cherry', 'Raspberry', 'Strawberry', 'Apricot', 'Black Cherry', 'Orange', 'Strawberry', 'Red Cherry', 'Mixed Fruit', 'Pineapple', 'Raspberry', 'Apricot', 'Strawberry', 'Black Cherry', 'Apricot', 'Forest Berry', 'Raspberry', 'Orange Marmalade', 'Fig', 'Assorted', 'Mango', 'Apple', 'Mixed Fruit', 'Pineapple', 'Strawberry', 'Mixed Fruit', 'Pineapple', 'Assorted', 'Apricot', 'Strawberry', 'Mixed Fruit', 'Raspberry', 'Pineapple', 'Red Cherry', 'Pineapple', 'Orange Marmalade', 'Apple', 'Mixed Fruit', 'Apricot', 'Red Cherry', 'Orange Marmalade', 'Raspberry', 'Peach', 'Strawberry', 'Red Cherry & Red Currant & Raspberry & Strawberry', 'Apricot', 'Sour Cherry', 'Strawberry', 'Orange Marmalade', 'Red Cherry', 'Strawberry', 'Raspberry', 'Fig with Nuts', 'Strawberry', 'Mulberry', 'Strawberry', 'Strawberry', 'Blackberry', 'Assorted', 'Apricot', 'Blueberry', 'Mixed Berry', 'Raspberry', 'Black Currant', 'Raspberry', 'Blueberry', 'Raspberry', 'Black Berry & Black Cherry & Raspberry & Strawberry', 'Fig', 'Assorted', 'Strawberry', 'Blackberry', 'Mixed Fruit', 'Black Cherry', 'Concord Grape', 'Pineapple', 'Apricot', 'Concord Grape', 'Strawberry', 'Raspberry', 'Strawberry', 'Pineapple', 'Strawberry', 'Raspberry', 'Mixed Fruit', 'Pineapple', 'Orange', 'Fig', 'Strawberry', 'Fig', 'Mixed Berry', 'Apricot', 'Raspberry', 'Dates', 'Strawberry', 'Orange Marmalade', 'Fig', 'Strawberry', 'Raspberry', 'Cherry', 'Apricot', 'Assorted', 'Mango', 'Fig', 'Peach', 'Strawberry', 'Raspberry', 'Blueberry', 'Bitter Orange', 'Strawberry', 'Pineapple & Passion Fruit', 'Assorted', 'Fig', 'Strawberry', 'Dates', 'Raspberry', 'Strawberry', 'Black Currant', 'Mixed Fruit', 'Tomato', 'Raspberry', 'Strawberry', 'Red Cherry & Red Currant & Raspberry & Strawberry', 'Apricot', 'Wood Apple', 'Wood Apple', 'Fig', 'Strawberry', 'Rose', 'Strawberry with Honey', 'Mulberry with Honey', 'Mixed Berry with Honey', 'Fig', 'Mixed Fruit', 'Guava', 'Pineapple', 'Lemon Curd', 'Black Fig', 'Apricot', 'Mixed Fruit', 'Fig', 'Guava', 'Fig', 'Chilli', 'Carrot & Ginger & Chilli', 'Jalapeno & Chilli', 'Chilli', 'Chilli', 'Strawberry & Chilli', 'Strawberry', 'Mixed Fruit', 'Cherry', 'Apricot', 'Plum', 'Peach', 'Raspberry', 'Fig', 'Strawberry', 'Mixed Fruit', 'Pineapple', 'Hibiscus Roselle', 'Passion Fruit', 'Papaya & Passion Fruit', 'Mulberry', 'Apricot']
 
 type_bin = type.copy()
 
@@ -644,7 +699,7 @@ temp.display()
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{table_name})
+spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f"{table_name}")
 
 # COMMAND ----------
 
@@ -659,18 +714,19 @@ df2.display()
 
 # COMMAND ----------
 
-volume = []
+volume = [200, 340, 850, 340, 850, 850, 340, 200, 850, 200, 200, 340, 850, 850, 340, 200, 200, 340, 340, 850, 200, 340, 850, 200, 340, 340, 340, 850, 200, 200, 340, 200, 340, 200, 200, 340, 800, 800, 200, 200, 200, 220, 220, 200, 340, 340, 340, 800, 340, 320, 320, 100, 200, 200, 200, 340, 340, 340, 320, 320]
 
-units = []
+units = ['G'] * 60
 
-type = []
+type = ['Chicken Hot & Spicy', 'Chicken', 'Chicken', 'Chicken Hot & Spicy', 'Chicken Hot & Spicy', 'Chicken', 'Chicken', 'Chicken', 'Chicken Hot & Spicy', 'Chicken Hot & Spicy', 'Chicken', 'Chicken', 'Chicken', 'Chicken Hot & Spicy', 'Chicken Hot & Spicy', 'Chicken', 'Chicken & Beef', 'Chicken', 'Chicken Hot & Spicy', 'Chicken', 'Turkey with Herbs', 'Turkey with Herbs', 'Turkey with Herbs', 'Chicken', 'Chicken & Beef', 'Chicken', 'Beef Hot & Spicy', 'Chicken Hot & Spicy', 'Chicken with Olives', 'Chicken Tandoori', 'Chicken', 'Chicken', 'Beef', 'Beef', 'Chicken', 'Chicken', 'Chicken', 'Chicken & Beef', 'Chicken', 'Chicken', 'Chicken', 'Italian Style Tuna Salad', 'Mexican Style Tuna Salad', 'Beef', 'Chicken', 'Beef', 'Chicken', 'Chicken', 'Chicken', 'Beef', 'Chicken', 'Beef', 'Chicken', 'Chicken', 'Chicken', 'Chicken', 'Chicken Hot & Spicy', 'Beef', 'Beef', 'Chicken']
 
 type_bin = type.copy()
 
 df['volume'] = volume
 df['units'] = units
 df['item_count'] = 1
-# df.loc[df['material_id'] == i, 'item_count'] = 2
+df.loc[df['material_id'].isin([184404, 557180, 738566, 932004, 1292326, 1292327, 1576176, 1998327, 2150524, 557181]), 'item_count'] = 2
+df.loc[df['material_id'].isin([701408, 866704, 866705, 1924890, 2247782, 2247783]), 'item_count'] = 3
 df['type'] = type
 df['type_bin'] = type_bin
 df['volume'] = df['volume'].astype('float64')
@@ -685,7 +741,7 @@ temp.display()
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{table_name})
+spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f"{table_name}")
 
 # COMMAND ----------
 
@@ -698,20 +754,32 @@ df = run('2023-10-01', '2024-09-28', 'BISCUITS & CAKES', 'SAVOURY')
 df2 = web_scrape(df)
 df2.display()
 
+# Check for crispbread
+
 # COMMAND ----------
 
-volume = []
+volume = [200, 125, 200, 42, 150, 63.3, 850, 650, 600, 600, 650, 650, 200, 160, 170, 170, 170, 30, 58.5, 250, 250, 135, 150, 150, 150, 100, 1, 200, 1, 190, 200, 35, 180, 250, 250, 130, 190, 200, 190, 100, 100, 250, 200, 800, 180, 300, 100, 200, 45, 150, 71, 71, 800, 150, 100, 300, 71, 71, 100, 39.6, 190, 33, 63.3, 32, 32, 32, 32, 32, 100, 200, 100, 170, 200, 210, 125, 170, 245, 215, 100, 41, 26, 26, 26, 200, 180, 200, 100, 720, 26, 26, 26, 26, 26, 275, 270, 260, 71, 850, 150, 170, 170, 297, 99, 351, 110, 110, 200, 800, 250, 250, 18, 227, 227, 300, 300, 71, 100, 120, 100, 185, 300, 200, 125, 23, 100, 70, 70, 70, 63.3, 120, 110, 125, 350, 100, 100, 100, 26, 26, 26, 150, 30, 100, 100, 100, 100, 100, 100, 100, 100, 250, 72, 100, 250, 90, 90, 90, 90, 150, 39.6, 250, 250, 250, 135, 311, 311, 105, 375, 850.5, 850.5, 180, 680, 793.8, 354.4, 65, 30, 40, 40, 172, 172, 39.6, 32, 200, 215, 100]
 
-units = []
+units = ['G'] * 184
 
-type = []
+type = ['NA', 'Water Cracker', 'Cream Cracker', 'Salted Cracker', 'Pretzel Sticks', 'Salted Cracker', 'Plain Cracker', 'Chicken Cracker', 'Plain Cracker', 'Cheese Cracker', 'Pizza Cracker', 'Garlic Cracker', 'Plain Cracker', 'Plain Cracker', 'Cheese Cracker', 'Pizza Cracker', 'Onion & Garlic Cracker', 'Stick Cracker', 'Plain Cracker', 'Multi Grain Bread', 'Sesame Bread', 'Cream Cracker', 'Sweet Cracker', 'Garlic & Herb Cracker', 'Spring Onion Cracker', 'Spring Onion Cracker', 'Assorted Biscuits', 'Salted Biscuit', 'Cream Cracker', 'Strawberry Cracker', 'Plain Cracker', 'Salted Cracker', 'Salted Cracker', 'Pretzel Sticks', 'Wholegrain Cracker', 'Bread Stix', 'Cream Cracker', 'Lemon Cream Biscuit', 'Cream Cracker', 'Lemon Cream Biscuit', 'Chocolate Cream Biscuit', 'Wholegrain Crispbread', 'Cream Cracker', 'Strawberry Cracker', 'Lemon Cracker', 'Plain Cracker', 'Plain Cracker', 'Cream Cracker', 'Cheese Cracker', 'Gluten Free Cracker', 'Salted Cracker', 'Salted & Buttered Cracker', 'Mango Cream Cracker', 'Salted Cracker', 'Plain Cracker', 'Plain Cracker', 'Salted & Buttered Cracker', 'Sweet & Salty Cracker', 'Plain Cracker', 'Plain Cracker', 'Orange & Cream Cracker Sandwich', 'Plain Cracker', 'Plain Cracker', 'Butter & Cream Cracker Sandwich', 'Chocolate & Cream Cracker Sandwich', 'Peanut Butter & Cream Cracker Sandwich', 'Cream Cracker Sandwich', 'Wholewheat Cracker', 'Plain Cracker', 'Cream Cracker', 'Cheese Cracker', 'Cream Cracker', 'Plain Cracker', 'Sesame Seeds Water Cracker', 'Plain Cracker', 'Cheese Cracker', 'Plain Cracker', 'Salted Cracker', 'Plain Cracker', 'Salted Cracker', 'Chilli & Tangy Cracker', 'Sour Cream & Onion Cracker', 'Plain Cracker', 'Cream Cracker', 'Cream Cracker', 'Sour Cream & Onion Cracker', 'Salted Stick Cracker', 'Cheese Cracker', 'Sour Cream & Onion Cracker', 'Chilli & Tangy Cracker', 'Salted Cracker', 'Cheese Cracker', 'Wholegrain Crispbread', 'Plain Crispbread', 'Wholegrain Crispbread', 'Sweet & Salted Cracker', 'Plain Cracker', 'Gluten Free Cracker', 'Onion Cracker', 'Plain Cracker', 'Plain Cracker', 'Plain Cracker', 'Cheese Cracker', 'Salted Cracker', 'Herbs Cracker', 'Cream Cracker', 'Plain Cracker', 'Quinoa & Chia Cracker', 'Assorted Crackers', 'Cheese Cracker', 'Cheese Cracker', 'Plain Cracker', 'Sugar Cracker', 'Butter Cracker', 'Salted & Buttered Cracker', 'Plain Cracker', 'Corn & Rice Crispbread', 'Cheese Cracker', 'Rosemary Cracker', 'Cream Cracker', 'Gluten & Milk Free Cracker', 'Italian Breadsticks', 'Cream & Onion Bread Nuggets', 'Salted Stick Cracker', 'Lentil & Green Onion & Multigrain Cracker', 'Lentil & Cheese & Multigrain Cracker', 'Lentil & Wasabi & Multigrain Cracker', 'Salted Cracker', 'Corn Flour Sticks', 'Rosemary & Salted Sticks', 'Multigrain Breadsticks', 'Plain Cracker', 'Plain Cracker', 'Pizza Cracker', 'Vegetables Cracker', 'Cheese & Chives Cracker Sandwich', 'Pumpkin Seed & Cream Cracker Sandwich', 'Strawberry Cracker Sandwich', 'Buckwheat Cracker', 'Plain Cracker', 'Spicy Crackers', 'Onion Cracker', 'Olive Oil & Salt Cracker', 'Rosemary Cracker', 'Oregano Cracker', 'Charcoal Cracker', 'Pizza Cracker', 'Truffle Cracker', 'Sfogliatelli Cracker', 'Chocolate Cream Biscuit', 'Spicy Crackers', 'Cheese & Paprika Cracker', 'Salted & Caramel Pretzel', 'Milk Chocolate Pretzel', 'Peanut Butter Pretzel', 'Cookie & Cream Pretzel', 'Sour Cream & Chive Cracker', 'Plain Cracker', 'Butter Cracker', 'Salted Cracker', 'Cheese Cracker', 'Plain Cracker', 'Cheese Cracker Sandwich', 'Cheese & Peanut Butter Cracker Sandwich', 'Coconut Cracker', 'Cream Cracker', 'Butter Soda Cracker', 'Soda Cracker', 'Butter & Garlic Baguette', 'Plain Cracker', 'Soda Cracker', 'Vanilla Cracker', 'Salted Cracker', 'Salted Stick Cracker', 'Matcha & Cream Pocky', 'Cookies & Cream Pocky', 'Plain Cracker', 'Wholewheat Cracker', 'Plain Cracker', 'Plain Cracker', 'Sourdough Cracker', 'Sourdough Cracker', 'Sweet Chilli & Sour Cream Rice Cracker']
 
 type_bin = type.copy()
 
 df['volume'] = volume
+df['volume'] = df['volume'].fillna(round(df['volume'].mean(), 1))
 df['units'] = units
+df.loc[df['material_id'].isin([74683, 134769]), 'units'] = 'KG'
 df['item_count'] = 1
-# df.loc[df['material_id'] == i, 'item_count'] = 2
+df.loc[df['material_id'].isin([1075748, 1325890, 1591485, 445819]), 'item_count'] = 2
+df.loc[df['material_id'].isin([624912, 2031827]), 'item_count'] = 3
+df.loc[df['material_id'].isin([808667, 1602308]), 'item_count'] = 5
+df.loc[df['material_id'].isin([586755, 593654]), 'item_count'] = 6
+df.loc[df['material_id'].isin([1204864, 1204865, 1204867, 1204884]), 'item_count'] = 8
+df.loc[df['material_id'].isin([785339, 819929, 820110, 820111, 820112, 1933759]), 'item_count'] = 10
+df.loc[df['material_id'].isin([13847, 292749, 1040110, 1040111, 1040112, 1167459, 1315905, 1673313, 2127466]), 'item_count'] = 12
+df.loc[df['material_id'].isin([706741, 983049]), 'item_count'] = 16
+df.loc[df['material_id'].isin([1971517, 2269332]), 'item_count'] = 24
 df['type'] = type
 df['type_bin'] = type_bin
 df['volume'] = df['volume'].astype('float64')
@@ -726,7 +794,7 @@ temp.display()
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{table_name})
+spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f"{table_name}")
 
 # COMMAND ----------
 
@@ -767,7 +835,7 @@ temp.display()
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{table_name})
+spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f"{table_name}")
 
 # COMMAND ----------
 
@@ -776,9 +844,14 @@ spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{ta
 
 # COMMAND ----------
 
-df = run('2023-10-01', '2024-09-28', 'BISCUITS & CAKES', 'COOKIES')
+df = run('2024-01-01', '2024-12-29', 'BISCUITS & CAKES', 'COOKIES')
 df2 = web_scrape(df)
 df2.display()
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select distinct material_group_id,category_id,department_id from gold.material.material_master where material_group_name='COOKIES';
 
 # COMMAND ----------
 
@@ -808,7 +881,7 @@ temp.display()
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{table_name})
+spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f"{table_name}")
 
 # COMMAND ----------
 
@@ -849,7 +922,7 @@ temp.display()
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{table_name})
+spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f"{table_name}")
 
 # COMMAND ----------
 
@@ -890,7 +963,7 @@ temp.display()
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{table_name})
+spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f"{table_name}")
 
 # COMMAND ----------
 
@@ -931,7 +1004,7 @@ temp.display()
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{table_name})
+spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f"{table_name}")
 
 # COMMAND ----------
 
@@ -972,7 +1045,7 @@ temp.display()
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{table_name})
+spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f"{table_name}")
 
 # COMMAND ----------
 
@@ -1013,7 +1086,7 @@ temp.display()
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{table_name})
+spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f"{table_name}")
 
 # COMMAND ----------
 
@@ -1054,7 +1127,7 @@ temp.display()
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f{table_name})
+spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable(f"{table_name}")
 
 # COMMAND ----------
 

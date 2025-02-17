@@ -1,6 +1,6 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC #Function Initializaitons
+# MAGIC #Function Initializations
 
 # COMMAND ----------
 
@@ -10,11 +10,11 @@ from datetime import datetime, timedelta
 
 # COMMAND ----------
 
-dbutils.widgets.text(name='Category', defaultValue='null')
-dbutils.widgets.text(name='Material Group', defaultValue='null')
-dbutils.widgets.text(name='Region', defaultValue='null')
-dbutils.widgets.text(name='Start Date', defaultValue='null')
-dbutils.widgets.text(name='End Date', defaultValue='null')
+dbutils.widgets.text(name = 'Category', defaultValue = 'null')
+dbutils.widgets.text(name = 'Material Group', defaultValue = 'null')
+dbutils.widgets.text(name = 'Region', defaultValue = 'null')
+dbutils.widgets.text(name = 'Start Date', defaultValue = 'null')
+dbutils.widgets.text(name = 'End Date', defaultValue = 'null')
 
 # COMMAND ----------
 
@@ -34,7 +34,7 @@ region = dbutils.widgets.get('Region') # ABU DHABI, AL AIN, DUBAI, SHARJAH
 
 # catg_lower = material_group_name.lower() # 'material_group_name' OR 'category'
 
-# Please make sure that the date range is EXACTLY 52 weeks (364 days) long, and does not include the present day's date
+# Make sure that the date range is EXACTLY 52 weeks (364 days) long, and does not include the present day's date
 start_date = dbutils.widgets.get('Start Date')
 end_date = dbutils.widgets.get('End Date')
 
@@ -59,7 +59,7 @@ new_sku_date_range = 6 # Products launched in the last [X] months will be taken 
 delist_contri_threshold = 0.03 # (% format) Contribution threshold for 'Low' contribution category to be categorized as Delist
 delist_product_count = 15 # (% format) Product count threshold for 'Low' contribution category that can be categorized as Delist
 
-save_files_flag = 1 # 1 is for saving files, 0 is for not saving files (for experimental purposes)
+save_data_flag = 1 # 1 is for saving data, 0 is for not saving data (for experimental purposes)
 
 # COMMAND ----------
 
@@ -108,7 +108,7 @@ rfm_month_year = spark.sql(query).toPandas().iloc[0,0]
 if material_group_name == "":
     material_group_condition = ""
 else:
-    material_group_condition = "AND material_group_name = '" + material_group_name + "'"
+    material_group_condition = f"AND material_group_name = '{material_group_name}'"
 
 # COMMAND ----------
 
@@ -1184,7 +1184,6 @@ low_sku_growth['new_buckets'] = new_buckets
 # COMMAND ----------
 
 # Identify PL SKUs recommended for delist and change their bucket to observe
-
 attr = spark.sql('SELECT * FROM dev.sandbox.pj_ao_attributes').toPandas()
 
 temp = low_sku_growth[['material_id', 'new_buckets']]
@@ -1192,7 +1191,7 @@ temp = pd.merge(temp, attr[['material_id', 'brand']], on='material_id', how='inn
 
 def check_pl_flag(text):
     words = text.split()
-    if 'IMP' in words or 'IMPORT' in words or text == 'LULU PRIVATE LABEL' or text == 'REPACKED PACKETS':
+    if 'IMP' in words or 'IMPORT' in words or text == 'LULU PRIVATE LABEL':
         return 1
     return 0
 
@@ -1203,18 +1202,9 @@ temp = temp[['material_id', 'new_buckets']]
 low_sku_growth.drop(columns=['new_buckets'], inplace=True)
 low_sku_growth = pd.merge(low_sku_growth, temp[['material_id', 'new_buckets']], on='material_id', how='inner')
 
-# COMMAND ----------
-
 # Identify newly launched PL SKUs recommended for delist and change their bucket to observe
-
 temp = new_sku_growth[['material_id', 'buckets']]
 temp = pd.merge(temp, attr[['material_id', 'brand']], on='material_id', how='inner')
-
-def check_pl_flag(text):
-    words = text.split()
-    if 'IMP' in words or 'IMPORT' in words or text == 'LULU PRIVATE LABEL':
-        return 1
-    return 0
 
 temp['pl_flag'] = temp['brand'].apply(check_pl_flag)
 temp['buckets'] = np.where((temp.pl_flag == 1) & (temp.buckets == 'Delist'), "Observe", temp.buckets)
@@ -1354,6 +1344,20 @@ all_products_catg.display()
 
 # COMMAND ----------
 
+if save_data_flag == 1:
+    temp = all_products_catg.copy()
+    temp['region_name'] = region
+    temp['category_name'] = category
+    temp['material_group_name'] = material_group_name
+
+    temp.rename(columns = {'new_buckets': 'recommendation'}, inplace = True)
+    temp = temp[['region_name', 'material_id', 'recommendation', 'category_name', 'material_group_name']]
+
+    spark_df = spark.createDataFrame(temp)
+    spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable("dev.sandbox.pj_ao_reco")
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC ##Weekly CWD & Customer %
 
@@ -1378,7 +1382,7 @@ ORDER BY week_number, material_id, store_id
 """
 
 material_store_df = spark.sql(query).toPandas()
-if save_files_flag == 1:
+if save_data_flag == 1:
     temp = material_store_df.copy()
     temp['region_name'] = region
     temp['category_name'] = category
@@ -1428,7 +1432,7 @@ weeks52.rename(columns={'total_quantity_sold': 'vol'}, inplace=True)
 weekly_data = pd.merge(weeks52, cwd_df, on=['material_id', 'week_number'], how = 'inner')
 weekly_data = weekly_data.drop(columns = 'total_sales')
 
-if save_files_flag == 1:
+if save_data_flag == 1:
     temp = weekly_data.copy()
     temp['region_name'] = region
     temp['category_name'] = category
@@ -1478,7 +1482,7 @@ ORDER BY material_id
 cust = spark.sql(query).toPandas()
 cust = pd.merge(cust, attr[['material_id', 'material_name']], on = 'material_id', how = 'inner')
 
-if save_files_flag == 1:
+if save_data_flag == 1:
     temp = cust.copy()
     temp['region_name'] = region
     temp['category_name'] = category
@@ -1490,22 +1494,6 @@ if save_files_flag == 1:
 
 # MAGIC %md
 # MAGIC ##GP - 3 Months & 12 Months
-
-# COMMAND ----------
-
-# Save the 3 months GP Data to DBFS
-
-gp_report.rename(columns={'gp_value': 'gp_abs_Q4'}, inplace=True)
-gp_report.rename(columns={'gp_contri': 'gp_contri_Q4'}, inplace=True)
-gp_report = gp_report[['material_id', 'gp_abs_Q4', 'gp_contri_Q4']]
-
-if save_files_flag == 1:
-    temp = gp_report.copy()
-    temp['region_name'] = region
-    temp['category_name'] = category
-    temp['material_group_name'] = material_group_name
-    spark_df = spark.createDataFrame(temp)
-    spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable("dev.sandbox.pj_ao_gp_3months")
 
 # COMMAND ----------
 
@@ -1540,19 +1528,23 @@ print(f"Added {materials_to_add['material_id'].nunique()} new SKUs")
 # Calculate the GP contribution
 
 total_gp_value = gp_report_12m['gp_value'].sum()
-gp_report_12m['gp_contri'] = gp_report_12m['gp_value'] / total_gp_value
+gp_report_12m['gp_contri_12m'] = gp_report_12m['gp_value'] / total_gp_value
 
 # COMMAND ----------
 
-# Bring the recommendation buckets into the gp dataframe and save it to DBFS
+# Merge the 3 months gp data into the 12 months gp data
 
-gp_report_12m = pd.merge(gp_report_12m, all_products_catg, on='material_id', how = 'inner')
-gp_report_12m.rename(columns={'gp_value': 'GP'}, inplace=True)
+gp_report.rename(columns={'gp_value': 'gp_abs_3m'}, inplace=True)
+gp_report.rename(columns={'gp_contri': 'gp_contri_3m'}, inplace=True)
+gp_report = gp_report[['material_id', 'gp_abs_3m', 'gp_contri_3m']]
+gp_report_12m = pd.merge(gp_report_12m, gp_report, on = 'material_id', how = 'inner')
 
-if save_files_flag == 1:
+gp_report_12m.rename(columns = {'gp_value': 'gp_abs_12m'}, inplace = True)
+
+if save_data_flag == 1:
     temp = gp_report_12m.copy()
     temp['region_name'] = region
     temp['category_name'] = category
     temp['material_group_name'] = material_group_name
     spark_df = spark.createDataFrame(temp)
-    spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable("dev.sandbox.pj_ao_gp_12months")
+    spark_df.write.option("overwriteSchema", "true").mode("append").saveAsTable("dev.sandbox.pj_ao_gp")
