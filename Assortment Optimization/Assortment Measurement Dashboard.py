@@ -544,186 +544,186 @@ df = pd.merge(df, reco_buckets_uae[['region_name', 'material_id', 'recommendatio
 
 # COMMAND ----------
 
-var_mg = ['PASTA', 'INSTANT NOODLE', 'CUP NOODLE', 'COCONUT OIL']
-for i in var_mg:
-    temp = reco_buckets_uae[reco_buckets_uae['material_group_name'] == i]
+# var_mg = ['PASTA', 'INSTANT NOODLE', 'CUP NOODLE', 'COCONUT OIL']
+# for i in var_mg:
+#     temp = reco_buckets_uae[reco_buckets_uae['material_group_name'] == i]
 
-    temp_auh = temp[temp['region_name'] == 'ABU DHABI'].reset_index(drop = True)
-    temp_aln = temp[temp['region_name'] == 'AL AIN'].reset_index(drop = True)
-    temp_dxb = temp[temp['region_name'] == 'DUBAI'].reset_index(drop = True)
-    temp_shj = temp[temp['region_name'] == 'SHARJAH'].reset_index(drop = True)
+#     temp_auh = temp[temp['region_name'] == 'ABU DHABI'].reset_index(drop = True)
+#     temp_aln = temp[temp['region_name'] == 'AL AIN'].reset_index(drop = True)
+#     temp_dxb = temp[temp['region_name'] == 'DUBAI'].reset_index(drop = True)
+#     temp_shj = temp[temp['region_name'] == 'SHARJAH'].reset_index(drop = True)
 
-    delist_from_reco_perc_auh = round(temp_auh[(temp_auh['delisted_date'] != 'NA') & (temp_auh['recommendation'] == 'Delist')]['material_id'].nunique() / temp_auh[temp_auh['recommendation'] == 'Delist']['material_id'].nunique() * 100)
-    delist_from_reco_perc_aln = round(temp_aln[(temp_aln['delisted_date'] != 'NA') & (temp_aln['recommendation'] == 'Delist')]['material_id'].nunique() / temp_aln[temp_aln['recommendation'] == 'Delist']['material_id'].nunique() * 100)
-    delist_from_reco_perc_dxb = round(temp_dxb[(temp_dxb['delisted_date'] != 'NA') & (temp_dxb['recommendation'] == 'Delist')]['material_id'].nunique() / temp_dxb[temp_dxb['recommendation'] == 'Delist']['material_id'].nunique() * 100)
-    delist_from_reco_perc_shj = round(temp_shj[(temp_shj['delisted_date'] != 'NA') & (temp_shj['recommendation'] == 'Delist')]['material_id'].nunique() / temp_shj[temp_shj['recommendation'] == 'Delist']['material_id'].nunique() * 100)
+#     delist_from_reco_perc_auh = round(temp_auh[(temp_auh['delisted_date'] != 'NA') & (temp_auh['recommendation'] == 'Delist')]['material_id'].nunique() / temp_auh[temp_auh['recommendation'] == 'Delist']['material_id'].nunique() * 100)
+#     delist_from_reco_perc_aln = round(temp_aln[(temp_aln['delisted_date'] != 'NA') & (temp_aln['recommendation'] == 'Delist')]['material_id'].nunique() / temp_aln[temp_aln['recommendation'] == 'Delist']['material_id'].nunique() * 100)
+#     delist_from_reco_perc_dxb = round(temp_dxb[(temp_dxb['delisted_date'] != 'NA') & (temp_dxb['recommendation'] == 'Delist')]['material_id'].nunique() / temp_dxb[temp_dxb['recommendation'] == 'Delist']['material_id'].nunique() * 100)
+#     delist_from_reco_perc_shj = round(temp_shj[(temp_shj['delisted_date'] != 'NA') & (temp_shj['recommendation'] == 'Delist')]['material_id'].nunique() / temp_shj[temp_shj['recommendation'] == 'Delist']['material_id'].nunique() * 100)
 
-    reco_from_delist_perc_auh = round(temp_auh[(temp_auh['delisted_date'] != 'NA') & (temp_auh['recommendation'] == 'Delist')]['material_id'].nunique() / temp_auh[temp_auh['delisted_date'] != 'NA']['material_id'].nunique() * 100)
-    reco_from_delist_perc_aln = round(temp_aln[(temp_aln['delisted_date'] != 'NA') & (temp_aln['recommendation'] == 'Delist')]['material_id'].nunique() / temp_aln[temp_aln['delisted_date'] != 'NA']['material_id'].nunique() * 100)
-    reco_from_delist_perc_dxb = round(temp_dxb[(temp_dxb['delisted_date'] != 'NA') & (temp_dxb['recommendation'] == 'Delist')]['material_id'].nunique() / temp_dxb[temp_dxb['delisted_date'] != 'NA']['material_id'].nunique() * 100)
-    reco_from_delist_perc_shj = round(temp_shj[(temp_shj['delisted_date'] != 'NA') & (temp_shj['recommendation'] == 'Delist')]['material_id'].nunique() / temp_shj[temp_shj['delisted_date'] != 'NA']['material_id'].nunique() * 100)
+#     reco_from_delist_perc_auh = round(temp_auh[(temp_auh['delisted_date'] != 'NA') & (temp_auh['recommendation'] == 'Delist')]['material_id'].nunique() / temp_auh[temp_auh['delisted_date'] != 'NA']['material_id'].nunique() * 100)
+#     reco_from_delist_perc_aln = round(temp_aln[(temp_aln['delisted_date'] != 'NA') & (temp_aln['recommendation'] == 'Delist')]['material_id'].nunique() / temp_aln[temp_aln['delisted_date'] != 'NA']['material_id'].nunique() * 100)
+#     reco_from_delist_perc_dxb = round(temp_dxb[(temp_dxb['delisted_date'] != 'NA') & (temp_dxb['recommendation'] == 'Delist')]['material_id'].nunique() / temp_dxb[temp_dxb['delisted_date'] != 'NA']['material_id'].nunique() * 100)
+#     reco_from_delist_perc_shj = round(temp_shj[(temp_shj['delisted_date'] != 'NA') & (temp_shj['recommendation'] == 'Delist')]['material_id'].nunique() / temp_shj[temp_shj['delisted_date'] != 'NA']['material_id'].nunique() * 100)
 
-    print(f"----------{i}----------")
-    print(f"% Delisted From Reco\nAbu Dhabi: {delist_from_reco_perc_auh}%\nAl Ain: {delist_from_reco_perc_aln}%\nDubai: {delist_from_reco_perc_dxb}%\nSharjah: {delist_from_reco_perc_shj}%")
-    print(f"\nReco From Delisted\nAbu Dhabi: {reco_from_delist_perc_auh}%\nAl Ain: {reco_from_delist_perc_aln}%\nDubai: {reco_from_delist_perc_dxb}%\nSharjah: {reco_from_delist_perc_shj}%\n")
-
-# COMMAND ----------
-
-temp = reco_buckets_uae[reco_buckets_uae['material_group_name'].isin(var_mg)]
-
-temp_auh = temp[temp['region_name'] == 'ABU DHABI'].reset_index(drop = True)
-temp_aln = temp[temp['region_name'] == 'AL AIN'].reset_index(drop = True)
-temp_dxb = temp[temp['region_name'] == 'DUBAI'].reset_index(drop = True)
-temp_shj = temp[temp['region_name'] == 'SHARJAH'].reset_index(drop = True)
-
-delist_from_reco_perc_auh = round(temp_auh[(temp_auh['delisted_date'] != 'NA') & (temp_auh['recommendation'] == 'Delist')]['material_id'].nunique() / temp_auh[temp_auh['recommendation'] == 'Delist']['material_id'].nunique() * 100)
-delist_from_reco_perc_aln = round(temp_aln[(temp_aln['delisted_date'] != 'NA') & (temp_aln['recommendation'] == 'Delist')]['material_id'].nunique() / temp_aln[temp_aln['recommendation'] == 'Delist']['material_id'].nunique() * 100)
-delist_from_reco_perc_dxb = round(temp_dxb[(temp_dxb['delisted_date'] != 'NA') & (temp_dxb['recommendation'] == 'Delist')]['material_id'].nunique() / temp_dxb[temp_dxb['recommendation'] == 'Delist']['material_id'].nunique() * 100)
-delist_from_reco_perc_shj = round(temp_shj[(temp_shj['delisted_date'] != 'NA') & (temp_shj['recommendation'] == 'Delist')]['material_id'].nunique() / temp_shj[temp_shj['recommendation'] == 'Delist']['material_id'].nunique() * 100)
-
-reco_from_delist_perc_auh = round(temp_auh[(temp_auh['delisted_date'] != 'NA') & (temp_auh['recommendation'] == 'Delist')]['material_id'].nunique() / temp_auh[temp_auh['delisted_date'] != 'NA']['material_id'].nunique() * 100)
-reco_from_delist_perc_aln = round(temp_aln[(temp_aln['delisted_date'] != 'NA') & (temp_aln['recommendation'] == 'Delist')]['material_id'].nunique() / temp_aln[temp_aln['delisted_date'] != 'NA']['material_id'].nunique() * 100)
-reco_from_delist_perc_dxb = round(temp_dxb[(temp_dxb['delisted_date'] != 'NA') & (temp_dxb['recommendation'] == 'Delist')]['material_id'].nunique() / temp_dxb[temp_dxb['delisted_date'] != 'NA']['material_id'].nunique() * 100)
-reco_from_delist_perc_shj = round(temp_shj[(temp_shj['delisted_date'] != 'NA') & (temp_shj['recommendation'] == 'Delist')]['material_id'].nunique() / temp_shj[temp_shj['delisted_date'] != 'NA']['material_id'].nunique() * 100)
-
-print("----------OVERALL----------")
-print(f"% Delisted From Reco\nAbu Dhabi: {delist_from_reco_perc_auh}%\nAl Ain: {delist_from_reco_perc_aln}%\nDubai: {delist_from_reco_perc_dxb}%\nSharjah: {delist_from_reco_perc_shj}%")
-print(f"\nReco From Delisted\nAbu Dhabi: {reco_from_delist_perc_auh}%\nAl Ain: {reco_from_delist_perc_aln}%\nDubai: {reco_from_delist_perc_dxb}%\nSharjah: {reco_from_delist_perc_shj}%\n")
+#     print(f"----------{i}----------")
+#     print(f"% Delisted From Reco\nAbu Dhabi: {delist_from_reco_perc_auh}%\nAl Ain: {delist_from_reco_perc_aln}%\nDubai: {delist_from_reco_perc_dxb}%\nSharjah: {delist_from_reco_perc_shj}%")
+#     print(f"\nReco From Delisted\nAbu Dhabi: {reco_from_delist_perc_auh}%\nAl Ain: {reco_from_delist_perc_aln}%\nDubai: {reco_from_delist_perc_dxb}%\nSharjah: {reco_from_delist_perc_shj}%\n")
 
 # COMMAND ----------
 
-dates_dct = {'WATER': {'pre_start': '2023-10-01', 'pre_end': '2023-12-30', 'post_start': '2024-04-01',
-                       'post_end': '2024-06-06', 'pre_months': 3, 'post_months': 2.2},
-             'PASTA': {'pre_start': '2024-02-19', 'pre_end': '2024-05-17', 'post_start': '2024-06-08',
-                       'post_end': '2024-08-08', 'pre_months': 3, 'post_months': 2},
-             'INSTANT NOODLE': {'pre_start': '2024-02-01', 'pre_end': '2024-04-28', 'post_start': '2024-06-01',
-                       'post_end': '2024-08-08', 'pre_months': 3, 'post_months': 2.266},
-             'CUP NOODLE': {'pre_start': '2023-12-01', 'pre_end': '2024-02-27', 'post_start': '2024-06-01',
-                       'post_end': '2024-08-08', 'pre_months': 3, 'post_months': 2.266},
-             'COCONUT OIL': {'pre_start': '2024-02-01', 'pre_end': '2024-04-28', 'post_start': '2024-06-15',
-                       'post_end': '2024-08-08', 'pre_months': 3, 'post_months': 1.766}}
+# temp = reco_buckets_uae[reco_buckets_uae['material_group_name'].isin(var_mg)]
 
-for i in var_mg:
-    pre_start = dates_dct[i]['pre_start']
-    pre_end = dates_dct[i]['pre_end']
-    post_start = dates_dct[i]['post_start']
-    post_end = dates_dct[i]['post_end']
-    pre_months = dates_dct[i]['pre_months']
-    post_months = dates_dct[i]['post_months']
+# temp_auh = temp[temp['region_name'] == 'ABU DHABI'].reset_index(drop = True)
+# temp_aln = temp[temp['region_name'] == 'AL AIN'].reset_index(drop = True)
+# temp_dxb = temp[temp['region_name'] == 'DUBAI'].reset_index(drop = True)
+# temp_shj = temp[temp['region_name'] == 'SHARJAH'].reset_index(drop = True)
 
-    temp = df[df['material_group_name'] == i]
+# delist_from_reco_perc_auh = round(temp_auh[(temp_auh['delisted_date'] != 'NA') & (temp_auh['recommendation'] == 'Delist')]['material_id'].nunique() / temp_auh[temp_auh['recommendation'] == 'Delist']['material_id'].nunique() * 100)
+# delist_from_reco_perc_aln = round(temp_aln[(temp_aln['delisted_date'] != 'NA') & (temp_aln['recommendation'] == 'Delist')]['material_id'].nunique() / temp_aln[temp_aln['recommendation'] == 'Delist']['material_id'].nunique() * 100)
+# delist_from_reco_perc_dxb = round(temp_dxb[(temp_dxb['delisted_date'] != 'NA') & (temp_dxb['recommendation'] == 'Delist')]['material_id'].nunique() / temp_dxb[temp_dxb['recommendation'] == 'Delist']['material_id'].nunique() * 100)
+# delist_from_reco_perc_shj = round(temp_shj[(temp_shj['delisted_date'] != 'NA') & (temp_shj['recommendation'] == 'Delist')]['material_id'].nunique() / temp_shj[temp_shj['recommendation'] == 'Delist']['material_id'].nunique() * 100)
 
-    temp_pre_uae = temp[(temp['business_day'] >= pre_start) & (temp['business_day'] <= pre_end)].reset_index(drop = True)
-    temp_pre_auh = temp[(temp['region_name'] == 'ABU DHABI') & (temp['business_day'] >= pre_start) & (temp['business_day'] <= pre_end)].reset_index(drop = True)
-    temp_pre_aln = temp[(temp['region_name'] == 'AL AIN') & (temp['business_day'] >= pre_start) & (temp['business_day'] <= pre_end)].reset_index(drop = True)
-    temp_pre_dxb = temp[(temp['region_name'] == 'DUBAI') & (temp['business_day'] >= pre_start) & (temp['business_day'] <= pre_end)].reset_index(drop = True)
-    temp_pre_shj = temp[(temp['region_name'] == 'SHARJAH') & (temp['business_day'] >= pre_start) & (temp['business_day'] <= pre_end)].reset_index(drop = True)
+# reco_from_delist_perc_auh = round(temp_auh[(temp_auh['delisted_date'] != 'NA') & (temp_auh['recommendation'] == 'Delist')]['material_id'].nunique() / temp_auh[temp_auh['delisted_date'] != 'NA']['material_id'].nunique() * 100)
+# reco_from_delist_perc_aln = round(temp_aln[(temp_aln['delisted_date'] != 'NA') & (temp_aln['recommendation'] == 'Delist')]['material_id'].nunique() / temp_aln[temp_aln['delisted_date'] != 'NA']['material_id'].nunique() * 100)
+# reco_from_delist_perc_dxb = round(temp_dxb[(temp_dxb['delisted_date'] != 'NA') & (temp_dxb['recommendation'] == 'Delist')]['material_id'].nunique() / temp_dxb[temp_dxb['delisted_date'] != 'NA']['material_id'].nunique() * 100)
+# reco_from_delist_perc_shj = round(temp_shj[(temp_shj['delisted_date'] != 'NA') & (temp_shj['recommendation'] == 'Delist')]['material_id'].nunique() / temp_shj[temp_shj['delisted_date'] != 'NA']['material_id'].nunique() * 100)
 
-    temp_post_uae = temp[(temp['business_day'] >= post_start) & (temp['business_day'] <= post_end)].reset_index(drop = True)
-    temp_post_auh = temp[(temp['region_name'] == 'ABU DHABI') & (temp['business_day'] >= post_start) & (temp['business_day'] <= post_end)].reset_index(drop = True)
-    temp_post_aln = temp[(temp['region_name'] == 'AL AIN') & (temp['business_day'] >= post_start) & (temp['business_day'] <= post_end)].reset_index(drop = True)
-    temp_post_dxb = temp[(temp['region_name'] == 'DUBAI') & (temp['business_day'] >= post_start) & (temp['business_day'] <= post_end)].reset_index(drop = True)
-    temp_post_shj = temp[(temp['region_name'] == 'SHARJAH') & (temp['business_day'] >= post_start) & (temp['business_day'] <= post_end)].reset_index(drop = True)
+# print("----------OVERALL----------")
+# print(f"% Delisted From Reco\nAbu Dhabi: {delist_from_reco_perc_auh}%\nAl Ain: {delist_from_reco_perc_aln}%\nDubai: {delist_from_reco_perc_dxb}%\nSharjah: {delist_from_reco_perc_shj}%")
+# print(f"\nReco From Delisted\nAbu Dhabi: {reco_from_delist_perc_auh}%\nAl Ain: {reco_from_delist_perc_aln}%\nDubai: {reco_from_delist_perc_dxb}%\nSharjah: {reco_from_delist_perc_shj}%\n")
 
-    temp_pre_uae_reco = temp_pre_uae[temp_pre_uae['recommendation'] != 'Delist'].reset_index(drop = True)
-    temp_pre_auh_reco = temp_pre_auh[temp_pre_auh['recommendation'] != 'Delist'].reset_index(drop = True)
-    temp_pre_aln_reco = temp_pre_aln[temp_pre_aln['recommendation'] != 'Delist'].reset_index(drop = True)
-    temp_pre_dxb_reco = temp_pre_dxb[temp_pre_dxb['recommendation'] != 'Delist'].reset_index(drop = True)
-    temp_pre_shj_reco = temp_pre_shj[temp_pre_shj['recommendation'] != 'Delist'].reset_index(drop = True)
+# COMMAND ----------
 
-    temp_post_uae_reco = temp_post_uae[temp_post_uae['recommendation'] != 'Delist'].reset_index(drop = True)
-    temp_post_auh_reco = temp_post_auh[temp_post_auh['recommendation'] != 'Delist'].reset_index(drop = True)
-    temp_post_aln_reco = temp_post_aln[temp_post_aln['recommendation'] != 'Delist'].reset_index(drop = True)
-    temp_post_dxb_reco = temp_post_dxb[temp_post_dxb['recommendation'] != 'Delist'].reset_index(drop = True)
-    temp_post_shj_reco = temp_post_shj[temp_post_shj['recommendation'] != 'Delist'].reset_index(drop = True)
+# dates_dct = {'WATER': {'pre_start': '2023-10-01', 'pre_end': '2023-12-30', 'post_start': '2024-04-01',
+#                        'post_end': '2024-06-06', 'pre_months': 3, 'post_months': 2.2},
+#              'PASTA': {'pre_start': '2024-02-19', 'pre_end': '2024-05-17', 'post_start': '2024-06-08',
+#                        'post_end': '2024-08-08', 'pre_months': 3, 'post_months': 2},
+#              'INSTANT NOODLE': {'pre_start': '2024-02-01', 'pre_end': '2024-04-28', 'post_start': '2024-06-01',
+#                        'post_end': '2024-08-08', 'pre_months': 3, 'post_months': 2.266},
+#              'CUP NOODLE': {'pre_start': '2023-12-01', 'pre_end': '2024-02-27', 'post_start': '2024-06-01',
+#                        'post_end': '2024-08-08', 'pre_months': 3, 'post_months': 2.266},
+#              'COCONUT OIL': {'pre_start': '2024-02-01', 'pre_end': '2024-04-28', 'post_start': '2024-06-15',
+#                        'post_end': '2024-08-08', 'pre_months': 3, 'post_months': 1.766}}
 
-    ########## Average Monthly Sales Growth
+# for i in var_mg:
+#     pre_start = dates_dct[i]['pre_start']
+#     pre_end = dates_dct[i]['pre_end']
+#     post_start = dates_dct[i]['post_start']
+#     post_end = dates_dct[i]['post_end']
+#     pre_months = dates_dct[i]['pre_months']
+#     post_months = dates_dct[i]['post_months']
 
-    avg_monthly_sales_pre_uae = temp_pre_uae['sales'].sum() / pre_months
-    avg_monthly_sales_pre_auh = temp_pre_auh['sales'].sum() / pre_months
-    avg_monthly_sales_pre_aln = temp_pre_aln['sales'].sum() / pre_months
-    avg_monthly_sales_pre_dxb = temp_pre_dxb['sales'].sum() / pre_months
-    avg_monthly_sales_pre_shj = temp_pre_shj['sales'].sum() / pre_months
+#     temp = df[df['material_group_name'] == i]
 
-    avg_monthly_sales_post_uae = temp_post_uae['sales'].sum() / post_months
-    avg_monthly_sales_post_auh = temp_post_auh['sales'].sum() / post_months
-    avg_monthly_sales_post_aln = temp_post_aln['sales'].sum() / post_months
-    avg_monthly_sales_post_dxb = temp_post_dxb['sales'].sum() / post_months
-    avg_monthly_sales_post_shj = temp_post_shj['sales'].sum() / post_months
+#     temp_pre_uae = temp[(temp['business_day'] >= pre_start) & (temp['business_day'] <= pre_end)].reset_index(drop = True)
+#     temp_pre_auh = temp[(temp['region_name'] == 'ABU DHABI') & (temp['business_day'] >= pre_start) & (temp['business_day'] <= pre_end)].reset_index(drop = True)
+#     temp_pre_aln = temp[(temp['region_name'] == 'AL AIN') & (temp['business_day'] >= pre_start) & (temp['business_day'] <= pre_end)].reset_index(drop = True)
+#     temp_pre_dxb = temp[(temp['region_name'] == 'DUBAI') & (temp['business_day'] >= pre_start) & (temp['business_day'] <= pre_end)].reset_index(drop = True)
+#     temp_pre_shj = temp[(temp['region_name'] == 'SHARJAH') & (temp['business_day'] >= pre_start) & (temp['business_day'] <= pre_end)].reset_index(drop = True)
 
-    avg_month_sales_growth_uae = round((avg_monthly_sales_post_uae - avg_monthly_sales_pre_uae) / avg_monthly_sales_pre_uae*100, 2)
-    avg_month_sales_growth_auh = round((avg_monthly_sales_post_auh - avg_monthly_sales_pre_auh) / avg_monthly_sales_pre_auh*100, 2)
-    avg_month_sales_growth_aln = round((avg_monthly_sales_post_aln - avg_monthly_sales_pre_aln) / avg_monthly_sales_pre_aln*100, 2)
-    avg_month_sales_growth_dxb = round((avg_monthly_sales_post_dxb - avg_monthly_sales_pre_dxb) / avg_monthly_sales_pre_dxb*100, 2)
-    avg_month_sales_growth_shj = round((avg_monthly_sales_post_shj - avg_monthly_sales_pre_shj) / avg_monthly_sales_pre_shj*100, 2)
+#     temp_post_uae = temp[(temp['business_day'] >= post_start) & (temp['business_day'] <= post_end)].reset_index(drop = True)
+#     temp_post_auh = temp[(temp['region_name'] == 'ABU DHABI') & (temp['business_day'] >= post_start) & (temp['business_day'] <= post_end)].reset_index(drop = True)
+#     temp_post_aln = temp[(temp['region_name'] == 'AL AIN') & (temp['business_day'] >= post_start) & (temp['business_day'] <= post_end)].reset_index(drop = True)
+#     temp_post_dxb = temp[(temp['region_name'] == 'DUBAI') & (temp['business_day'] >= post_start) & (temp['business_day'] <= post_end)].reset_index(drop = True)
+#     temp_post_shj = temp[(temp['region_name'] == 'SHARJAH') & (temp['business_day'] >= post_start) & (temp['business_day'] <= post_end)].reset_index(drop = True)
 
-    ########## Average Monthly GP Growth
+#     temp_pre_uae_reco = temp_pre_uae[temp_pre_uae['recommendation'] != 'Delist'].reset_index(drop = True)
+#     temp_pre_auh_reco = temp_pre_auh[temp_pre_auh['recommendation'] != 'Delist'].reset_index(drop = True)
+#     temp_pre_aln_reco = temp_pre_aln[temp_pre_aln['recommendation'] != 'Delist'].reset_index(drop = True)
+#     temp_pre_dxb_reco = temp_pre_dxb[temp_pre_dxb['recommendation'] != 'Delist'].reset_index(drop = True)
+#     temp_pre_shj_reco = temp_pre_shj[temp_pre_shj['recommendation'] != 'Delist'].reset_index(drop = True)
 
-    avg_monthly_gp_pre_uae = temp_pre_uae['gross_profit'].sum() / pre_months
-    avg_monthly_gp_pre_auh = temp_pre_auh['gross_profit'].sum() / pre_months
-    avg_monthly_gp_pre_aln = temp_pre_aln['gross_profit'].sum() / pre_months
-    avg_monthly_gp_pre_dxb = temp_pre_dxb['gross_profit'].sum() / pre_months
-    avg_monthly_gp_pre_shj = temp_pre_shj['gross_profit'].sum() / pre_months
+#     temp_post_uae_reco = temp_post_uae[temp_post_uae['recommendation'] != 'Delist'].reset_index(drop = True)
+#     temp_post_auh_reco = temp_post_auh[temp_post_auh['recommendation'] != 'Delist'].reset_index(drop = True)
+#     temp_post_aln_reco = temp_post_aln[temp_post_aln['recommendation'] != 'Delist'].reset_index(drop = True)
+#     temp_post_dxb_reco = temp_post_dxb[temp_post_dxb['recommendation'] != 'Delist'].reset_index(drop = True)
+#     temp_post_shj_reco = temp_post_shj[temp_post_shj['recommendation'] != 'Delist'].reset_index(drop = True)
 
-    avg_monthly_gp_post_uae = temp_post_uae['gross_profit'].sum() / post_months
-    avg_monthly_gp_post_auh = temp_post_auh['gross_profit'].sum() / post_months
-    avg_monthly_gp_post_aln = temp_post_aln['gross_profit'].sum() / post_months
-    avg_monthly_gp_post_dxb = temp_post_dxb['gross_profit'].sum() / post_months
-    avg_monthly_gp_post_shj = temp_post_shj['gross_profit'].sum() / post_months
+#     ########## Average Monthly Sales Growth
 
-    avg_month_gp_growth_uae = round((avg_monthly_gp_post_uae - avg_monthly_gp_pre_uae) / avg_monthly_gp_pre_uae*100, 2)
-    avg_month_gp_growth_auh = round((avg_monthly_gp_post_auh - avg_monthly_gp_pre_auh) / avg_monthly_gp_pre_auh*100, 2)
-    avg_month_gp_growth_aln = round((avg_monthly_gp_post_aln - avg_monthly_gp_pre_aln) / avg_monthly_gp_pre_aln*100, 2)
-    avg_month_gp_growth_dxb = round((avg_monthly_gp_post_dxb - avg_monthly_gp_pre_dxb) / avg_monthly_gp_pre_dxb*100, 2)
-    avg_month_gp_growth_shj = round((avg_monthly_gp_post_shj - avg_monthly_gp_pre_shj) / avg_monthly_gp_pre_shj*100, 2)
+#     avg_monthly_sales_pre_uae = temp_pre_uae['sales'].sum() / pre_months
+#     avg_monthly_sales_pre_auh = temp_pre_auh['sales'].sum() / pre_months
+#     avg_monthly_sales_pre_aln = temp_pre_aln['sales'].sum() / pre_months
+#     avg_monthly_sales_pre_dxb = temp_pre_dxb['sales'].sum() / pre_months
+#     avg_monthly_sales_pre_shj = temp_pre_shj['sales'].sum() / pre_months
 
-    ########## GP Margin Delta (Actual Delisted)
+#     avg_monthly_sales_post_uae = temp_post_uae['sales'].sum() / post_months
+#     avg_monthly_sales_post_auh = temp_post_auh['sales'].sum() / post_months
+#     avg_monthly_sales_post_aln = temp_post_aln['sales'].sum() / post_months
+#     avg_monthly_sales_post_dxb = temp_post_dxb['sales'].sum() / post_months
+#     avg_monthly_sales_post_shj = temp_post_shj['sales'].sum() / post_months
 
-    gp_margin_pre_actual_uae = temp_pre_uae['gross_profit'].sum() / temp_pre_uae['sales'].sum()
-    gp_margin_pre_actual_auh = temp_pre_auh['gross_profit'].sum() / temp_pre_auh['sales'].sum()
-    gp_margin_pre_actual_aln = temp_pre_aln['gross_profit'].sum() / temp_pre_aln['sales'].sum()
-    gp_margin_pre_actual_dxb = temp_pre_dxb['gross_profit'].sum() / temp_pre_dxb['sales'].sum()
-    gp_margin_pre_actual_shj = temp_pre_shj['gross_profit'].sum() / temp_pre_shj['sales'].sum()
+#     avg_month_sales_growth_uae = round((avg_monthly_sales_post_uae - avg_monthly_sales_pre_uae) / avg_monthly_sales_pre_uae*100, 2)
+#     avg_month_sales_growth_auh = round((avg_monthly_sales_post_auh - avg_monthly_sales_pre_auh) / avg_monthly_sales_pre_auh*100, 2)
+#     avg_month_sales_growth_aln = round((avg_monthly_sales_post_aln - avg_monthly_sales_pre_aln) / avg_monthly_sales_pre_aln*100, 2)
+#     avg_month_sales_growth_dxb = round((avg_monthly_sales_post_dxb - avg_monthly_sales_pre_dxb) / avg_monthly_sales_pre_dxb*100, 2)
+#     avg_month_sales_growth_shj = round((avg_monthly_sales_post_shj - avg_monthly_sales_pre_shj) / avg_monthly_sales_pre_shj*100, 2)
 
-    gp_margin_post_actual_uae = temp_post_uae['gross_profit'].sum() / temp_post_uae['sales'].sum()
-    gp_margin_post_actual_auh = temp_post_auh['gross_profit'].sum() / temp_post_auh['sales'].sum()
-    gp_margin_post_actual_aln = temp_post_aln['gross_profit'].sum() / temp_post_aln['sales'].sum()
-    gp_margin_post_actual_dxb = temp_post_dxb['gross_profit'].sum() / temp_post_dxb['sales'].sum()
-    gp_margin_post_actual_shj = temp_post_shj['gross_profit'].sum() / temp_post_shj['sales'].sum()
+#     ########## Average Monthly GP Growth
 
-    gp_margin_delta_actual_uae = round((gp_margin_post_actual_uae - gp_margin_pre_actual_uae)*100, 2)
-    gp_margin_delta_actual_auh = round((gp_margin_post_actual_auh - gp_margin_pre_actual_auh)*100, 2)
-    gp_margin_delta_actual_aln = round((gp_margin_post_actual_aln - gp_margin_pre_actual_aln)*100, 2)
-    gp_margin_delta_actual_dxb = round((gp_margin_post_actual_dxb - gp_margin_pre_actual_dxb)*100, 2)
-    gp_margin_delta_actual_shj = round((gp_margin_post_actual_shj - gp_margin_pre_actual_shj)*100, 2)
+#     avg_monthly_gp_pre_uae = temp_pre_uae['gross_profit'].sum() / pre_months
+#     avg_monthly_gp_pre_auh = temp_pre_auh['gross_profit'].sum() / pre_months
+#     avg_monthly_gp_pre_aln = temp_pre_aln['gross_profit'].sum() / pre_months
+#     avg_monthly_gp_pre_dxb = temp_pre_dxb['gross_profit'].sum() / pre_months
+#     avg_monthly_gp_pre_shj = temp_pre_shj['gross_profit'].sum() / pre_months
 
-    ########## GP Margin Delta (Delist Reco)
+#     avg_monthly_gp_post_uae = temp_post_uae['gross_profit'].sum() / post_months
+#     avg_monthly_gp_post_auh = temp_post_auh['gross_profit'].sum() / post_months
+#     avg_monthly_gp_post_aln = temp_post_aln['gross_profit'].sum() / post_months
+#     avg_monthly_gp_post_dxb = temp_post_dxb['gross_profit'].sum() / post_months
+#     avg_monthly_gp_post_shj = temp_post_shj['gross_profit'].sum() / post_months
 
-    gp_margin_pre_reco_uae = temp_pre_uae_reco['gross_profit'].sum() / temp_pre_uae_reco['sales'].sum()
-    gp_margin_pre_reco_auh = temp_pre_auh_reco['gross_profit'].sum() / temp_pre_auh_reco['sales'].sum()
-    gp_margin_pre_reco_aln = temp_pre_aln_reco['gross_profit'].sum() / temp_pre_aln_reco['sales'].sum()
-    gp_margin_pre_reco_dxb = temp_pre_dxb_reco['gross_profit'].sum() / temp_pre_dxb_reco['sales'].sum()
-    gp_margin_pre_reco_shj = temp_pre_shj_reco['gross_profit'].sum() / temp_pre_shj_reco['sales'].sum()
+#     avg_month_gp_growth_uae = round((avg_monthly_gp_post_uae - avg_monthly_gp_pre_uae) / avg_monthly_gp_pre_uae*100, 2)
+#     avg_month_gp_growth_auh = round((avg_monthly_gp_post_auh - avg_monthly_gp_pre_auh) / avg_monthly_gp_pre_auh*100, 2)
+#     avg_month_gp_growth_aln = round((avg_monthly_gp_post_aln - avg_monthly_gp_pre_aln) / avg_monthly_gp_pre_aln*100, 2)
+#     avg_month_gp_growth_dxb = round((avg_monthly_gp_post_dxb - avg_monthly_gp_pre_dxb) / avg_monthly_gp_pre_dxb*100, 2)
+#     avg_month_gp_growth_shj = round((avg_monthly_gp_post_shj - avg_monthly_gp_pre_shj) / avg_monthly_gp_pre_shj*100, 2)
 
-    gp_margin_post_reco_uae = temp_post_uae_reco['gross_profit'].sum() / temp_post_uae_reco['sales'].sum()
-    gp_margin_post_reco_auh = temp_post_auh_reco['gross_profit'].sum() / temp_post_auh_reco['sales'].sum()
-    gp_margin_post_reco_aln = temp_post_aln_reco['gross_profit'].sum() / temp_post_aln_reco['sales'].sum()
-    gp_margin_post_reco_dxb = temp_post_dxb_reco['gross_profit'].sum() / temp_post_dxb_reco['sales'].sum()
-    gp_margin_post_reco_shj = temp_post_shj_reco['gross_profit'].sum() / temp_post_shj_reco['sales'].sum()
+#     ########## GP Margin Delta (Actual Delisted)
 
-    gp_margin_delta_reco_uae = round((gp_margin_post_reco_uae - gp_margin_pre_reco_uae)*100, 2)
-    gp_margin_delta_reco_auh = round((gp_margin_post_reco_auh - gp_margin_pre_reco_auh)*100, 2)
-    gp_margin_delta_reco_aln = round((gp_margin_post_reco_aln - gp_margin_pre_reco_aln)*100, 2)
-    gp_margin_delta_reco_dxb = round((gp_margin_post_reco_dxb - gp_margin_pre_reco_dxb)*100, 2)
-    gp_margin_delta_reco_shj = round((gp_margin_post_reco_shj - gp_margin_pre_reco_shj)*100, 2)
+#     gp_margin_pre_actual_uae = temp_pre_uae['gross_profit'].sum() / temp_pre_uae['sales'].sum()
+#     gp_margin_pre_actual_auh = temp_pre_auh['gross_profit'].sum() / temp_pre_auh['sales'].sum()
+#     gp_margin_pre_actual_aln = temp_pre_aln['gross_profit'].sum() / temp_pre_aln['sales'].sum()
+#     gp_margin_pre_actual_dxb = temp_pre_dxb['gross_profit'].sum() / temp_pre_dxb['sales'].sum()
+#     gp_margin_pre_actual_shj = temp_pre_shj['gross_profit'].sum() / temp_pre_shj['sales'].sum()
 
-    print(f"----------{i}----------")
-    print(f"Pre-delist Sales\nUAE: {temp_pre_uae['sales'].sum().round()}\nAbu Dhabi: {temp_pre_auh['sales'].sum().round()}\nAl Ain: {temp_pre_aln['sales'].sum().round()}\nDubai: {temp_pre_dxb['sales'].sum().round()}\nSharjah: {temp_pre_shj['sales'].sum().round()}")
-    print(f"\nPost Delist Sales\nUAE: {temp_post_uae['sales'].sum().round()}\nAbu Dhabi: {temp_post_auh['sales'].sum().round()}\nAl Ain: {temp_post_aln['sales'].sum().round()}\nDubai: {temp_post_dxb['sales'].sum().round()}\nSharjah: {temp_post_shj['sales'].sum().round()}")
-    print(f"\nAverage Monthly Sales Growth\nUAE: {avg_month_sales_growth_uae}%\nAbu Dhabi: {avg_month_sales_growth_auh}%\nAl Ain: {avg_month_sales_growth_aln}%\nDubai: {avg_month_sales_growth_dxb}%\nSharjah: {avg_month_sales_growth_shj}%")
-    print(f"\nAverage Monthly GP Growth\nUAE: {avg_month_gp_growth_uae}%\nAbu Dhabi: {avg_month_gp_growth_auh}%\nAl Ain: {avg_month_gp_growth_aln}%\nDubai: {avg_month_gp_growth_dxb}%\nSharjah: {avg_month_gp_growth_shj}%")
-    print(f"\nGP Margin Delta (Actual Delistings)\nUAE: {gp_margin_delta_actual_uae}%\nAbu Dhabi: {gp_margin_delta_actual_auh}%\nAl Ain: {gp_margin_delta_actual_aln}%\nDubai: {gp_margin_delta_actual_dxb}%\nSharjah: {gp_margin_delta_actual_shj}%\n")
-    print(f"\nGP Margin Delta (Delist Reco)\nUAE: {gp_margin_delta_reco_uae}%\nAbu Dhabi: {gp_margin_delta_reco_auh}%\nAl Ain: {gp_margin_delta_reco_aln}%\nDubai: {gp_margin_delta_reco_dxb}%\nSharjah: {gp_margin_delta_reco_shj}%\n")
+#     gp_margin_post_actual_uae = temp_post_uae['gross_profit'].sum() / temp_post_uae['sales'].sum()
+#     gp_margin_post_actual_auh = temp_post_auh['gross_profit'].sum() / temp_post_auh['sales'].sum()
+#     gp_margin_post_actual_aln = temp_post_aln['gross_profit'].sum() / temp_post_aln['sales'].sum()
+#     gp_margin_post_actual_dxb = temp_post_dxb['gross_profit'].sum() / temp_post_dxb['sales'].sum()
+#     gp_margin_post_actual_shj = temp_post_shj['gross_profit'].sum() / temp_post_shj['sales'].sum()
+
+#     gp_margin_delta_actual_uae = round((gp_margin_post_actual_uae - gp_margin_pre_actual_uae)*100, 2)
+#     gp_margin_delta_actual_auh = round((gp_margin_post_actual_auh - gp_margin_pre_actual_auh)*100, 2)
+#     gp_margin_delta_actual_aln = round((gp_margin_post_actual_aln - gp_margin_pre_actual_aln)*100, 2)
+#     gp_margin_delta_actual_dxb = round((gp_margin_post_actual_dxb - gp_margin_pre_actual_dxb)*100, 2)
+#     gp_margin_delta_actual_shj = round((gp_margin_post_actual_shj - gp_margin_pre_actual_shj)*100, 2)
+
+#     ########## GP Margin Delta (Delist Reco)
+
+#     gp_margin_pre_reco_uae = temp_pre_uae_reco['gross_profit'].sum() / temp_pre_uae_reco['sales'].sum()
+#     gp_margin_pre_reco_auh = temp_pre_auh_reco['gross_profit'].sum() / temp_pre_auh_reco['sales'].sum()
+#     gp_margin_pre_reco_aln = temp_pre_aln_reco['gross_profit'].sum() / temp_pre_aln_reco['sales'].sum()
+#     gp_margin_pre_reco_dxb = temp_pre_dxb_reco['gross_profit'].sum() / temp_pre_dxb_reco['sales'].sum()
+#     gp_margin_pre_reco_shj = temp_pre_shj_reco['gross_profit'].sum() / temp_pre_shj_reco['sales'].sum()
+
+#     gp_margin_post_reco_uae = temp_post_uae_reco['gross_profit'].sum() / temp_post_uae_reco['sales'].sum()
+#     gp_margin_post_reco_auh = temp_post_auh_reco['gross_profit'].sum() / temp_post_auh_reco['sales'].sum()
+#     gp_margin_post_reco_aln = temp_post_aln_reco['gross_profit'].sum() / temp_post_aln_reco['sales'].sum()
+#     gp_margin_post_reco_dxb = temp_post_dxb_reco['gross_profit'].sum() / temp_post_dxb_reco['sales'].sum()
+#     gp_margin_post_reco_shj = temp_post_shj_reco['gross_profit'].sum() / temp_post_shj_reco['sales'].sum()
+
+#     gp_margin_delta_reco_uae = round((gp_margin_post_reco_uae - gp_margin_pre_reco_uae)*100, 2)
+#     gp_margin_delta_reco_auh = round((gp_margin_post_reco_auh - gp_margin_pre_reco_auh)*100, 2)
+#     gp_margin_delta_reco_aln = round((gp_margin_post_reco_aln - gp_margin_pre_reco_aln)*100, 2)
+#     gp_margin_delta_reco_dxb = round((gp_margin_post_reco_dxb - gp_margin_pre_reco_dxb)*100, 2)
+#     gp_margin_delta_reco_shj = round((gp_margin_post_reco_shj - gp_margin_pre_reco_shj)*100, 2)
+
+#     print(f"----------{i}----------")
+#     print(f"Pre-delist Sales\nUAE: {temp_pre_uae['sales'].sum().round()}\nAbu Dhabi: {temp_pre_auh['sales'].sum().round()}\nAl Ain: {temp_pre_aln['sales'].sum().round()}\nDubai: {temp_pre_dxb['sales'].sum().round()}\nSharjah: {temp_pre_shj['sales'].sum().round()}")
+#     print(f"\nPost Delist Sales\nUAE: {temp_post_uae['sales'].sum().round()}\nAbu Dhabi: {temp_post_auh['sales'].sum().round()}\nAl Ain: {temp_post_aln['sales'].sum().round()}\nDubai: {temp_post_dxb['sales'].sum().round()}\nSharjah: {temp_post_shj['sales'].sum().round()}")
+#     print(f"\nAverage Monthly Sales Growth\nUAE: {avg_month_sales_growth_uae}%\nAbu Dhabi: {avg_month_sales_growth_auh}%\nAl Ain: {avg_month_sales_growth_aln}%\nDubai: {avg_month_sales_growth_dxb}%\nSharjah: {avg_month_sales_growth_shj}%")
+#     print(f"\nAverage Monthly GP Growth\nUAE: {avg_month_gp_growth_uae}%\nAbu Dhabi: {avg_month_gp_growth_auh}%\nAl Ain: {avg_month_gp_growth_aln}%\nDubai: {avg_month_gp_growth_dxb}%\nSharjah: {avg_month_gp_growth_shj}%")
+#     print(f"\nGP Margin Delta (Actual Delistings)\nUAE: {gp_margin_delta_actual_uae}%\nAbu Dhabi: {gp_margin_delta_actual_auh}%\nAl Ain: {gp_margin_delta_actual_aln}%\nDubai: {gp_margin_delta_actual_dxb}%\nSharjah: {gp_margin_delta_actual_shj}%\n")
+#     print(f"\nGP Margin Delta (Delist Reco)\nUAE: {gp_margin_delta_reco_uae}%\nAbu Dhabi: {gp_margin_delta_reco_auh}%\nAl Ain: {gp_margin_delta_reco_aln}%\nDubai: {gp_margin_delta_reco_dxb}%\nSharjah: {gp_margin_delta_reco_shj}%\n")
 
 # COMMAND ----------
 
@@ -732,581 +732,581 @@ for i in var_mg:
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC WITH sales AS (
-# MAGIC     SELECT
-# MAGIC         region_name,
-# MAGIC         INT(CONCAT(YEAR(business_day), LPAD(MONTH(business_day), 2, '0'))) AS year_month,
-# MAGIC         category_name,
-# MAGIC         material_group_name,
-# MAGIC         material_id,
-# MAGIC         SUM(amount) AS sales
-# MAGIC     FROM gold.transaction.uae_pos_transactions AS t1
-# MAGIC     JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
-# MAGIC     JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
-# MAGIC     WHERE
-# MAGIC         business_day BETWEEN "2024-01-01" AND "2024-08-08"
-# MAGIC         AND category_name = "PASTA & NOODLE"
-# MAGIC         AND tayeb_flag = 0
-# MAGIC         AND transaction_type IN ("SALE", "SELL_MEDIA")
-# MAGIC         AND amount > 0
-# MAGIC         AND quantity > 0
-# MAGIC     GROUP BY 1, 2, 3, 4, 5
-# MAGIC ),
-# MAGIC
-# MAGIC gp AS (
-# MAGIC     SELECT
-# MAGIC         CASE WHEN region = 'AUH' THEN 'ABU DHABI'
-# MAGIC             WHEN region = 'ALN' THEN 'AL AIN'
-# MAGIC             WHEN region = 'DXB' THEN 'DUBAI'
-# MAGIC             ELSE 'SHARJAH' END AS region_name,
-# MAGIC         year_month,
-# MAGIC         material_id,
-# MAGIC         gp_wth_chargeback
-# MAGIC     FROM gold.business.gross_profit
-# MAGIC     WHERE year_month BETWEEN 202401 AND 202408
-# MAGIC     AND country = 'AE'
-# MAGIC ),
-# MAGIC
-# MAGIC combined AS (
-# MAGIC     SELECT
-# MAGIC         t1.region_name,
-# MAGIC         t1.year_month,
-# MAGIC         category_name,
-# MAGIC         material_group_name,
-# MAGIC         t1.material_id,
-# MAGIC         sales,
-# MAGIC         COALESCE(sales*gp_wth_chargeback/100, 0) AS gp
-# MAGIC     FROM sales AS t1
-# MAGIC     LEFT JOIN gp AS t2
-# MAGIC         ON t1.region_name = t2.region_name
-# MAGIC         AND t1.year_month = t2.year_month
-# MAGIC         AND t1.material_id = t2.material_id
-# MAGIC )
-# MAGIC
-# MAGIC SELECT
-# MAGIC     category_name,
-# MAGIC     material_group_name,
-# MAGIC     ROUND(SUM(gp) / SUM(sales) * 100, 2) AS gp_margin,
-# MAGIC     ROUND(SUM(sales) / SUM(SUM(sales)) OVER () * 100, 2) AS sales_contri,
-# MAGIC     ROUND(SUM(gp) / SUM(SUM(gp)) OVER () * 100, 2) AS gp_contri
-# MAGIC FROM combined
-# MAGIC GROUP BY 1, 2
-# MAGIC ORDER BY 4 DESC
+# %sql
+# WITH sales AS (
+#     SELECT
+#         region_name,
+#         INT(CONCAT(YEAR(business_day), LPAD(MONTH(business_day), 2, '0'))) AS year_month,
+#         category_name,
+#         material_group_name,
+#         material_id,
+#         SUM(amount) AS sales
+#     FROM gold.transaction.uae_pos_transactions AS t1
+#     JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+#     JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
+#     WHERE
+#         business_day BETWEEN "2024-01-01" AND "2024-08-08"
+#         AND category_name = "PASTA & NOODLE"
+#         AND tayeb_flag = 0
+#         AND transaction_type IN ("SALE", "SELL_MEDIA")
+#         AND amount > 0
+#         AND quantity > 0
+#     GROUP BY 1, 2, 3, 4, 5
+# ),
+
+# gp AS (
+#     SELECT
+#         CASE WHEN region = 'AUH' THEN 'ABU DHABI'
+#             WHEN region = 'ALN' THEN 'AL AIN'
+#             WHEN region = 'DXB' THEN 'DUBAI'
+#             ELSE 'SHARJAH' END AS region_name,
+#         year_month,
+#         material_id,
+#         gp_wth_chargeback
+#     FROM gold.business.gross_profit
+#     WHERE year_month BETWEEN 202401 AND 202408
+#     AND country = 'AE'
+# ),
+
+# combined AS (
+#     SELECT
+#         t1.region_name,
+#         t1.year_month,
+#         category_name,
+#         material_group_name,
+#         t1.material_id,
+#         sales,
+#         COALESCE(sales*gp_wth_chargeback/100, 0) AS gp
+#     FROM sales AS t1
+#     LEFT JOIN gp AS t2
+#         ON t1.region_name = t2.region_name
+#         AND t1.year_month = t2.year_month
+#         AND t1.material_id = t2.material_id
+# )
+
+# SELECT
+#     category_name,
+#     material_group_name,
+#     ROUND(SUM(gp) / SUM(sales) * 100, 2) AS gp_margin,
+#     ROUND(SUM(sales) / SUM(SUM(sales)) OVER () * 100, 2) AS sales_contri,
+#     ROUND(SUM(gp) / SUM(SUM(gp)) OVER () * 100, 2) AS gp_contri
+# FROM combined
+# GROUP BY 1, 2
+# ORDER BY 4 DESC
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC SELECT
-# MAGIC     material_group_name,
-# MAGIC     ROUND(SUM(amount)) AS post_sales
-# MAGIC FROM gold.transaction.uae_pos_transactions AS t1
-# MAGIC JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
-# MAGIC JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
-# MAGIC WHERE
-# MAGIC     business_day BETWEEN "2024-06-08" AND "2024-08-08"
-# MAGIC     AND material_group_name = "PASTA"
-# MAGIC     AND tayeb_flag = 0
-# MAGIC     AND transaction_type IN ("SALE", "SELL_MEDIA")
-# MAGIC     AND amount > 0
-# MAGIC     AND quantity > 0
-# MAGIC GROUP BY 1
+# %sql
+# SELECT
+#     material_group_name,
+#     ROUND(SUM(amount)) AS post_sales
+# FROM gold.transaction.uae_pos_transactions AS t1
+# JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+# JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
+# WHERE
+#     business_day BETWEEN "2024-06-08" AND "2024-08-08"
+#     AND material_group_name = "PASTA"
+#     AND tayeb_flag = 0
+#     AND transaction_type IN ("SALE", "SELL_MEDIA")
+#     AND amount > 0
+#     AND quantity > 0
+# GROUP BY 1
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC SELECT
-# MAGIC     material_group_name,
-# MAGIC     ROUND(SUM(amount)) AS post_sales
-# MAGIC FROM gold.transaction.uae_pos_transactions AS t1
-# MAGIC JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
-# MAGIC JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
-# MAGIC WHERE
-# MAGIC     business_day BETWEEN "2024-06-01" AND "2024-08-08"
-# MAGIC     AND material_group_name IN ("INSTANT NOODLE", "CUP NOODLE")
-# MAGIC     AND tayeb_flag = 0
-# MAGIC     AND transaction_type IN ("SALE", "SELL_MEDIA")
-# MAGIC     AND amount > 0
-# MAGIC     AND quantity > 0
-# MAGIC GROUP BY 1
+# %sql
+# SELECT
+#     material_group_name,
+#     ROUND(SUM(amount)) AS post_sales
+# FROM gold.transaction.uae_pos_transactions AS t1
+# JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+# JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
+# WHERE
+#     business_day BETWEEN "2024-06-01" AND "2024-08-08"
+#     AND material_group_name IN ("INSTANT NOODLE", "CUP NOODLE")
+#     AND tayeb_flag = 0
+#     AND transaction_type IN ("SALE", "SELL_MEDIA")
+#     AND amount > 0
+#     AND quantity > 0
+# GROUP BY 1
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC SELECT
-# MAGIC     material_group_name,
-# MAGIC     ROUND(SUM(amount)) AS post_sales
-# MAGIC FROM gold.transaction.uae_pos_transactions AS t1
-# MAGIC JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
-# MAGIC JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
-# MAGIC WHERE
-# MAGIC     business_day BETWEEN "2024-06-15" AND "2024-08-08"
-# MAGIC     AND material_group_name = "COCONUT OIL"
-# MAGIC     AND tayeb_flag = 0
-# MAGIC     AND transaction_type IN ("SALE", "SELL_MEDIA")
-# MAGIC     AND amount > 0
-# MAGIC     AND quantity > 0
-# MAGIC GROUP BY 1
+# %sql
+# SELECT
+#     material_group_name,
+#     ROUND(SUM(amount)) AS post_sales
+# FROM gold.transaction.uae_pos_transactions AS t1
+# JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+# JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
+# WHERE
+#     business_day BETWEEN "2024-06-15" AND "2024-08-08"
+#     AND material_group_name = "COCONUT OIL"
+#     AND tayeb_flag = 0
+#     AND transaction_type IN ("SALE", "SELL_MEDIA")
+#     AND amount > 0
+#     AND quantity > 0
+# GROUP BY 1
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC SELECT
-# MAGIC     material_group_name,
-# MAGIC     region_name,
-# MAGIC     CASE WHEN business_day <= "2023-01-01" THEN "Year 1" ELSE "Year 2" END AS year,
-# MAGIC     ROUND(SUM(CASE WHEN MONTH(business_day) <= 5 THEN amount END)) AS pre_sales,
-# MAGIC     ROUND(SUM(CASE WHEN MONTH(business_day) >= 6 THEN amount END)) AS post_sales,
-# MAGIC     ROUND((post_sales - pre_sales) / pre_sales * 100, 2) AS growth
-# MAGIC FROM gold.transaction.uae_pos_transactions AS t1
-# MAGIC JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
-# MAGIC JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
-# MAGIC WHERE
-# MAGIC     (business_day BETWEEN "2022-02-19" AND "2022-05-17"
-# MAGIC         OR business_day BETWEEN "2022-06-08" AND "2022-08-08"
-# MAGIC         OR business_day BETWEEN "2023-02-19" AND "2023-05-17"
-# MAGIC         OR business_day BETWEEN "2023-06-08" AND "2023-08-08")
-# MAGIC     AND material_group_name = "PASTA"
-# MAGIC     AND tayeb_flag = 0
-# MAGIC     AND transaction_type IN ("SALE", "SELL_MEDIA")
-# MAGIC     AND amount > 0
-# MAGIC     AND quantity > 0
-# MAGIC GROUP BY 1, 2, 3
-# MAGIC ORDER BY 2, 3
+# %sql
+# SELECT
+#     material_group_name,
+#     region_name,
+#     CASE WHEN business_day <= "2023-01-01" THEN "Year 1" ELSE "Year 2" END AS year,
+#     ROUND(SUM(CASE WHEN MONTH(business_day) <= 5 THEN amount END)) AS pre_sales,
+#     ROUND(SUM(CASE WHEN MONTH(business_day) >= 6 THEN amount END)) AS post_sales,
+#     ROUND((post_sales - pre_sales) / pre_sales * 100, 2) AS growth
+# FROM gold.transaction.uae_pos_transactions AS t1
+# JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+# JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
+# WHERE
+#     (business_day BETWEEN "2022-02-19" AND "2022-05-17"
+#         OR business_day BETWEEN "2022-06-08" AND "2022-08-08"
+#         OR business_day BETWEEN "2023-02-19" AND "2023-05-17"
+#         OR business_day BETWEEN "2023-06-08" AND "2023-08-08")
+#     AND material_group_name = "PASTA"
+#     AND tayeb_flag = 0
+#     AND transaction_type IN ("SALE", "SELL_MEDIA")
+#     AND amount > 0
+#     AND quantity > 0
+# GROUP BY 1, 2, 3
+# ORDER BY 2, 3
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC SELECT
-# MAGIC     material_group_name,
-# MAGIC     region_name,
-# MAGIC     CASE WHEN business_day <= "2023-01-01" THEN "Year 1" ELSE "Year 2" END AS year,
-# MAGIC     ROUND(SUM(CASE WHEN MONTH(business_day) <= 5 THEN amount END)) AS pre_sales,
-# MAGIC     ROUND(SUM(CASE WHEN MONTH(business_day) >= 6 THEN amount END)) AS post_sales,
-# MAGIC     ROUND((post_sales - pre_sales) / pre_sales * 100, 2) AS growth
-# MAGIC FROM gold.transaction.uae_pos_transactions AS t1
-# MAGIC JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
-# MAGIC JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
-# MAGIC WHERE
-# MAGIC     (business_day BETWEEN "2022-01-01" AND "2022-04-28"
-# MAGIC         OR business_day BETWEEN "2022-06-15" AND "2022-08-08"
-# MAGIC         OR business_day BETWEEN "2023-02-01" AND "2023-04-28"
-# MAGIC         OR business_day BETWEEN "2023-06-15" AND "2023-08-08")
-# MAGIC     AND material_group_name = "COCONUT OIL"
-# MAGIC     AND tayeb_flag = 0
-# MAGIC     AND transaction_type IN ("SALE", "SELL_MEDIA")
-# MAGIC     AND amount > 0
-# MAGIC     AND quantity > 0
-# MAGIC GROUP BY 1, 2, 3
-# MAGIC ORDER BY 2, 3
+# %sql
+# SELECT
+#     material_group_name,
+#     region_name,
+#     CASE WHEN business_day <= "2023-01-01" THEN "Year 1" ELSE "Year 2" END AS year,
+#     ROUND(SUM(CASE WHEN MONTH(business_day) <= 5 THEN amount END)) AS pre_sales,
+#     ROUND(SUM(CASE WHEN MONTH(business_day) >= 6 THEN amount END)) AS post_sales,
+#     ROUND((post_sales - pre_sales) / pre_sales * 100, 2) AS growth
+# FROM gold.transaction.uae_pos_transactions AS t1
+# JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+# JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
+# WHERE
+#     (business_day BETWEEN "2022-01-01" AND "2022-04-28"
+#         OR business_day BETWEEN "2022-06-15" AND "2022-08-08"
+#         OR business_day BETWEEN "2023-02-01" AND "2023-04-28"
+#         OR business_day BETWEEN "2023-06-15" AND "2023-08-08")
+#     AND material_group_name = "COCONUT OIL"
+#     AND tayeb_flag = 0
+#     AND transaction_type IN ("SALE", "SELL_MEDIA")
+#     AND amount > 0
+#     AND quantity > 0
+# GROUP BY 1, 2, 3
+# ORDER BY 2, 3
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC WITH sales as (
-# MAGIC     SELECT
-# MAGIC         region_name,
-# MAGIC         transaction_id,
-# MAGIC         product_id,
-# MAGIC         material_group_name,
-# MAGIC         SUM(CASE WHEN business_day <= "2024-05-17" THEN amount END) AS pre_sales,
-# MAGIC         SUM(CASE WHEN business_day >= "2024-06-08" THEN amount END) AS post_sales
-# MAGIC     FROM gold.transaction.uae_pos_transactions AS t1
-# MAGIC     JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
-# MAGIC     JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
-# MAGIC     WHERE
-# MAGIC         business_day BETWEEN "2024-02-19" AND "2024-08-08"
-# MAGIC         AND material_group_name = "PASTA"
-# MAGIC         AND tayeb_flag = 0
-# MAGIC         AND transaction_type IN ("SALE", "SELL_MEDIA")
-# MAGIC         AND amount > 0
-# MAGIC         AND quantity > 0
-# MAGIC     GROUP BY 1, 2, 3, 4
-# MAGIC ),
-# MAGIC
-# MAGIC promo_table AS (
-# MAGIC     SELECT
-# MAGIC         transaction_id,
-# MAGIC         product_id,
-# MAGIC         CONCAT(SUBSTRING(business_date, 1, 4), '-',
-# MAGIC             SUBSTRING(business_date, 5, 2), '-',
-# MAGIC             SUBSTRING(business_date, 7, 2)) AS formatted_date
-# MAGIC     FROM gold.marketing.uae_pos_sales_campaign
-# MAGIC     WHERE
-# MAGIC         void_flag IS NULL
-# MAGIC         AND campaign_id IS NOT NULL
-# MAGIC         AND (pm_campaign_group NOT IN ('HAPPINESS BURN', 'HAPPINESS EARNED') OR pm_campaign_group IS NULL)
-# MAGIC         AND (pm_reason_code != "HAPPINESS VOUCHER")
-# MAGIC         AND (pm_discount_media_type != 'Special Offer0' OR pm_discount_media_type IS NULL)
-# MAGIC         AND business_date BETWEEN "20240201" AND "20240808"
-# MAGIC     GROUP BY transaction_id, product_id, business_date
-# MAGIC ),
-# MAGIC
-# MAGIC final AS (
-# MAGIC     SELECT
-# MAGIC         region_name,
-# MAGIC         material_group_name,
-# MAGIC         ROUND(SUM(pre_sales)) AS total_pre_sales,
-# MAGIC         ROUND(SUM(CASE WHEN formatted_date IS NOT NULL THEN pre_sales ELSE 0 END)) AS pre_promo_sales,
-# MAGIC         ROUND(pre_promo_sales/total_pre_sales*100, 2) AS pre_promo_sales_perc,
-# MAGIC         ROUND(SUM(post_sales)) AS total_post_sales,
-# MAGIC         ROUND(SUM(CASE WHEN formatted_date IS NOT NULL THEN post_sales ELSE 0 END)) AS post_promo_sales,
-# MAGIC         ROUND(post_promo_sales/total_post_sales*100, 2) AS post_promo_sales_perc
-# MAGIC     FROM sales AS t1
-# MAGIC     LEFT JOIN promo_table AS t2
-# MAGIC         ON t1.transaction_id = t2.transaction_id
-# MAGIC         AND t1.product_id = t2.product_id
-# MAGIC     GROUP BY 1, 2
-# MAGIC )
-# MAGIC
-# MAGIC SELECT
-# MAGIC     material_group_name,
-# MAGIC     region_name,
-# MAGIC     pre_promo_sales_perc,
-# MAGIC     post_promo_sales_perc,
-# MAGIC     ROUND(post_promo_sales_perc - pre_promo_sales_perc, 2) AS delta
-# MAGIC FROM final
+# %sql
+# WITH sales as (
+#     SELECT
+#         region_name,
+#         transaction_id,
+#         product_id,
+#         material_group_name,
+#         SUM(CASE WHEN business_day <= "2024-05-17" THEN amount END) AS pre_sales,
+#         SUM(CASE WHEN business_day >= "2024-06-08" THEN amount END) AS post_sales
+#     FROM gold.transaction.uae_pos_transactions AS t1
+#     JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+#     JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
+#     WHERE
+#         business_day BETWEEN "2024-02-19" AND "2024-08-08"
+#         AND material_group_name = "PASTA"
+#         AND tayeb_flag = 0
+#         AND transaction_type IN ("SALE", "SELL_MEDIA")
+#         AND amount > 0
+#         AND quantity > 0
+#     GROUP BY 1, 2, 3, 4
+# ),
+
+# promo_table AS (
+#     SELECT
+#         transaction_id,
+#         product_id,
+#         CONCAT(SUBSTRING(business_date, 1, 4), '-',
+#             SUBSTRING(business_date, 5, 2), '-',
+#             SUBSTRING(business_date, 7, 2)) AS formatted_date
+#     FROM gold.marketing.uae_pos_sales_campaign
+#     WHERE
+#         void_flag IS NULL
+#         AND campaign_id IS NOT NULL
+#         AND (pm_campaign_group NOT IN ('HAPPINESS BURN', 'HAPPINESS EARNED') OR pm_campaign_group IS NULL)
+#         AND (pm_reason_code != "HAPPINESS VOUCHER")
+#         AND (pm_discount_media_type != 'Special Offer0' OR pm_discount_media_type IS NULL)
+#         AND business_date BETWEEN "20240201" AND "20240808"
+#     GROUP BY transaction_id, product_id, business_date
+# ),
+
+# final AS (
+#     SELECT
+#         region_name,
+#         material_group_name,
+#         ROUND(SUM(pre_sales)) AS total_pre_sales,
+#         ROUND(SUM(CASE WHEN formatted_date IS NOT NULL THEN pre_sales ELSE 0 END)) AS pre_promo_sales,
+#         ROUND(pre_promo_sales/total_pre_sales*100, 2) AS pre_promo_sales_perc,
+#         ROUND(SUM(post_sales)) AS total_post_sales,
+#         ROUND(SUM(CASE WHEN formatted_date IS NOT NULL THEN post_sales ELSE 0 END)) AS post_promo_sales,
+#         ROUND(post_promo_sales/total_post_sales*100, 2) AS post_promo_sales_perc
+#     FROM sales AS t1
+#     LEFT JOIN promo_table AS t2
+#         ON t1.transaction_id = t2.transaction_id
+#         AND t1.product_id = t2.product_id
+#     GROUP BY 1, 2
+# )
+
+# SELECT
+#     material_group_name,
+#     region_name,
+#     pre_promo_sales_perc,
+#     post_promo_sales_perc,
+#     ROUND(post_promo_sales_perc - pre_promo_sales_perc, 2) AS delta
+# FROM final
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC WITH sales as (
-# MAGIC     SELECT
-# MAGIC         region_name,
-# MAGIC         INT(CONCAT(YEAR(business_day), LPAD(MONTH(business_day), 2, '0'))) AS year_month,
-# MAGIC         transaction_id,
-# MAGIC         product_id,
-# MAGIC         material_group_name,
-# MAGIC         SUM(CASE WHEN business_day <= "2024-05-17" THEN amount END) AS pre_sales,
-# MAGIC         SUM(CASE WHEN business_day >= "2024-06-08" THEN amount END) AS post_sales
-# MAGIC     FROM gold.transaction.uae_pos_transactions AS t1
-# MAGIC     JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
-# MAGIC     JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
-# MAGIC     WHERE
-# MAGIC         (business_day BETWEEN "2024-02-19" AND "2024-05-17"
-# MAGIC         OR business_day BETWEEN "2024-06-08" AND "2024-08-08")
-# MAGIC         AND material_group_name = "PASTA"
-# MAGIC         AND tayeb_flag = 0
-# MAGIC         AND transaction_type IN ("SALE", "SELL_MEDIA")
-# MAGIC         AND amount > 0
-# MAGIC         AND quantity > 0
-# MAGIC     GROUP BY 1, 2, 3, 4, 5
-# MAGIC ),
-# MAGIC
-# MAGIC promo_table AS (
-# MAGIC     SELECT
-# MAGIC         transaction_id,
-# MAGIC         product_id,
-# MAGIC         CONCAT(SUBSTRING(business_date, 1, 4), '-',
-# MAGIC             SUBSTRING(business_date, 5, 2), '-',
-# MAGIC             SUBSTRING(business_date, 7, 2)) AS formatted_date
-# MAGIC     FROM gold.marketing.uae_pos_sales_campaign
-# MAGIC     WHERE
-# MAGIC         void_flag IS NULL
-# MAGIC         AND campaign_id IS NOT NULL
-# MAGIC         AND (pm_campaign_group NOT IN ('HAPPINESS BURN', 'HAPPINESS EARNED') OR pm_campaign_group IS NULL)
-# MAGIC         AND (pm_reason_code != "HAPPINESS VOUCHER")
-# MAGIC         AND (pm_discount_media_type != 'Special Offer0' OR pm_discount_media_type IS NULL)
-# MAGIC         AND business_date BETWEEN "20240201" AND "20240808"
-# MAGIC     GROUP BY transaction_id, product_id, business_date
-# MAGIC ),
-# MAGIC
-# MAGIC combined AS (
-# MAGIC     SELECT
-# MAGIC         region_name,
-# MAGIC         year_month,
-# MAGIC         material_group_name,
-# MAGIC         t1.product_id,
-# MAGIC         ROUND(SUM(pre_sales)) AS total_pre_sales,
-# MAGIC         ROUND(SUM(CASE WHEN formatted_date IS NOT NULL THEN pre_sales ELSE 0 END)) AS pre_promo_sales,
-# MAGIC         ROUND(SUM(post_sales)) AS total_post_sales,
-# MAGIC         ROUND(SUM(CASE WHEN formatted_date IS NOT NULL THEN post_sales ELSE 0 END)) AS post_promo_sales
-# MAGIC     FROM sales AS t1
-# MAGIC     LEFT JOIN promo_table AS t2
-# MAGIC         ON t1.transaction_id = t2.transaction_id
-# MAGIC         AND t1.product_id = t2.product_id
-# MAGIC     GROUP BY 1, 2, 3, 4
-# MAGIC     ORDER BY 5 DESC
-# MAGIC ),
-# MAGIC
-# MAGIC final AS (
-# MAGIC     SELECT
-# MAGIC         material_group_name,
-# MAGIC         region_name,
-# MAGIC         year_month,
-# MAGIC         product_id,
-# MAGIC         total_pre_sales,
-# MAGIC         pre_promo_sales,
-# MAGIC         total_post_sales,
-# MAGIC         post_promo_sales
-# MAGIC     FROM combined
-# MAGIC ),
-# MAGIC
-# MAGIC gp_data AS (
-# MAGIC     SELECT
-# MAGIC         CASE WHEN region = "AUH" THEN "ABU DHABI"
-# MAGIC             WHEN region = "ALN" THEN "AL AIN"
-# MAGIC             WHEN region = "DXB" THEN "DUBAI"
-# MAGIC             ELSE "SHARJAH" END AS region_name,
-# MAGIC         year_month,
-# MAGIC         material_id,
-# MAGIC         gp_wth_chargeback
-# MAGIC     FROM gold.business.gross_profit
-# MAGIC     WHERE
-# MAGIC         country = 'AE'
-# MAGIC         AND year_month BETWEEN 202402 AND 202405
-# MAGIC ),
-# MAGIC
-# MAGIC final_2 AS (
-# MAGIC     SELECT
-# MAGIC         material_group_name,
-# MAGIC         t1.year_month,
-# MAGIC         t1.region_name,
-# MAGIC         product_id,
-# MAGIC         total_pre_sales,
-# MAGIC         pre_promo_sales,
-# MAGIC         total_post_sales,
-# MAGIC         post_promo_sales,
-# MAGIC         ROUND(total_pre_sales * gp_wth_chargeback / 100, 2) AS gp
-# MAGIC     FROM final AS t1
-# MAGIC     LEFT JOIN gp_data AS t2
-# MAGIC         ON t1.region_name = t2.region_name
-# MAGIC         AND t1.year_month = t2.year_month
-# MAGIC         AND t1.product_id = t2.material_id
-# MAGIC ),
-# MAGIC
-# MAGIC ranked AS (
-# MAGIC     SELECT
-# MAGIC         material_group_name,
-# MAGIC         region_name,
-# MAGIC         product_id,
-# MAGIC         SUM(total_pre_sales) AS total_pre_sales_,
-# MAGIC         ROUND(SUM(pre_promo_sales)/total_pre_sales_*100, 2) AS pre_promo_sales_perc,
-# MAGIC         ROUND(SUM(post_promo_sales)/SUM(total_post_sales)*100, 2) AS post_promo_sales_perc,
-# MAGIC         ROUND(post_promo_sales_perc - pre_promo_sales_perc, 2) AS delta,
-# MAGIC         ROUND(total_pre_sales_ / SUM(gp) * 100, 2) AS gp_margin,
-# MAGIC         ROW_NUMBER() OVER(PARTITION BY region_name ORDER BY SUM(total_pre_sales) DESC) AS rk
-# MAGIC     FROM final_2
-# MAGIC     GROUP BY 1, 2, 3
-# MAGIC     ORDER BY region_name, total_pre_sales_ DESC
-# MAGIC )
-# MAGIC
-# MAGIC SELECT
-# MAGIC     material_group_name,
-# MAGIC     region_name,
-# MAGIC     product_id,
-# MAGIC     total_pre_sales_,
-# MAGIC     pre_promo_sales_perc,
-# MAGIC     post_promo_sales_perc,
-# MAGIC     delta,
-# MAGIC     gp_margin,
-# MAGIC     rk
-# MAGIC FROM ranked
-# MAGIC WHERE rk <= 20
+# %sql
+# WITH sales as (
+#     SELECT
+#         region_name,
+#         INT(CONCAT(YEAR(business_day), LPAD(MONTH(business_day), 2, '0'))) AS year_month,
+#         transaction_id,
+#         product_id,
+#         material_group_name,
+#         SUM(CASE WHEN business_day <= "2024-05-17" THEN amount END) AS pre_sales,
+#         SUM(CASE WHEN business_day >= "2024-06-08" THEN amount END) AS post_sales
+#     FROM gold.transaction.uae_pos_transactions AS t1
+#     JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+#     JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
+#     WHERE
+#         (business_day BETWEEN "2024-02-19" AND "2024-05-17"
+#         OR business_day BETWEEN "2024-06-08" AND "2024-08-08")
+#         AND material_group_name = "PASTA"
+#         AND tayeb_flag = 0
+#         AND transaction_type IN ("SALE", "SELL_MEDIA")
+#         AND amount > 0
+#         AND quantity > 0
+#     GROUP BY 1, 2, 3, 4, 5
+# ),
+
+# promo_table AS (
+#     SELECT
+#         transaction_id,
+#         product_id,
+#         CONCAT(SUBSTRING(business_date, 1, 4), '-',
+#             SUBSTRING(business_date, 5, 2), '-',
+#             SUBSTRING(business_date, 7, 2)) AS formatted_date
+#     FROM gold.marketing.uae_pos_sales_campaign
+#     WHERE
+#         void_flag IS NULL
+#         AND campaign_id IS NOT NULL
+#         AND (pm_campaign_group NOT IN ('HAPPINESS BURN', 'HAPPINESS EARNED') OR pm_campaign_group IS NULL)
+#         AND (pm_reason_code != "HAPPINESS VOUCHER")
+#         AND (pm_discount_media_type != 'Special Offer0' OR pm_discount_media_type IS NULL)
+#         AND business_date BETWEEN "20240201" AND "20240808"
+#     GROUP BY transaction_id, product_id, business_date
+# ),
+
+# combined AS (
+#     SELECT
+#         region_name,
+#         year_month,
+#         material_group_name,
+#         t1.product_id,
+#         ROUND(SUM(pre_sales)) AS total_pre_sales,
+#         ROUND(SUM(CASE WHEN formatted_date IS NOT NULL THEN pre_sales ELSE 0 END)) AS pre_promo_sales,
+#         ROUND(SUM(post_sales)) AS total_post_sales,
+#         ROUND(SUM(CASE WHEN formatted_date IS NOT NULL THEN post_sales ELSE 0 END)) AS post_promo_sales
+#     FROM sales AS t1
+#     LEFT JOIN promo_table AS t2
+#         ON t1.transaction_id = t2.transaction_id
+#         AND t1.product_id = t2.product_id
+#     GROUP BY 1, 2, 3, 4
+#     ORDER BY 5 DESC
+# ),
+
+# final AS (
+#     SELECT
+#         material_group_name,
+#         region_name,
+#         year_month,
+#         product_id,
+#         total_pre_sales,
+#         pre_promo_sales,
+#         total_post_sales,
+#         post_promo_sales
+#     FROM combined
+# ),
+
+# gp_data AS (
+#     SELECT
+#         CASE WHEN region = "AUH" THEN "ABU DHABI"
+#             WHEN region = "ALN" THEN "AL AIN"
+#             WHEN region = "DXB" THEN "DUBAI"
+#             ELSE "SHARJAH" END AS region_name,
+#         year_month,
+#         material_id,
+#         gp_wth_chargeback
+#     FROM gold.business.gross_profit
+#     WHERE
+#         country = 'AE'
+#         AND year_month BETWEEN 202402 AND 202405
+# ),
+
+# final_2 AS (
+#     SELECT
+#         material_group_name,
+#         t1.year_month,
+#         t1.region_name,
+#         product_id,
+#         total_pre_sales,
+#         pre_promo_sales,
+#         total_post_sales,
+#         post_promo_sales,
+#         ROUND(total_pre_sales * gp_wth_chargeback / 100, 2) AS gp
+#     FROM final AS t1
+#     LEFT JOIN gp_data AS t2
+#         ON t1.region_name = t2.region_name
+#         AND t1.year_month = t2.year_month
+#         AND t1.product_id = t2.material_id
+# ),
+
+# ranked AS (
+#     SELECT
+#         material_group_name,
+#         region_name,
+#         product_id,
+#         SUM(total_pre_sales) AS total_pre_sales_,
+#         ROUND(SUM(pre_promo_sales)/total_pre_sales_*100, 2) AS pre_promo_sales_perc,
+#         ROUND(SUM(post_promo_sales)/SUM(total_post_sales)*100, 2) AS post_promo_sales_perc,
+#         ROUND(post_promo_sales_perc - pre_promo_sales_perc, 2) AS delta,
+#         ROUND(total_pre_sales_ / SUM(gp) * 100, 2) AS gp_margin,
+#         ROW_NUMBER() OVER(PARTITION BY region_name ORDER BY SUM(total_pre_sales) DESC) AS rk
+#     FROM final_2
+#     GROUP BY 1, 2, 3
+#     ORDER BY region_name, total_pre_sales_ DESC
+# )
+
+# SELECT
+#     material_group_name,
+#     region_name,
+#     product_id,
+#     total_pre_sales_,
+#     pre_promo_sales_perc,
+#     post_promo_sales_perc,
+#     delta,
+#     gp_margin,
+#     rk
+# FROM ranked
+# WHERE rk <= 20
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC WITH sales as (
-# MAGIC     SELECT
-# MAGIC         region_name,
-# MAGIC         transaction_id,
-# MAGIC         product_id,
-# MAGIC         material_group_name,
-# MAGIC         SUM(CASE WHEN business_day <= "2024-04-28" THEN amount END) AS pre_sales,
-# MAGIC         SUM(CASE WHEN business_day >= "2024-06-01" THEN amount END) AS post_sales
-# MAGIC     FROM gold.transaction.uae_pos_transactions AS t1
-# MAGIC     JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
-# MAGIC     JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
-# MAGIC     WHERE
-# MAGIC         business_day BETWEEN "2024-02-01" AND "2024-08-08"
-# MAGIC         AND material_group_name = "INSTANT NOODLE"
-# MAGIC         AND tayeb_flag = 0
-# MAGIC         AND transaction_type IN ("SALE", "SELL_MEDIA")
-# MAGIC         AND amount > 0
-# MAGIC         AND quantity > 0
-# MAGIC     GROUP BY 1, 2, 3, 4
-# MAGIC ),
-# MAGIC
-# MAGIC promo_table AS (
-# MAGIC     SELECT
-# MAGIC         transaction_id,
-# MAGIC         product_id,
-# MAGIC         CONCAT(SUBSTRING(business_date, 1, 4), '-',
-# MAGIC             SUBSTRING(business_date, 5, 2), '-',
-# MAGIC             SUBSTRING(business_date, 7, 2)) AS formatted_date
-# MAGIC     FROM gold.marketing.uae_pos_sales_campaign
-# MAGIC     WHERE
-# MAGIC         void_flag IS NULL
-# MAGIC         AND campaign_id IS NOT NULL
-# MAGIC         AND (pm_campaign_group NOT IN ('HAPPINESS BURN', 'HAPPINESS EARNED') OR pm_campaign_group IS NULL)
-# MAGIC         AND (pm_reason_code != "HAPPINESS VOUCHER")
-# MAGIC         AND (pm_discount_media_type != 'Special Offer0' OR pm_discount_media_type IS NULL)
-# MAGIC         AND business_date BETWEEN "20240201" AND "20240808"
-# MAGIC     GROUP BY transaction_id, product_id, business_date
-# MAGIC ),
-# MAGIC
-# MAGIC final AS (
-# MAGIC     SELECT
-# MAGIC         region_name,
-# MAGIC         material_group_name,
-# MAGIC         ROUND(SUM(pre_sales)) AS total_pre_sales,
-# MAGIC         ROUND(SUM(CASE WHEN formatted_date IS NOT NULL THEN pre_sales ELSE 0 END)) AS pre_promo_sales,
-# MAGIC         ROUND(pre_promo_sales/total_pre_sales*100, 2) AS pre_promo_sales_perc,
-# MAGIC         ROUND(SUM(post_sales)) AS total_post_sales,
-# MAGIC         ROUND(SUM(CASE WHEN formatted_date IS NOT NULL THEN post_sales ELSE 0 END)) AS post_promo_sales,
-# MAGIC         ROUND(post_promo_sales/total_post_sales*100, 2) AS post_promo_sales_perc
-# MAGIC     FROM sales AS t1
-# MAGIC     LEFT JOIN promo_table AS t2
-# MAGIC         ON t1.transaction_id = t2.transaction_id
-# MAGIC         AND t1.product_id = t2.product_id
-# MAGIC     GROUP BY 1, 2
-# MAGIC )
-# MAGIC
-# MAGIC SELECT
-# MAGIC     material_group_name,
-# MAGIC     region_name,
-# MAGIC     pre_promo_sales_perc,
-# MAGIC     post_promo_sales_perc,
-# MAGIC     ROUND(post_promo_sales_perc - pre_promo_sales_perc, 2) AS delta
-# MAGIC FROM final
+# %sql
+# WITH sales as (
+#     SELECT
+#         region_name,
+#         transaction_id,
+#         product_id,
+#         material_group_name,
+#         SUM(CASE WHEN business_day <= "2024-04-28" THEN amount END) AS pre_sales,
+#         SUM(CASE WHEN business_day >= "2024-06-01" THEN amount END) AS post_sales
+#     FROM gold.transaction.uae_pos_transactions AS t1
+#     JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+#     JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
+#     WHERE
+#         business_day BETWEEN "2024-02-01" AND "2024-08-08"
+#         AND material_group_name = "INSTANT NOODLE"
+#         AND tayeb_flag = 0
+#         AND transaction_type IN ("SALE", "SELL_MEDIA")
+#         AND amount > 0
+#         AND quantity > 0
+#     GROUP BY 1, 2, 3, 4
+# ),
+
+# promo_table AS (
+#     SELECT
+#         transaction_id,
+#         product_id,
+#         CONCAT(SUBSTRING(business_date, 1, 4), '-',
+#             SUBSTRING(business_date, 5, 2), '-',
+#             SUBSTRING(business_date, 7, 2)) AS formatted_date
+#     FROM gold.marketing.uae_pos_sales_campaign
+#     WHERE
+#         void_flag IS NULL
+#         AND campaign_id IS NOT NULL
+#         AND (pm_campaign_group NOT IN ('HAPPINESS BURN', 'HAPPINESS EARNED') OR pm_campaign_group IS NULL)
+#         AND (pm_reason_code != "HAPPINESS VOUCHER")
+#         AND (pm_discount_media_type != 'Special Offer0' OR pm_discount_media_type IS NULL)
+#         AND business_date BETWEEN "20240201" AND "20240808"
+#     GROUP BY transaction_id, product_id, business_date
+# ),
+
+# final AS (
+#     SELECT
+#         region_name,
+#         material_group_name,
+#         ROUND(SUM(pre_sales)) AS total_pre_sales,
+#         ROUND(SUM(CASE WHEN formatted_date IS NOT NULL THEN pre_sales ELSE 0 END)) AS pre_promo_sales,
+#         ROUND(pre_promo_sales/total_pre_sales*100, 2) AS pre_promo_sales_perc,
+#         ROUND(SUM(post_sales)) AS total_post_sales,
+#         ROUND(SUM(CASE WHEN formatted_date IS NOT NULL THEN post_sales ELSE 0 END)) AS post_promo_sales,
+#         ROUND(post_promo_sales/total_post_sales*100, 2) AS post_promo_sales_perc
+#     FROM sales AS t1
+#     LEFT JOIN promo_table AS t2
+#         ON t1.transaction_id = t2.transaction_id
+#         AND t1.product_id = t2.product_id
+#     GROUP BY 1, 2
+# )
+
+# SELECT
+#     material_group_name,
+#     region_name,
+#     pre_promo_sales_perc,
+#     post_promo_sales_perc,
+#     ROUND(post_promo_sales_perc - pre_promo_sales_perc, 2) AS delta
+# FROM final
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC WITH sales as (
-# MAGIC     SELECT
-# MAGIC         region_name,
-# MAGIC         INT(CONCAT(YEAR(business_day), LPAD(MONTH(business_day), 2, '0'))) AS year_month,
-# MAGIC         transaction_id,
-# MAGIC         product_id,
-# MAGIC         material_group_name,
-# MAGIC         SUM(CASE WHEN business_day <= "2024-04-28" THEN amount END) AS pre_sales,
-# MAGIC         SUM(CASE WHEN business_day >= "2024-06-01" THEN amount END) AS post_sales
-# MAGIC     FROM gold.transaction.uae_pos_transactions AS t1
-# MAGIC     JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
-# MAGIC     JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
-# MAGIC     WHERE
-# MAGIC         (business_day BETWEEN "2024-02-01" AND "2024-04-28"
-# MAGIC         OR business_day BETWEEN "2024-06-01" AND "2024-08-08")
-# MAGIC         AND material_group_name = "INSTANT NOODLE"
-# MAGIC         AND tayeb_flag = 0
-# MAGIC         AND transaction_type IN ("SALE", "SELL_MEDIA")
-# MAGIC         AND amount > 0
-# MAGIC         AND quantity > 0
-# MAGIC     GROUP BY 1, 2, 3, 4, 5
-# MAGIC ),
-# MAGIC
-# MAGIC promo_table AS (
-# MAGIC     SELECT
-# MAGIC         transaction_id,
-# MAGIC         product_id,
-# MAGIC         CONCAT(SUBSTRING(business_date, 1, 4), '-',
-# MAGIC             SUBSTRING(business_date, 5, 2), '-',
-# MAGIC             SUBSTRING(business_date, 7, 2)) AS formatted_date
-# MAGIC     FROM gold.marketing.uae_pos_sales_campaign
-# MAGIC     WHERE
-# MAGIC         void_flag IS NULL
-# MAGIC         AND campaign_id IS NOT NULL
-# MAGIC         AND (pm_campaign_group NOT IN ('HAPPINESS BURN', 'HAPPINESS EARNED') OR pm_campaign_group IS NULL)
-# MAGIC         AND (pm_reason_code != "HAPPINESS VOUCHER")
-# MAGIC         AND (pm_discount_media_type != 'Special Offer0' OR pm_discount_media_type IS NULL)
-# MAGIC         AND business_date BETWEEN "20240201" AND "20240808"
-# MAGIC     GROUP BY transaction_id, product_id, business_date
-# MAGIC ),
-# MAGIC
-# MAGIC combined AS (
-# MAGIC     SELECT
-# MAGIC         region_name,
-# MAGIC         year_month,
-# MAGIC         material_group_name,
-# MAGIC         t1.product_id,
-# MAGIC         ROUND(SUM(pre_sales)) AS total_pre_sales,
-# MAGIC         ROUND(SUM(CASE WHEN formatted_date IS NOT NULL THEN pre_sales ELSE 0 END)) AS pre_promo_sales,
-# MAGIC         ROUND(SUM(post_sales)) AS total_post_sales,
-# MAGIC         ROUND(SUM(CASE WHEN formatted_date IS NOT NULL THEN post_sales ELSE 0 END)) AS post_promo_sales
-# MAGIC     FROM sales AS t1
-# MAGIC     LEFT JOIN promo_table AS t2
-# MAGIC         ON t1.transaction_id = t2.transaction_id
-# MAGIC         AND t1.product_id = t2.product_id
-# MAGIC     GROUP BY 1, 2, 3, 4
-# MAGIC     ORDER BY 5 DESC
-# MAGIC ),
-# MAGIC
-# MAGIC final AS (
-# MAGIC     SELECT
-# MAGIC         material_group_name,
-# MAGIC         region_name,
-# MAGIC         year_month,
-# MAGIC         product_id,
-# MAGIC         total_pre_sales,
-# MAGIC         pre_promo_sales,
-# MAGIC         total_post_sales,
-# MAGIC         post_promo_sales
-# MAGIC     FROM combined
-# MAGIC ),
-# MAGIC
-# MAGIC gp_data AS (
-# MAGIC     SELECT
-# MAGIC         CASE WHEN region = "AUH" THEN "ABU DHABI"
-# MAGIC             WHEN region = "ALN" THEN "AL AIN"
-# MAGIC             WHEN region = "DXB" THEN "DUBAI"
-# MAGIC             ELSE "SHARJAH" END AS region_name,
-# MAGIC         year_month,
-# MAGIC         material_id,
-# MAGIC         gp_wth_chargeback
-# MAGIC     FROM gold.business.gross_profit
-# MAGIC     WHERE
-# MAGIC         country = 'AE'
-# MAGIC         AND year_month BETWEEN 202402 AND 202404
-# MAGIC ),
-# MAGIC
-# MAGIC final_2 AS (
-# MAGIC     SELECT
-# MAGIC         material_group_name,
-# MAGIC         t1.year_month,
-# MAGIC         t1.region_name,
-# MAGIC         product_id,
-# MAGIC         total_pre_sales,
-# MAGIC         pre_promo_sales,
-# MAGIC         total_post_sales,
-# MAGIC         post_promo_sales,
-# MAGIC         ROUND(total_pre_sales * gp_wth_chargeback / 100, 2) AS gp
-# MAGIC     FROM final AS t1
-# MAGIC     LEFT JOIN gp_data AS t2
-# MAGIC         ON t1.region_name = t2.region_name
-# MAGIC         AND t1.year_month = t2.year_month
-# MAGIC         AND t1.product_id = t2.material_id
-# MAGIC ),
-# MAGIC
-# MAGIC ranked AS (
-# MAGIC     SELECT
-# MAGIC         material_group_name,
-# MAGIC         region_name,
-# MAGIC         product_id,
-# MAGIC         SUM(total_pre_sales) AS total_pre_sales_,
-# MAGIC         ROUND(SUM(pre_promo_sales)/total_pre_sales_*100, 2) AS pre_promo_sales_perc,
-# MAGIC         ROUND(SUM(post_promo_sales)/SUM(total_post_sales)*100, 2) AS post_promo_sales_perc,
-# MAGIC         ROUND(post_promo_sales_perc - pre_promo_sales_perc, 2) AS delta,
-# MAGIC         ROUND(total_pre_sales_ / SUM(gp) * 100, 2) AS gp_margin,
-# MAGIC         ROW_NUMBER() OVER(PARTITION BY region_name ORDER BY SUM(total_pre_sales) DESC) AS rk
-# MAGIC     FROM final_2
-# MAGIC     GROUP BY 1, 2, 3
-# MAGIC     ORDER BY region_name, total_pre_sales_ DESC
-# MAGIC )
-# MAGIC
-# MAGIC SELECT
-# MAGIC     material_group_name,
-# MAGIC     region_name,
-# MAGIC     product_id,
-# MAGIC     total_pre_sales_,
-# MAGIC     pre_promo_sales_perc,
-# MAGIC     post_promo_sales_perc,
-# MAGIC     delta,
-# MAGIC     gp_margin,
-# MAGIC     rk
-# MAGIC FROM ranked
-# MAGIC WHERE rk <= 20
+# %sql
+# WITH sales as (
+#     SELECT
+#         region_name,
+#         INT(CONCAT(YEAR(business_day), LPAD(MONTH(business_day), 2, '0'))) AS year_month,
+#         transaction_id,
+#         product_id,
+#         material_group_name,
+#         SUM(CASE WHEN business_day <= "2024-04-28" THEN amount END) AS pre_sales,
+#         SUM(CASE WHEN business_day >= "2024-06-01" THEN amount END) AS post_sales
+#     FROM gold.transaction.uae_pos_transactions AS t1
+#     JOIN gold.material.material_master AS t2 ON t1.product_id = t2.material_id
+#     JOIN gold.store.store_master AS t3 ON t1.store_id = t3.store_id
+#     WHERE
+#         (business_day BETWEEN "2024-02-01" AND "2024-04-28"
+#         OR business_day BETWEEN "2024-06-01" AND "2024-08-08")
+#         AND material_group_name = "INSTANT NOODLE"
+#         AND tayeb_flag = 0
+#         AND transaction_type IN ("SALE", "SELL_MEDIA")
+#         AND amount > 0
+#         AND quantity > 0
+#     GROUP BY 1, 2, 3, 4, 5
+# ),
+
+# promo_table AS (
+#     SELECT
+#         transaction_id,
+#         product_id,
+#         CONCAT(SUBSTRING(business_date, 1, 4), '-',
+#             SUBSTRING(business_date, 5, 2), '-',
+#             SUBSTRING(business_date, 7, 2)) AS formatted_date
+#     FROM gold.marketing.uae_pos_sales_campaign
+#     WHERE
+#         void_flag IS NULL
+#         AND campaign_id IS NOT NULL
+#         AND (pm_campaign_group NOT IN ('HAPPINESS BURN', 'HAPPINESS EARNED') OR pm_campaign_group IS NULL)
+#         AND (pm_reason_code != "HAPPINESS VOUCHER")
+#         AND (pm_discount_media_type != 'Special Offer0' OR pm_discount_media_type IS NULL)
+#         AND business_date BETWEEN "20240201" AND "20240808"
+#     GROUP BY transaction_id, product_id, business_date
+# ),
+
+# combined AS (
+#     SELECT
+#         region_name,
+#         year_month,
+#         material_group_name,
+#         t1.product_id,
+#         ROUND(SUM(pre_sales)) AS total_pre_sales,
+#         ROUND(SUM(CASE WHEN formatted_date IS NOT NULL THEN pre_sales ELSE 0 END)) AS pre_promo_sales,
+#         ROUND(SUM(post_sales)) AS total_post_sales,
+#         ROUND(SUM(CASE WHEN formatted_date IS NOT NULL THEN post_sales ELSE 0 END)) AS post_promo_sales
+#     FROM sales AS t1
+#     LEFT JOIN promo_table AS t2
+#         ON t1.transaction_id = t2.transaction_id
+#         AND t1.product_id = t2.product_id
+#     GROUP BY 1, 2, 3, 4
+#     ORDER BY 5 DESC
+# ),
+
+# final AS (
+#     SELECT
+#         material_group_name,
+#         region_name,
+#         year_month,
+#         product_id,
+#         total_pre_sales,
+#         pre_promo_sales,
+#         total_post_sales,
+#         post_promo_sales
+#     FROM combined
+# ),
+
+# gp_data AS (
+#     SELECT
+#         CASE WHEN region = "AUH" THEN "ABU DHABI"
+#             WHEN region = "ALN" THEN "AL AIN"
+#             WHEN region = "DXB" THEN "DUBAI"
+#             ELSE "SHARJAH" END AS region_name,
+#         year_month,
+#         material_id,
+#         gp_wth_chargeback
+#     FROM gold.business.gross_profit
+#     WHERE
+#         country = 'AE'
+#         AND year_month BETWEEN 202402 AND 202404
+# ),
+
+# final_2 AS (
+#     SELECT
+#         material_group_name,
+#         t1.year_month,
+#         t1.region_name,
+#         product_id,
+#         total_pre_sales,
+#         pre_promo_sales,
+#         total_post_sales,
+#         post_promo_sales,
+#         ROUND(total_pre_sales * gp_wth_chargeback / 100, 2) AS gp
+#     FROM final AS t1
+#     LEFT JOIN gp_data AS t2
+#         ON t1.region_name = t2.region_name
+#         AND t1.year_month = t2.year_month
+#         AND t1.product_id = t2.material_id
+# ),
+
+# ranked AS (
+#     SELECT
+#         material_group_name,
+#         region_name,
+#         product_id,
+#         SUM(total_pre_sales) AS total_pre_sales_,
+#         ROUND(SUM(pre_promo_sales)/total_pre_sales_*100, 2) AS pre_promo_sales_perc,
+#         ROUND(SUM(post_promo_sales)/SUM(total_post_sales)*100, 2) AS post_promo_sales_perc,
+#         ROUND(post_promo_sales_perc - pre_promo_sales_perc, 2) AS delta,
+#         ROUND(total_pre_sales_ / SUM(gp) * 100, 2) AS gp_margin,
+#         ROW_NUMBER() OVER(PARTITION BY region_name ORDER BY SUM(total_pre_sales) DESC) AS rk
+#     FROM final_2
+#     GROUP BY 1, 2, 3
+#     ORDER BY region_name, total_pre_sales_ DESC
+# )
+
+# SELECT
+#     material_group_name,
+#     region_name,
+#     product_id,
+#     total_pre_sales_,
+#     pre_promo_sales_perc,
+#     post_promo_sales_perc,
+#     delta,
+#     gp_margin,
+#     rk
+# FROM ranked
+# WHERE rk <= 20
 
 # COMMAND ----------
 
@@ -1316,12 +1316,12 @@ for i in var_mg:
 # COMMAND ----------
 
 spark_df = spark.createDataFrame(df)
-spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("dev.sandbox.pj_assortment_dashboard_region_view")
+spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("dev.sandbox.pj_ao_dashboard_region_view")
 
 # COMMAND ----------
 
-# %sql
-# SELECT * FROM dev.sandbox.pj_assortment_dashboard_region_view LIMIT 5
+# MAGIC %sql
+# MAGIC SELECT * FROM dev.sandbox.pj_ao_dashboard_region_view LIMIT 5
 
 # COMMAND ----------
 
@@ -1332,7 +1332,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 
 query = f"""
 SELECT business_day AS cy_date
-FROM dev.sandbox.pj_assortment_dashboard_region_view
+FROM dev.sandbox.pj_ao_dashboard_region_view
 WHERE business_day >= '{cy_start_date}'
 GROUP BY 1
 ORDER BY 1
@@ -1347,7 +1347,7 @@ cal_df = cal_df[cal_df['cy_date'] != pd.to_datetime('2024-02-29').date()].reset_
 cal_df['dayno'] = range(1, len(cal_df) + 1)
 
 spark_df = spark.createDataFrame(cal_df)
-spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("dev.sandbox.tbl_assortment_lfl_calendar")
+spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("dev.sandbox.pj_ao_lfl_calendar")
 
 # COMMAND ----------
 
@@ -1357,23 +1357,23 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC CREATE OR REPLACE TABLE dev.sandbox.pj_assortment_dashboard_cy_region_view AS (
+# MAGIC CREATE OR REPLACE TABLE dev.sandbox.pj_ao_dashboard_cy_region_view AS (
 # MAGIC     SELECT
 # MAGIC         t1.*,
 # MAGIC         t2.dayno
-# MAGIC     FROM dev.sandbox.pj_assortment_dashboard_region_view AS t1
-# MAGIC     JOIN dev.sandbox.tbl_assortment_lfl_calendar AS t2 ON t1.business_day = t2.cy_date
+# MAGIC     FROM dev.sandbox.pj_ao_dashboard_region_view AS t1
+# MAGIC     JOIN dev.sandbox.pj_ao_lfl_calendar AS t2 ON t1.business_day = t2.cy_date
 # MAGIC )
 
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC CREATE OR REPLACE TABLE dev.sandbox.pj_assortment_dashboard_py_region_view AS (
+# MAGIC CREATE OR REPLACE TABLE dev.sandbox.pj_ao_dashboard_py_region_view AS (
 # MAGIC     SELECT
 # MAGIC         t1.*,
 # MAGIC         t2.dayno
-# MAGIC     FROM dev.sandbox.pj_assortment_dashboard_region_view AS t1
-# MAGIC     JOIN dev.sandbox.tbl_assortment_lfl_calendar AS t2 ON t1.business_day = t2.py_date
+# MAGIC     FROM dev.sandbox.pj_ao_dashboard_region_view AS t1
+# MAGIC     JOIN dev.sandbox.pj_ao_lfl_calendar AS t2 ON t1.business_day = t2.py_date
 # MAGIC )
 
 # COMMAND ----------
@@ -1417,7 +1417,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # COMMAND ----------
 
 # spark_df = spark.createDataFrame(cust_df)
-# spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("sandbox.pj_assortment_dashboard_customers")
+# spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("sandbox.pj_ao_dashboard_customers")
 
 # COMMAND ----------
 
@@ -1427,8 +1427,8 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # COMMAND ----------
 
 # %sql
-# CREATE OR REPLACE TABLE sandbox.pj_assortment_dashboard_cy AS (
-#     WITH pj_assortment_dashboard_cy_trans AS (
+# CREATE OR REPLACE TABLE dev.sandbox.pj_ao_dashboard_cy AS (
+#     WITH pj_ao_dashboard_cy_trans AS (
 #         SELECT
 #             a.business_day AS trans_date,
 #             cast(a.transaction_id AS STRING) AS transaction_id,
@@ -1458,7 +1458,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 #         GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
 #     ),
 
-#     pj_assortment_dashboard_cy_ovr AS (
+#     pj_ao_dashboard_cy_ovr AS (
 #         SELECT
 #             trans_date,
 #             department_name,
@@ -1470,11 +1470,11 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 #             SUM(amount) AS amount,
 #             SUM(quantity) AS quantity,
 #             COUNT(DISTINCT transaction_id) AS trans
-#         FROM pj_assortment_dashboard_cy_trans
+#         FROM pj_ao_dashboard_cy_trans
 #         GROUP BY 1, 2, 3, 4, 5, 6, 7
 #     ),
 
-#     pj_assortment_dashboard_cy_dept AS (
+#     pj_ao_dashboard_cy_dept AS (
 #         SELECT
 #             trans_date,
 #             department_name,
@@ -1486,33 +1486,33 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 #             SUM(amount) AS amount,
 #             SUM(quantity) AS quantity,
 #             COUNT(DISTINCT transaction_id) AS trans
-#         FROM pj_assortment_dashboard_cy_trans
+#         FROM pj_ao_dashboard_cy_trans
 #         GROUP BY 1, 2, 3, 4, 5, 6, 7
 #     ),
 
-#     pj_assortment_dashboard_cy AS (
+#     pj_ao_dashboard_cy AS (
 #         SELECT *
-#         FROM pj_assortment_dashboard_cy_ovr
+#         FROM pj_ao_dashboard_cy_ovr
 
 #         UNION
 
 #         SELECT *
-#         FROM pj_assortment_dashboard_cy_dept
+#         FROM pj_ao_dashboard_cy_dept
 #     )
 
 #     SELECT
 #         a.*,
 #         b.cy_date,
 #         b.dayno AS r_day
-#     FROM pj_assortment_dashboard_cy a
-#     JOIN dashboard.tbl_water_assortment_lfl_calendar b ON a.trans_date = b.cy_date
+#     FROM pj_ao_dashboard_cy a
+#     JOIN dashboard.pj_ao_lfl_calendar b ON a.trans_date = b.cy_date
 # )
 
 # COMMAND ----------
 
 # %sql
-# CREATE OR REPLACE TABLE sandbox.pj_assortment_dashboard_py AS (
-#     WITH pj_assortment_dashboard_py_trans AS (
+# CREATE OR REPLACE TABLE dev.sandbox.pj_ao_dashboard_py AS (
+#     WITH pj_ao_dashboard_py_trans AS (
 #         SELECT
 #             a.business_day AS trans_date,
 #             cast(a.transaction_id AS STRING) AS transaction_id,
@@ -1542,7 +1542,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 #         GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
 #     ),
 
-#     pj_assortment_dashboard_py_ovr AS (
+#     pj_ao_dashboard_py_ovr AS (
 #         SELECT
 #             trans_date,
 #             department_name,
@@ -1554,12 +1554,12 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 #             SUM(amount) AS amount,
 #             SUM(quantity) AS quantity,
 #             COUNT(DISTINCT transaction_id) AS trans
-#         FROM pj_assortment_dashboard_py_trans
+#         FROM pj_ao_dashboard_py_trans
 #         GROUP BY 1, 2, 3, 4, 5, 6, 7
 #     ),
 
 
-#     pj_assortment_dashboard_py_dept AS (
+#     pj_ao_dashboard_py_dept AS (
 #         SELECT
 #             trans_date,
 #             department_name,
@@ -1571,32 +1571,32 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 #             SUM(amount) AS amount,
 #             SUM(quantity) AS quantity,
 #             COUNT(DISTINCT transaction_id) AS trans
-#         FROM pj_assortment_dashboard_py_trans
+#         FROM pj_ao_dashboard_py_trans
 #         GROUP BY 1, 2, 3, 4, 5, 6, 7
 #     ),
 
-#     pj_assortment_dashboard_py AS (
+#     pj_ao_dashboard_py AS (
 #         SELECT *
-#         FROM pj_assortment_dashboard_py_ovr
+#         FROM pj_ao_dashboard_py_ovr
 
 #         UNION
 
 #         SELECT *
-#         FROM pj_assortment_dashboard_py_dept
+#         FROM pj_ao_dashboard_py_dept
 #     )
 
 #     SELECT
 #         a.*,
 #         b.py_date,
 #         b.dayno AS r_day
-#     FROM pj_assortment_dashboard_py a
-#     JOIN dashboard.tbl_water_assortment_lfl_calendar b ON a.trans_date = b.py_date
+#     FROM pj_ao_dashboard_py a
+#     JOIN dashboard.pj_ao_lfl_calendar b ON a.trans_date = b.py_date
 # )
 
 # COMMAND ----------
 
 # %sql
-# CREATE OR REPLACE TABLE sandbox.pj_assortment_dashboard_lfl_data AS (
+# CREATE OR REPLACE TABLE dev.sandbox.pj_ao_dashboard_lfl_data AS (
 #     SELECT
 #         NVL(a.r_day, b.r_day) AS r_day,
 #         a.trans_date AS cy_date,
@@ -1613,8 +1613,8 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 #         NVL(b.amount, 0) AS py_amount,
 #         NVL(b.quantity, 0) AS py_quantity,
 #         NVL(b.trans, 0) AS py_trans
-#     FROM sandbox.pj_assortment_dashboard_cy AS a
-#     FULL JOIN sandbox.pj_assortment_dashboard_py AS b
+#     FROM dev.sandbox.pj_ao_dashboard_cy AS a
+#     FULL JOIN dev.sandbox.pj_ao_dashboard_py AS b
 #         ON a.r_day = b.r_day
 #         AND a.store_id = b.store_id
 #         AND a.department_name = b.department_name
@@ -1638,7 +1638,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC %sql
 # MAGIC -- Delist Recommended SKUs
 # MAGIC SELECT COUNT(DISTINCT material_id)
-# MAGIC FROM sandbox.pj_assortment_dashboard_reco
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_reco
 # MAGIC WHERE recommendation = "Delist"
 # MAGIC AND category_name = "WATER"
 
@@ -1647,7 +1647,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC %sql
 # MAGIC -- Rationalized SKUs
 # MAGIC SELECT COUNT(DISTINCT material_id)
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE delisted_date != "NA"
 # MAGIC AND category_name = "WATER"
 
@@ -1656,7 +1656,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC %sql
 # MAGIC -- Rationalized SKUs From Recommendation
 # MAGIC SELECT COUNT(DISTINCT material_id)
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE delisted_date != "NA"
 # MAGIC AND category_name = "WATER"
 # MAGIC AND recommendation = "Delist"
@@ -1669,7 +1669,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     SUM(CASE WHEN delisted_date != "NA" THEN sales END) AS delist_sales,
 # MAGIC     SUM(sales) AS total_sales,
 # MAGIC     ROUND(delist_sales/total_sales,4) AS perc
-# MAGIC FROM sandbox.pj_assortment_dashboard_cy_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_cy_region_view
 # MAGIC WHERE category_period_type = "Pre-delist"
 # MAGIC AND category_name = "WATER"
 
@@ -1681,7 +1681,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     SELECT
 # MAGIC         SUM(CASE WHEN delisted_date != "NA" THEN sales END) AS delist_sales,
 # MAGIC         SUM(sales) AS total_sales
-# MAGIC     FROM sandbox.pj_assortment_dashboard_cy_region_view
+# MAGIC     FROM dev.sandbox.pj_ao_dashboard_cy_region_view
 # MAGIC     WHERE category_period_type = "Pre-delist"
 # MAGIC     AND business_day >= "2023-12-07"
 # MAGIC     AND region_name = "ABU DHABI"
@@ -1692,7 +1692,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     SELECT
 # MAGIC         SUM(CASE WHEN delisted_date != "NA" THEN sales END) AS delist_sales,
 # MAGIC         SUM(sales) AS total_sales
-# MAGIC     FROM sandbox.pj_assortment_dashboard_cy_region_view
+# MAGIC     FROM dev.sandbox.pj_ao_dashboard_cy_region_view
 # MAGIC     WHERE category_period_type = "Pre-delist"
 # MAGIC     AND business_day >= "2023-12-08"
 # MAGIC     AND region_name = "AL AIN"
@@ -1703,7 +1703,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     SELECT
 # MAGIC         SUM(CASE WHEN delisted_date != "NA" THEN sales END) AS delist_sales,
 # MAGIC         SUM(sales) AS total_sales
-# MAGIC     FROM sandbox.pj_assortment_dashboard_cy_region_view
+# MAGIC     FROM dev.sandbox.pj_ao_dashboard_cy_region_view
 # MAGIC     WHERE category_period_type = "Pre-delist"
 # MAGIC     AND business_day >= "2023-12-13"
 # MAGIC     AND region_name IN ("DUBAI", "SHARJAH")
@@ -1724,7 +1724,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     SUM(CASE WHEN delisted_date != "NA" THEN gross_profit END) AS delist_gp,
 # MAGIC     SUM(gross_profit) AS total_gp,
 # MAGIC     ROUND(delist_gp/total_gp,4) AS perc
-# MAGIC FROM sandbox.pj_assortment_dashboard_cy_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_cy_region_view
 # MAGIC WHERE category_period_type = "Pre-delist"
 # MAGIC AND category_name = "WATER"
 
@@ -1736,7 +1736,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     SELECT
 # MAGIC         SUM(CASE WHEN delisted_date != "NA" THEN gross_profit END) AS delist_gp,
 # MAGIC         SUM(gross_profit) AS total_gp
-# MAGIC     FROM sandbox.pj_assortment_dashboard_cy_region_view
+# MAGIC     FROM dev.sandbox.pj_ao_dashboard_cy_region_view
 # MAGIC     WHERE category_period_type = "Pre-delist"
 # MAGIC     AND business_day >= "2023-12-07"
 # MAGIC     AND region_name = "ABU DHABI"
@@ -1747,7 +1747,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     SELECT
 # MAGIC         SUM(CASE WHEN delisted_date != "NA" THEN gross_profit END) AS delist_gp,
 # MAGIC         SUM(gross_profit) AS total_gp
-# MAGIC     FROM sandbox.pj_assortment_dashboard_cy_region_view
+# MAGIC     FROM dev.sandbox.pj_ao_dashboard_cy_region_view
 # MAGIC     WHERE category_period_type = "Pre-delist"
 # MAGIC     AND business_day >= "2023-12-08"
 # MAGIC     AND region_name = "AL AIN"
@@ -1758,7 +1758,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     SELECT
 # MAGIC         SUM(CASE WHEN delisted_date != "NA" THEN gross_profit END) AS delist_gp,
 # MAGIC         SUM(gross_profit) AS total_gp
-# MAGIC     FROM sandbox.pj_assortment_dashboard_cy_region_view
+# MAGIC     FROM dev.sandbox.pj_ao_dashboard_cy_region_view
 # MAGIC     WHERE category_period_type = "Pre-delist"
 # MAGIC     AND business_day >= "2023-12-13"
 # MAGIC     AND region_name IN ("DUBAI", "SHARJAH")
@@ -1785,7 +1785,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     COUNT(DISTINCT material_id) AS recommended,
 # MAGIC     COUNT(DISTINCT CASE WHEN delisted_date != "NA" THEN material_id END) AS rationalized,
 # MAGIC     ROUND(rationalized/recommended,2) AS perc
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE recommendation = "Delist"
 # MAGIC AND material_group_name = "COCONUT OIL"
 # MAGIC GROUP BY region_name
@@ -1800,7 +1800,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     SUM(sales) AS sales_reco,
 # MAGIC     SUM(CASE WHEN delisted_date != "NA" THEN sales END) AS sales_reco_rationalized,
 # MAGIC     ROUND(sales_reco_rationalized/sales_reco,2) AS perc
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE recommendation = "Delist"
 # MAGIC AND business_day >= "2023-12-01"
 # MAGIC AND category_name = "WATER"
@@ -1816,8 +1816,8 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     SUM(volume) AS volume_reco,
 # MAGIC     SUM(CASE WHEN delisted_date != "NA" THEN volume END) AS volume_reco_rationalized,
 # MAGIC     ROUND(volume_reco_rationalized/volume_reco,2) AS perc
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
-# MAGIC -- FROM sandbox.pj_assortment_dashboard_cy_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
+# MAGIC -- FROM dev.sandbox.pj_ao_dashboard_cy_region_view
 # MAGIC WHERE recommendation = "Delist"
 # MAGIC AND business_day >= "2023-12-01"
 # MAGIC AND category_name = "WATER"
@@ -1833,8 +1833,8 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     SUM(gross_profit) AS gp_reco,
 # MAGIC     SUM(CASE WHEN delisted_date != "NA" THEN gross_profit END) AS gp_reco_rationalized,
 # MAGIC     ROUND(gp_reco_rationalized/gp_reco,2) AS perc
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
-# MAGIC -- FROM sandbox.pj_assortment_dashboard_cy_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
+# MAGIC -- FROM dev.sandbox.pj_ao_dashboard_cy_region_view
 # MAGIC WHERE recommendation = "Delist"
 # MAGIC AND business_day >= "2023-12-01"
 # MAGIC AND category_name = "WATER"
@@ -1855,7 +1855,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     SUM(CASE WHEN business_day >= "2023-12-01" AND category_period_type_lfl = "Pre-delist" THEN sales END) AS pre_delist_sales,
 # MAGIC     SUM(CASE WHEN business_day < "2023-12-01" AND category_period_type_lfl = "Pre-delist" THEN sales END) AS lfl_sales,
 # MAGIC     ROUND((pre_delist_sales - lfl_sales)/lfl_sales,3) AS growth
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE category_name = "WATER"
 # MAGIC GROUP BY region_name
 # MAGIC ORDER BY region_name
@@ -1869,7 +1869,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     SUM(CASE WHEN business_day >= "2023-12-01" AND category_period_type_lfl = "Post delist" THEN sales END) AS post_delist_sales,
 # MAGIC     SUM(CASE WHEN business_day < "2023-12-01" AND category_period_type_lfl = "Post delist" THEN sales END) AS lfl_sales,
 # MAGIC     ROUND((post_delist_sales - lfl_sales)/lfl_sales,3) AS growth
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE category_name = "WATER"
 # MAGIC GROUP BY region_name
 # MAGIC ORDER BY region_name
@@ -1883,7 +1883,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     SUM(CASE WHEN business_day >= "2023-12-01" AND category_period_type_lfl = "Pre-delist" THEN volume END) AS pre_delist_volume,
 # MAGIC     SUM(CASE WHEN business_day < "2023-12-01" AND category_period_type_lfl = "Pre-delist" THEN volume END) AS lfl_volume,
 # MAGIC     ROUND((pre_delist_volume - lfl_volume)/lfl_volume,3) AS growth
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE category_name = "WATER"
 # MAGIC GROUP BY region_name
 # MAGIC ORDER BY region_name
@@ -1897,7 +1897,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     SUM(CASE WHEN business_day >= "2023-12-01" AND category_period_type_lfl = "Post delist" THEN volume END) AS post_delist_volume,
 # MAGIC     SUM(CASE WHEN business_day < "2023-12-01" AND category_period_type_lfl = "Post delist" THEN volume END) AS lfl_volume,
 # MAGIC     ROUND((post_delist_volume - lfl_volume)/lfl_volume,3) AS growth
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE category_name = "WATER"
 # MAGIC GROUP BY region_name
 # MAGIC ORDER BY region_name
@@ -1911,7 +1911,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     SUM(CASE WHEN business_day >= "2023-12-01" AND category_period_type_lfl = "Pre-delist" THEN gross_profit END) AS pre_delist_gp,
 # MAGIC     SUM(CASE WHEN business_day < "2023-12-01" AND category_period_type_lfl = "Pre-delist" THEN gross_profit END) AS lfl_gp,
 # MAGIC     ROUND((pre_delist_gp - lfl_gp)/lfl_gp,3) AS growth
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE category_name = "WATER"
 # MAGIC GROUP BY region_name
 # MAGIC ORDER BY region_name
@@ -1925,7 +1925,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     SUM(CASE WHEN business_day >= "2023-12-01" AND category_period_type_lfl = "Post delist" THEN gross_profit END) AS post_delist_gp,
 # MAGIC     SUM(CASE WHEN business_day < "2023-12-01" AND category_period_type_lfl = "Post delist" THEN gross_profit END) AS lfl_gp,
 # MAGIC     ROUND((post_delist_gp - lfl_gp)/lfl_gp,3) AS growth
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE category_name = "WATER"
 # MAGIC GROUP BY region_name
 # MAGIC ORDER BY region_name
@@ -1940,7 +1940,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC %sql
 # MAGIC SELECT
 # MAGIC     SUM(gross_profit)
-# MAGIC FROM sandbox.pj_assortment_dashboard_cy_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_cy_region_view
 # MAGIC WHERE new_sku_flag = 1
 # MAGIC AND region_name = "ABU DHABI"
 # MAGIC AND category_name = "WATER"
@@ -1953,7 +1953,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC         category_period_type,
 # MAGIC         MONTH(business_day) AS month,
 # MAGIC         SUM(sales) AS total_sales
-# MAGIC     FROM sandbox.pj_assortment_dashboard_cy_region_view
+# MAGIC     FROM dev.sandbox.pj_ao_dashboard_cy_region_view
 # MAGIC     WHERE region_name = "ABU DHABI"
 # MAGIC     AND category_name = "WATER"
 # MAGIC     GROUP BY category_period_type, month
@@ -1975,7 +1975,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC SELECT
 # MAGIC     business_day,
 # MAGIC     ROUND(SUM(sales)) AS periodly_sales
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE region_name = "ABU DHABI"
 # MAGIC AND category_period_type_lfl = "Pre-delist"
 # MAGIC AND business_day >= "2023-12-01"
@@ -1989,7 +1989,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC SELECT
 # MAGIC     business_day,
 # MAGIC     ROUND(SUM(sales)) AS periodly_sales
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE region_name = "ABU DHABI"
 # MAGIC AND category_period_type_lfl = "Pre-delist"
 # MAGIC AND business_day < "2023-12-01"
@@ -2003,7 +2003,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC SELECT
 # MAGIC     business_day,
 # MAGIC     ROUND(SUM(sales)) AS periodly_sales
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE region_name = "ABU DHABI"
 # MAGIC AND category_period_type_lfl = "Post delist"
 # MAGIC AND business_day >= "2023-12-01"
@@ -2017,7 +2017,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC SELECT
 # MAGIC     business_day,
 # MAGIC     ROUND(SUM(sales)) AS periodly_sales
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE region_name = "ABU DHABI"
 # MAGIC AND category_period_type_lfl = "Post delist"
 # MAGIC AND business_day < "2023-12-01"
@@ -2031,7 +2031,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC SELECT
 # MAGIC     business_day,
 # MAGIC     ROUND(SUM(gross_profit)) AS periodly_gp
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE region_name = "ABU DHABI"
 # MAGIC AND category_period_type_lfl = "Pre-delist"
 # MAGIC AND business_day >= "2023-12-01"
@@ -2045,7 +2045,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC SELECT
 # MAGIC     MONTH(business_day) AS month,
 # MAGIC     ROUND(SUM(sales)) AS periodly_sales
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE region_name = "ABU DHABI"
 # MAGIC AND category_period_type_lfl = "Pre-delist"
 # MAGIC AND business_day >= "2023-12-01"
@@ -2059,7 +2059,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC SELECT
 # MAGIC     MONTH(business_day) AS month,
 # MAGIC     ROUND(SUM(sales)) AS periodly_sales
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE region_name = "ABU DHABI"
 # MAGIC AND category_period_type_lfl = "Pre-delist"
 # MAGIC AND business_day < "2023-12-01"
@@ -2073,7 +2073,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC SELECT
 # MAGIC     MONTH(business_day) AS month,
 # MAGIC     ROUND(SUM(sales)) AS periodly_sales
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE region_name = "ABU DHABI"
 # MAGIC AND category_period_type_lfl = "Pre-delist"
 # MAGIC AND business_day < "2023-12-01"
@@ -2087,7 +2087,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC SELECT
 # MAGIC     MONTH(business_day) AS month,
 # MAGIC     ROUND(SUM(sales)) AS periodly_sales
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE region_name = "ABU DHABI"
 # MAGIC AND category_period_type_lfl = "Post delist"
 # MAGIC AND business_day >= "2023-12-01"
@@ -2101,7 +2101,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC SELECT
 # MAGIC     MONTH(business_day) AS month,
 # MAGIC     ROUND(SUM(sales)) AS periodly_sales
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE region_name = "ABU DHABI"
 # MAGIC AND category_period_type_lfl = "Post delist"
 # MAGIC AND business_day < "2023-12-01"
@@ -2115,7 +2115,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC SELECT
 # MAGIC     MONTH(business_day) AS month,
 # MAGIC     ROUND(SUM(volume)) AS periodly_volume
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE region_name = "ABU DHABI"
 # MAGIC AND category_period_type_lfl = "Pre-delist"
 # MAGIC AND business_day >= "2023-12-01"
@@ -2129,7 +2129,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC SELECT
 # MAGIC     MONTH(business_day) AS month,
 # MAGIC     ROUND(SUM(volume)) AS periodly_volume
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE region_name = "ABU DHABI"
 # MAGIC AND category_period_type_lfl = "Pre-delist"
 # MAGIC AND business_day < "2023-12-01"
@@ -2143,7 +2143,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC SELECT
 # MAGIC     WEEKOFYEAR(business_day) AS week,
 # MAGIC     ROUND(SUM(gross_profit)) AS periodly_gp
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE region_name = "ABU DHABI"
 # MAGIC AND category_period_type_lfl = "Pre-delist"
 # MAGIC AND business_day >= "2023-12-01"
@@ -2159,7 +2159,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     ROUND(SUM(gross_profit)) AS periodly_gp,
 # MAGIC     ROUND(SUM(sales)) AS periodly_sales,
 # MAGIC     ROUND((periodly_gp/periodly_sales)*100,2) AS gp_margin
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE region_name = "ABU DHABI"
 # MAGIC AND category_period_type_lfl = "Pre-delist"
 # MAGIC AND business_day >= "2023-12-01"
@@ -2175,7 +2175,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     ROUND(SUM(gross_profit)) AS periodly_gp,
 # MAGIC     ROUND(SUM(sales)) AS periodly_sales,
 # MAGIC     ROUND((periodly_gp/periodly_sales)*100,2) AS gp_margin
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE region_name = "ABU DHABI"
 # MAGIC AND category_period_type_lfl = "Post delist"
 # MAGIC AND business_day >= "2023-12-01"
@@ -2191,7 +2191,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     ROUND(SUM(gross_profit)) AS periodly_gp,
 # MAGIC     ROUND(SUM(sales)) AS periodly_sales,
 # MAGIC     ROUND((periodly_gp/periodly_sales)*100,2) AS gp_margin
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE region_name = "ABU DHABI"
 # MAGIC AND category_period_type_lfl = "Post delist"
 # MAGIC AND business_day < "2023-12-01"
@@ -2212,7 +2212,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     brand,
 # MAGIC     SUM(CASE WHEN category_period_type = "Post delist" THEN sales END) AS post_delist_sales,
 # MAGIC     SUM(CASE WHEN category_period_type = "Pre-delist" THEN sales END) AS pre_delist_sales
-# MAGIC FROM sandbox.pj_assortment_dashboard_cy_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_cy_region_view
 # MAGIC WHERE region_name = "ABU DHABI"
 # MAGIC AND category_name = "WATER"
 # MAGIC GROUP BY brand
@@ -2227,7 +2227,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     brand,
 # MAGIC     SUM(CASE WHEN category_period_type = "Post delist" THEN volume END) AS post_delist_volume,
 # MAGIC     SUM(CASE WHEN category_period_type = "Pre-delist" THEN volume END) AS pre_delist_volume
-# MAGIC FROM sandbox.pj_assortment_dashboard_cy_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_cy_region_view
 # MAGIC WHERE region_name = "ABU DHABI"
 # MAGIC AND category_name = "WATER"
 # MAGIC GROUP BY brand
@@ -2242,7 +2242,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     brand,
 # MAGIC     SUM(CASE WHEN category_period_type = "Post delist" THEN gross_profit END) AS post_delist_gp,
 # MAGIC     SUM(CASE WHEN category_period_type = "Pre-delist" THEN gross_profit END) AS pre_delist_gp
-# MAGIC FROM sandbox.pj_assortment_dashboard_cy_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_cy_region_view
 # MAGIC WHERE region_name = "ABU DHABI"
 # MAGIC AND category_name = "WATER"
 # MAGIC GROUP BY brand
@@ -2263,7 +2263,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     SUM(sales) AS total_sales,
 # MAGIC     SUM(gross_profit) AS total_gp,
 # MAGIC     (total_gp/total_sales) AS gp_margin
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE region_name = "ABU DHABI"
 # MAGIC AND category_period_type_lfl = "Pre-delist"
 # MAGIC AND business_day >= "2023-12-01"
@@ -2286,7 +2286,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     SUM(sales) AS tot_sales,
 # MAGIC     SUM(volume) AS tot_volume,
 # MAGIC     SUM(gross_profit) AS tot_gp
-# MAGIC FROM sandbox.pj_assortment_dashboard_cy_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_cy_region_view
 # MAGIC WHERE material_id IN (5539, 91929)
 # MAGIC GROUP BY 1, 2
 
@@ -2299,7 +2299,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 
 # MAGIC %sql
 # MAGIC SELECT SUM(sales)
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE business_day BETWEEN "2023-12-01" AND "2024-01-30"
 # MAGIC AND material_id = 123693
 
@@ -2317,7 +2317,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC     material_name,
 # MAGIC     brand,
 # MAGIC     CASE WHEN delisted_date = "NA" THEN "NA" ELSE "Delisted" END AS delist_status
-# MAGIC FROM sandbox.pj_assortment_dashboard_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_region_view
 # MAGIC WHERE recommendation = "Delist"
 # MAGIC AND category_name = "WATER"
 # MAGIC GROUP BY ALL
@@ -2329,7 +2329,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC SELECT
 # MAGIC     region_name,
 # MAGIC     COUNT(DISTINCT material_id) AS delisted
-# MAGIC FROM sandbox.pj_assortment_dashboard_reco
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_reco
 # MAGIC WHERE material_group_name = "COCONUT OIL"
 # MAGIC AND recommendation = "Delist"
 # MAGIC GROUP BY region_name
@@ -2346,7 +2346,7 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 # MAGIC SELECT
 # MAGIC     category_period_type,
 # MAGIC     ROUND(SUM(sales) / COUNT(DISTINCT business_day), 2) AS daily_ros
-# MAGIC FROM sandbox.pj_assortment_dashboard_cy_region_view
+# MAGIC FROM dev.sandbox.pj_ao_dashboard_cy_region_view
 # MAGIC WHERE category_name = "WATER"
 # MAGIC GROUP BY 1
 
@@ -2354,136 +2354,3 @@ spark_df.write.option("overwriteSchema", "true").mode("overwrite").saveAsTable("
 
 # MAGIC %sql
 # MAGIC SELECT ROUND((297441.74 - 221098.56) / 221098.56, 4)
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC #Misc
-
-# COMMAND ----------
-
-# %sql
-# with qa_Data 
-# as 
-# (select 
-#         DISTINCT transaction_id, 
-#         business_day, 
-#         transaction_begin_datetime, 
-#         store_id, 
-#         billed_amount,
-#         gift_sale, 
-#         mobile, 
-#         loyalty_account_id,
-#         t1.redemption_loyalty_id,
-#         t1.returned_loyalty_id,
-#         loyalty_points, 
-#         loyalty_points_returned,
-#         redeemed_points,
-#         redeemed_amount, 
-#         --voucher_sale, 
-#         transaction_type_id
-#         from gold.qatar_pos_transactions t1
-#         where t1.business_day between "2024-02-20" and "2024-03-27"
-#          and t1.store_id in (SELECT DISTINCT storeid from dashboard.v_qatar_lhp_registration))
-# select
-# sum(billed_amount) 
-# from
-# qa_Data
-
-# COMMAND ----------
-
-# %sql
-# select 
-#         sum(t1.amount)
-#         from gold.qatar_pos_transactions t1
-#         where t1.business_day between "2024-02-20" and "2024-03-27"
-#          and t1.store_id in (SELECT DISTINCT storeid from dashboard.v_qatar_lhp_registration)
-
-# COMMAND ----------
-
-# %sql
-# with qa_bill_amt_data
-# as (
-# select 
-#         DISTINCT transaction_id, 
-#         business_day,
-#         billed_amount
-#         from gold.qatar_pos_transactions t1
-#         where t1.business_day between "2024-02-20" and "2024-03-27"
-#          and t1.store_id in (SELECT DISTINCT storeid from dashboard.v_qatar_lhp_registration)
-# ),
-# qa_billamt_final as (
-#   select
-#   business_day,
-#   sum(billed_amount) as bill_amount
-#   from   
-#   qa_bill_amt_data
-#   group by
-#   1
-# ),
-# qa_amt_final as (
-#   select 
-#         t1.business_day,
-#         sum(t1.amount) as amount
-#         from gold.qatar_pos_transactions t1
-#         where t1.business_day between "2024-02-20" and "2024-03-27"
-#          and t1.store_id in (SELECT DISTINCT storeid from dashboard.v_qatar_lhp_registration)
-#          group by 1
-# )
-# select
-# a.business_day,
-# a.bill_amount,
-# b.amount
-# from   
-# qa_billamt_final a 
-# join
-# qa_amt_final b 
-# on a.business_day = b.business_day
-
-
-
-# COMMAND ----------
-
-# %sql
-# with qa_bill_amt_data
-# as (
-# select 
-#         DISTINCT transaction_id, 
-#         t1.store_id,
-#         business_day,
-#         billed_amount
-#         from gold.qatar_pos_transactions t1
-#         where t1.business_day = "2024-03-27"
-#          and t1.store_id in (SELECT DISTINCT storeid from dashboard.v_qatar_lhp_registration)
-# ),
-# qa_billamt_final as (
-#   select
-#   business_day,
-#   store_id,
-#   sum(billed_amount) as bill_amount
-#   from   
-#   qa_bill_amt_data
-#   group by
-#   1,2
-# ),
-# qa_amt_final as (
-#   select 
-#         t1.business_day,
-#         t1.store_id.
-#         sum(t1.amount) as amount
-#         from gold.qatar_pos_transactions t1
-#         where t1.business_day = "2024-03-27"
-#          and t1.store_id in (SELECT DISTINCT storeid from dashboard.v_qatar_lhp_registration)
-#          group by 1,2
-# )
-# select
-# a.store_id,
-# a.bill_amount,
-# b.amount
-# from   
-# qa_billamt_final a 
-# join
-# qa_amt_final b 
-# on a.business_day = b.business_day
-
-
